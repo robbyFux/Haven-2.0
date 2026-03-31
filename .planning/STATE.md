@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 Phase: 3 of 3 (Phase-2-Bugfix)
 Plan: 0 of ? in current phase
 Status: Ready to plan
-Last activity: 2026-03-31 - Completed quick task 260331-u38: Fix DetectionZone not being saved from ZoneEditorScreen
+Last activity: 2026-03-31 - Completed quick task 260331-uke: Fix Save button stays greyed out after drawing detection zone (stale closure in pointerInput)
 
 Progress: [░░░░░░░░░░] 0%
 
