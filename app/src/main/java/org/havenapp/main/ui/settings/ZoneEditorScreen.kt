@@ -219,17 +219,32 @@ private fun ZoneCameraBox(
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
             .pointerInput(Unit) {
+                var localStart: Offset? = null
+                var localCurrent: Offset? = null
                 detectDragGestures(
-                    onDragStart = { onDragStart(it) },
-                    onDrag = { change, _ -> onDrag(change.position) },
+                    onDragStart = {
+                        localStart = it
+                        localCurrent = it
+                        onDragStart(it)
+                    },
+                    onDrag = { change, _ ->
+                        localCurrent = change.position
+                        onDrag(change.position)
+                    },
                     onDragEnd = {
-                        val start = dragStart
-                        val end = dragCurrent
+                        val start = localStart
+                        val end = localCurrent
                         if (start != null && end != null) {
                             onDragEnd(start, end, size.width.toFloat(), size.height.toFloat())
                         }
+                        localStart = null
+                        localCurrent = null
                     },
-                    onDragCancel = { onDragCancel() },
+                    onDragCancel = {
+                        localStart = null
+                        localCurrent = null
+                        onDragCancel()
+                    },
                 )
             },
     ) {
