@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 Phase: 3 of 3 (Phase-2-Bugfix)
 Plan: 0 of ? in current phase
 Status: Ready to plan
-Last activity: 2026-03-31 — Roadmap created for Phase-2-Bugfix milestone
+Last activity: 2026-03-31 - Completed quick task 260331-u38: Fix DetectionZone not being saved from ZoneEditorScreen
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,12 @@ None yet.
 ### Blockers/Concerns
 
 - SENSOR-01 and SENSOR-02 can only be validated after TFLite and Zone fixes are in place — plan accordingly.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260331-u38 | Fix DetectionZone not being saved from ZoneEditorScreen | 2026-03-31 | 118fa19 | [260331-u38-fix-detectionzone-not-being-saved-from-z](./quick/260331-u38-fix-detectionzone-not-being-saved-from-z/) |
 
 ## Session Continuity
 
