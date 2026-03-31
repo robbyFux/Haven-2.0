@@ -58,9 +58,10 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260331-u38 | Fix DetectionZone not being saved from ZoneEditorScreen | 2026-03-31 | 118fa19 | [260331-u38-fix-detectionzone-not-being-saved-from-z](./quick/260331-u38-fix-detectionzone-not-being-saved-from-z/) |
+| 260331-uke | Fix Save button stays greyed out after drawing detection zone (stale closure in pointerInput) | 2026-03-31 | db40801 | [260331-uke-fehler-bei-der-festlegung-der-erkennungs](./quick/260331-uke-fehler-bei-der-festlegung-der-erkennungs/) |
 
 ## Session Continuity
 
 Last session: 2026-03-31
-Stopped at: Roadmap created, ready to plan Phase 3
+Stopped at: Completed quick task 260331-uke: Fix Save button stays greyed out after drawing detection zone
 Resume file: None
