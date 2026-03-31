@@ -70,15 +70,15 @@ Geplante Features für Phase 3+, noch nicht begonnen.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TFLITE-01 | Phase 1 | Pending |
-| TFLITE-02 | Phase 1 | Pending |
-| TFLITE-03 | Phase 1 | Pending |
-| ZONE-01 | Phase 1 | Pending |
-| ZONE-02 | Phase 1 | Pending |
-| EVENT-01 | Phase 1 | Pending |
-| EVENT-02 | Phase 1 | Pending |
-| SENSOR-01 | Phase 1 | Pending |
-| SENSOR-02 | Phase 1 | Pending |
+| TFLITE-01 | Phase 3 | Pending |
+| TFLITE-02 | Phase 3 | Pending |
+| TFLITE-03 | Phase 3 | Pending |
+| ZONE-01 | Phase 3 | Pending |
+| ZONE-02 | Phase 3 | Pending |
+| EVENT-01 | Phase 3 | Pending |
+| EVENT-02 | Phase 3 | Pending |
+| SENSOR-01 | Phase 3 | Pending |
+| SENSOR-02 | Phase 3 | Pending |
 
 **Coverage:**
 - v1 requirements: 9 total
@@ -87,4 +87,4 @@ Geplante Features für Phase 3+, noch nicht begonnen.
 
 ---
 *Requirements defined: 2026-03-31*
-*Last updated: 2026-03-31 after initial definition*
+*Last updated: 2026-03-31 — traceability updated to Phase 3 after roadmap creation*
