@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Haven</string>
+
+    <!-- Monitor Screen -->
+    <string name="monitor_status_active">Überwachung aktiv</string>
+    <string name="monitor_status_idle">Bereit</string>
+    <string name="monitor_start">Starten</string>
+    <string name="monitor_stop">Stoppen</string>
+    <string name="monitor_cancel">Abbrechen</string>
+    <string name="monitor_countdown_label">Startet in</string>
+    <string name="monitor_calibrating">Kalibrierung läuft…</string>
+    <string name="calibration_seconds_remaining">Noch %1$d s</string>
+    <string name="calibration_complete">Kalibrierung abgeschlossen</string>
+    <string name="calibration_sensor_motion">Bewegung (Beschleunigungssensor + Gyroskop)</string>
+    <string name="calibration_sensor_light">Licht</string>
+    <string name="calibration_sensor_mic">Mikrofon</string>
+    <string name="calibration_sensor_camera">Kamera</string>
+    <string name="calibration_fixed_threshold">Fester Schwellwert</string>
+    <string name="calibration_noise_floor">Rauschen: %1$s</string>
+    <string name="calibration_camera_zone_active">Zone %1$d%%×%2$d%%</string>
+    <string name="calibration_camera_full_frame">Vollbild</string>
+
+    <!-- Navigation -->
+    <string name="nav_monitor">Monitor</string>
+    <string name="nav_timeline">Ereignisse</string>
+    <string name="nav_settings">Einstellungen</string>
+    <string name="settings_open_diagnostics">Diagnose</string>
+
+    <!-- Timeline Screen -->
+    <string name="timeline_empty">Keine Ereignisse aufgezeichnet</string>
+
+    <!-- Event Detail Screen -->
+    <string name="detail_title">Einzelereignisse</string>
+    <string name="detail_empty">Keine Auslöser aufgezeichnet</string>
+    <string name="action_delete_event">Ereignis löschen</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_sensitivity_title">Empfindlichkeit</string>
+    <string name="sensitivity_off">Aus</string>
+    <string name="sensitivity_low">Niedrig</string>
+    <string name="sensitivity_medium">Mittel</string>
+    <string name="sensitivity_high">Hoch</string>
+
+    <string name="settings_camera_title">Kamera</string>
+    <string name="camera_back">Rückkamera</string>
+    <string name="camera_front">Frontkamera</string>
+
+    <string name="settings_countdown_title">Startverzögerung</string>
+    <string name="countdown_no_delay">Kein Countdown</string>
+    <string name="countdown_seconds">%1$d Sekunden</string>
+
+    <string name="settings_detection_title">Erkennungsmodus</string>
+    <string name="settings_sensors_title">Aktive Sensoren</string>
+    <string name="detection_motion_only">Nur Bewegung (kein KI)</string>
+    <string name="detection_person">Personen (KI)</string>
+    <string name="detection_pet">Tiere (KI)</string>
+    <string name="detection_vehicle">Fahrzeuge (KI)</string>
+    <string name="detection_all">Alle Objekte (KI)</string>
+    <string name="detection_ai_unavailable">KI-Modell nicht verfügbar</string>
+
+    <string name="settings_calibration_title">Kalibrierungsdauer</string>
+    <string name="calibration_5s">5 s – schnell</string>
+    <string name="calibration_10s">10 s – Standard</string>
+    <string name="calibration_20s">20 s – unruhige Umgebung</string>
+    <string name="calibration_30s">30 s – maximale Präzision</string>
+
+    <string name="settings_language_title">Sprache</string>
+    <string name="language_system">Systemsprache</string>
+    <string name="language_de">Deutsch</string>
+    <string name="language_en">English</string>
+
+    <string name="nav_diagnostics">Diagnose</string>
+    <string name="diag_settings_title">Einstellungen</string>
+    <string name="diag_calibration_strategy_title">Kalibrierungsstrategie</string>
+    <string name="diag_log_title">Trigger-Log (%1$d Einträge)</string>
+    <string name="diag_log_empty">Noch keine Trigger – zuerst Überwachung starten</string>
+    <string name="diag_app_log_title">App-Log (%1$d Zeilen)</string>
+    <string name="diag_app_log_empty">Keine Log-Einträge</string>
+    <string name="diag_app_log_refresh">Log aktualisieren</string>
+    <string name="diag_app_log_clear">Log leeren</string>
+
+    <string name="settings_about_title">Über Haven</string>
+    <string name="about_version">Version</string>
+    <string name="about_build">Build</string>
+
+    <!-- Zone Editor -->
+    <string name="settings_zone_title">Erkennungszone</string>
+    <string name="settings_zone_none">Vollbild (keine Zone)</string>
+    <string name="settings_zone_active">Zone aktiv: %1$d%%×%2$d%%</string>
+    <string name="settings_zone_edit">Zone bearbeiten</string>
+    <string name="zone_editor_title">Erkennungszone</string>
+    <string name="zone_editor_hint">Rechteck zeichnen, um die Erkennung auf einen Bildbereich zu beschränken.</string>
+    <string name="zone_editor_info">Zone: %1$d%% – %3$d%% × %2$d%% – %4$d%%</string>
+    <string name="zone_editor_no_zone">Keine Zone – Vollbild ist aktiv</string>
+    <string name="zone_editor_clear">Löschen</string>
+    <string name="zone_editor_save">Speichern</string>
+</resources>
