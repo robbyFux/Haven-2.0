@@ -114,6 +114,10 @@ dependencies {
     implementation(libs.camerax.view)
     implementation(libs.camerax.video)
 
+    // Media3 ExoPlayer
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui)
+
     // DataStore
     implementation(libs.datastore.preferences)
 

@@ -31,6 +31,7 @@ class SettingsRepository @Inject constructor(
         private val KEY_MIC_ENABLED = booleanPreferencesKey("sensor_mic_enabled")
         private val KEY_CAMERA_ENABLED = booleanPreferencesKey("sensor_camera_enabled")
         private val KEY_CLIP_DURATION_SECONDS = intPreferencesKey("clip_duration_seconds")
+        private val KEY_MEDIA_ENCRYPTED_V1 = booleanPreferencesKey("media_encrypted_v1")
     }
 
     val sensitivity: Flow<Sensitivity> = dataStore.data.map { prefs ->
@@ -107,5 +108,14 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setClipDurationSeconds(seconds: Int) {
         dataStore.edit { it[KEY_CLIP_DURATION_SECONDS] = seconds }
+    }
+
+    /** Whether the one-shot media encryption migration (SEC-02) has already been run. */
+    val mediaEncryptedV1: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[KEY_MEDIA_ENCRYPTED_V1] ?: false
+    }
+
+    suspend fun setMediaEncryptedV1(done: Boolean) {
+        dataStore.edit { it[KEY_MEDIA_ENCRYPTED_V1] = done }
     }
 }
