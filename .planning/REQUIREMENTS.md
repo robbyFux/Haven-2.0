@@ -30,9 +30,9 @@ Phase-2-Bugfix + fehlende Phase-2-Features: Bugfixes für vollständige Nutzbark
 
 ### Videoaufzeichnung bei Sensorauslösung
 
-- [ ] **REC-01**: Wenn ein Sensor auslöst, wird automatisch ein Video-Clip (Kamera + Ton) gestartet; Clip-Dauer konfigurierbar in Settings (10 s / 30 s / 60 s, Standard 30 s)
-- [ ] **REC-02**: Aufgezeichneter Clip wird dem auslösenden HavenEvent in Room zugeordnet (mediaPath in EventTriggerEntity) und im EventDetailScreen abspielbar
-- [ ] **REC-03**: Während eine Aufnahme läuft, kann eine weitere Auslösung keinen zweiten parallelen Clip starten (Cooldown bis Clip abgeschlossen)
+- [x] **REC-01**: Wenn ein Sensor auslöst, wird automatisch ein Video-Clip (Kamera + Ton) gestartet; Clip-Dauer konfigurierbar in Settings (10 s / 30 s / 60 s, Standard 30 s)
+- [x] **REC-02**: Aufgezeichneter Clip wird dem auslösenden HavenEvent in Room zugeordnet (mediaPath in EventTriggerEntity) und im EventDetailScreen abspielbar
+- [x] **REC-03**: Während eine Aufnahme läuft, kann eine weitere Auslösung keinen zweiten parallelen Clip starten (Cooldown bis Clip abgeschlossen)
 
 ### Datenverschlüsselung
 
@@ -96,9 +96,9 @@ Geplante Features für Phase 3+, noch nicht begonnen.
 | EVENT-02 | Phase 3 | Complete |
 | SENSOR-01 | Phase 3 | Complete |
 | SENSOR-02 | Phase 3 | Complete |
-| REC-01 | Phase 3 | Pending |
-| REC-02 | Phase 3 | Pending |
-| REC-03 | Phase 3 | Pending |
+| REC-01 | Phase 3 | Complete |
+| REC-02 | Phase 3 | Complete |
+| REC-03 | Phase 3 | Complete |
 | SEC-01 | Phase 3 | Pending |
 | SEC-02 | Phase 3 | Pending |
 | SEC-03 | Phase 3 | Pending |

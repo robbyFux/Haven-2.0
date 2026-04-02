@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.3
 milestone_name: Phase-2-Complete
 status: executing
-stopped_at: "Completed 03-phase-2-complete plan 01: compilation verification and SENSOR-02 confirmation"
-last_updated: "2026-04-02T14:42:38.499Z"
+stopped_at: "Completed 03-phase-2-complete plan 02: video clip recording infrastructure"
+last_updated: "2026-04-02T14:50:10.125Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 ## Current Position
 
 Phase: 03 (phase-2-complete) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-04-02
 
@@ -53,6 +53,7 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 | Phase 03-phase-2-complete P01 | 5 | 2 tasks | 55 files |
+| Phase 03-phase-2-complete P02 | 5 | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,8 @@ Recent decisions affecting current work:
 - DiagnosticsViewModel reaktiv auf availabilityFlow: `isAvailable` war Snapshot → Flow behebt das — Pending
 - [Phase 03-phase-2-complete]: FusedMotionMonitor warmup guard already implemented via warmupDone flag; SENSOR-02 confirmed without code change
 - [Phase 03-phase-2-complete]: 54 untracked app source files committed to git with .gitignore to exclude build artifacts
+- [Phase 03-phase-2-complete]: ClipRecorder is not a Hilt singleton — owned by MonitorService, tied to camera lifecycle
+- [Phase 03-phase-2-complete]: EventRepository.recordTrigger returns Long (trigger row ID) enabling async mediaPath linkage
 
 ### Pending Todos
 
@@ -84,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T14:42:38.496Z
-Stopped at: Completed 03-phase-2-complete plan 01: compilation verification and SENSOR-02 confirmation
+Last session: 2026-04-02T14:50:10.122Z
+Stopped at: Completed 03-phase-2-complete plan 02: video clip recording infrastructure
 Resume file: None
