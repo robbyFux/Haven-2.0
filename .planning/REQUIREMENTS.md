@@ -5,7 +5,7 @@
 
 ## v1 Requirements
 
-Phase-2-Fehlerbehebung: Alle bekannten Bugs, die die vollständige Nutzbarkeit von Phase 2 blockieren.
+Phase-2-Bugfix + fehlende Phase-2-Features: Bugfixes für vollständige Nutzbarkeit + Videoaufzeichnung bei Auslösung, Datenverschlüsselung und App-PIN.
 
 ### TFLite / KI-Erkennung
 
@@ -27,6 +27,23 @@ Phase-2-Fehlerbehebung: Alle bekannten Bugs, die die vollständige Nutzbarkeit v
 
 - [ ] **SENSOR-01**: Nach TFLite-Fix: CameraAnalyzer läuft stabil ohne Crashes bei aktivem ML-Modus
 - [ ] **SENSOR-02**: FusedMotionMonitor verursacht keine ungewollten Trigger während der Kalibrierungsphase
+
+### Videoaufzeichnung bei Sensorauslösung
+
+- [ ] **REC-01**: Wenn ein Sensor auslöst, wird automatisch ein Video-Clip (Kamera + Ton) gestartet; Clip-Dauer konfigurierbar in Settings (10 s / 30 s / 60 s, Standard 30 s)
+- [ ] **REC-02**: Aufgezeichneter Clip wird dem auslösenden HavenEvent in Room zugeordnet (mediaPath in EventTriggerEntity) und im EventDetailScreen abspielbar
+- [ ] **REC-03**: Während eine Aufnahme läuft, kann eine weitere Auslösung keinen zweiten parallelen Clip starten (Cooldown bis Clip abgeschlossen)
+
+### Datenverschlüsselung
+
+- [ ] **SEC-01**: Aufgezeichnete Video- und Audio-Dateien werden AES-GCM-verschlüsselt im internen App-Speicher abgelegt (Android Keystore, `EncryptedFile` via `security-crypto`)
+- [ ] **SEC-02**: Bestehende unverschlüsselte Medien-Dateien werden beim ersten App-Start nach dem Update migriert (verschlüsselt und Original gelöscht)
+
+### App-PIN
+
+- [ ] **SEC-03**: Optionaler App-PIN (4–6-stellig, in Settings aktivierbar) — wenn aktiv, muss der PIN beim App-Start korrekt eingegeben werden bevor die UI zugänglich ist
+- [ ] **SEC-04**: App sperrt sich automatisch wenn sie in den Hintergrund geht (konfigurierbar: sofort / nach 30 s / nie)
+- [ ] **SEC-05**: PIN-Hash wird AES-GCM-verschlüsselt in DataStore gespeichert (kein Klartext)
 
 ## v2 Requirements
 
@@ -53,9 +70,9 @@ Geplante Features für Phase 3+, noch nicht begonnen.
 
 ### Hardening (Phase 5)
 
-- **SEC-01**: Android Keystore Verschlüsselung aller Medien
-- **SEC-02**: Telefon-Manipulations-Erkennung
-- **SEC-03**: Audit-Logs
+- **HARD-01**: Telefon-Manipulations-Erkennung
+- **HARD-02**: Audit-Logs
+- **HARD-03**: Batterie-Optimierung
 
 ## Out of Scope
 
@@ -79,12 +96,20 @@ Geplante Features für Phase 3+, noch nicht begonnen.
 | EVENT-02 | Phase 3 | Pending |
 | SENSOR-01 | Phase 3 | Pending |
 | SENSOR-02 | Phase 3 | Pending |
+| REC-01 | Phase 3 | Pending |
+| REC-02 | Phase 3 | Pending |
+| REC-03 | Phase 3 | Pending |
+| SEC-01 | Phase 3 | Pending |
+| SEC-02 | Phase 3 | Pending |
+| SEC-03 | Phase 3 | Pending |
+| SEC-04 | Phase 3 | Pending |
+| SEC-05 | Phase 3 | Pending |
 
 **Coverage:**
-- v1 requirements: 9 total
-- Mapped to phases: 9
+- v1 requirements: 17 total
+- Mapped to phases: 17
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-31*
-*Last updated: 2026-03-31 — traceability updated to Phase 3 after roadmap creation*
+*Last updated: 2026-04-02 — Phase 3 erweitert: Videoaufzeichnung (REC-01–03), Verschlüsselung (SEC-01–02), App-PIN (SEC-03–05)*
