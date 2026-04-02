@@ -32,6 +32,10 @@ class SettingsRepository @Inject constructor(
         private val KEY_CAMERA_ENABLED = booleanPreferencesKey("sensor_camera_enabled")
         private val KEY_CLIP_DURATION_SECONDS = intPreferencesKey("clip_duration_seconds")
         private val KEY_MEDIA_ENCRYPTED_V1 = booleanPreferencesKey("media_encrypted_v1")
+        private val KEY_PIN_ENABLED = booleanPreferencesKey("pin_enabled")
+        private val KEY_PIN_HASH = stringPreferencesKey("pin_hash")
+        private val KEY_PIN_SALT = stringPreferencesKey("pin_salt")
+        private val KEY_AUTO_LOCK_DELAY_SECONDS = intPreferencesKey("auto_lock_delay_seconds")
     }
 
     val sensitivity: Flow<Sensitivity> = dataStore.data.map { prefs ->
@@ -117,5 +121,47 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setMediaEncryptedV1(done: Boolean) {
         dataStore.edit { it[KEY_MEDIA_ENCRYPTED_V1] = done }
+    }
+
+    // PIN lock settings (SEC-03, SEC-04, SEC-05)
+
+    val pinEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[KEY_PIN_ENABLED] ?: false
+    }
+
+    val pinHash: Flow<String?> = dataStore.data.map { prefs ->
+        prefs[KEY_PIN_HASH]
+    }
+
+    val pinSalt: Flow<String?> = dataStore.data.map { prefs ->
+        prefs[KEY_PIN_SALT]
+    }
+
+    /** Auto-lock delay: 0 = immediate, 30 = 30 seconds, -1 = never */
+    val autoLockDelaySeconds: Flow<Int> = dataStore.data.map { prefs ->
+        prefs[KEY_AUTO_LOCK_DELAY_SECONDS] ?: 0
+    }
+
+    suspend fun setPinEnabled(enabled: Boolean) {
+        dataStore.edit { it[KEY_PIN_ENABLED] = enabled }
+    }
+
+    suspend fun setPinCredentials(hash: String, salt: String) {
+        dataStore.edit { prefs ->
+            prefs[KEY_PIN_HASH] = hash
+            prefs[KEY_PIN_SALT] = salt
+        }
+    }
+
+    suspend fun clearPinCredentials() {
+        dataStore.edit { prefs ->
+            prefs.remove(KEY_PIN_HASH)
+            prefs.remove(KEY_PIN_SALT)
+            prefs[KEY_PIN_ENABLED] = false
+        }
+    }
+
+    suspend fun setAutoLockDelaySeconds(seconds: Int) {
+        dataStore.edit { it[KEY_AUTO_LOCK_DELAY_SECONDS] = seconds }
     }
 }
