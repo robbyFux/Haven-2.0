@@ -36,8 +36,8 @@ Phase-2-Bugfix + fehlende Phase-2-Features: Bugfixes für vollständige Nutzbark
 
 ### Datenverschlüsselung
 
-- [ ] **SEC-01**: Aufgezeichnete Video- und Audio-Dateien werden AES-GCM-verschlüsselt im internen App-Speicher abgelegt (Android Keystore, `EncryptedFile` via `security-crypto`)
-- [ ] **SEC-02**: Bestehende unverschlüsselte Medien-Dateien werden beim ersten App-Start nach dem Update migriert (verschlüsselt und Original gelöscht)
+- [x] **SEC-01**: Aufgezeichnete Video- und Audio-Dateien werden AES-GCM-verschlüsselt im internen App-Speicher abgelegt (Android Keystore, `EncryptedFile` via `security-crypto`)
+- [x] **SEC-02**: Bestehende unverschlüsselte Medien-Dateien werden beim ersten App-Start nach dem Update migriert (verschlüsselt und Original gelöscht)
 
 ### App-PIN
 
@@ -99,8 +99,8 @@ Geplante Features für Phase 3+, noch nicht begonnen.
 | REC-01 | Phase 3 | Complete |
 | REC-02 | Phase 3 | Complete |
 | REC-03 | Phase 3 | Complete |
-| SEC-01 | Phase 3 | Pending |
-| SEC-02 | Phase 3 | Pending |
+| SEC-01 | Phase 3 | Complete |
+| SEC-02 | Phase 3 | Complete |
 | SEC-03 | Phase 3 | Pending |
 | SEC-04 | Phase 3 | Pending |
 | SEC-05 | Phase 3 | Pending |

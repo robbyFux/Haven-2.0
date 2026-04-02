@@ -37,7 +37,7 @@ an optional app PIN. One phase delivers a fully secured, fully functional monito
 Plans:
 - [x] 03-01-PLAN.md — Verify quick-task fixes and add FusedMotionMonitor calibration guard
 - [x] 03-02-PLAN.md — Video recording infrastructure (ClipRecorder + CameraX VideoCapture)
-- [ ] 03-03-PLAN.md — Encrypted storage (AES-GCM) and ExoPlayer video playback
+- [x] 03-03-PLAN.md — Encrypted storage (AES-GCM) and ExoPlayer video playback
 - [ ] 03-04-PLAN.md — App PIN lock with auto-lock on background
 
 **UI hint**: yes
