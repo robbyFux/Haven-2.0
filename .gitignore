@@ -1,0 +1,18 @@
+# Build outputs
+build/
+app/build/
+.gradle/
+
+# Local configuration
+local.properties
+
+# IDE files
+*.iml
+.idea/
+.DS_Store
+
+# Generated files
+claude_resume
+
+# Android assets (large binary — add manually)
+app/src/main/assets/*.tflite
