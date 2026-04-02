@@ -9,24 +9,24 @@ Phase-2-Bugfix + fehlende Phase-2-Features: Bugfixes für vollständige Nutzbark
 
 ### TFLite / KI-Erkennung
 
-- [ ] **TFLITE-01**: KI-Erkennungsmodi (PERSON, PET, VEHICLE, ALL) sind in den Einstellungen wählbar — `isAvailable` muss `true` sein sobald das Modell geladen ist
-- [ ] **TFLITE-02**: TFLite-Initialisierung erfolgt beim App-Start (unabhängig vom aktiven Screen), sodass `availabilityFlow` vor dem ersten Screen-Render emittiert
-- [ ] **TFLITE-03**: DiagnosticsScreen zeigt TFLite-Status reaktiv — aktualisiert sich sobald Initialisierung abgeschlossen ist
+- [x] **TFLITE-01**: KI-Erkennungsmodi (PERSON, PET, VEHICLE, ALL) sind in den Einstellungen wählbar — `isAvailable` muss `true` sein sobald das Modell geladen ist
+- [x] **TFLITE-02**: TFLite-Initialisierung erfolgt beim App-Start (unabhängig vom aktiven Screen), sodass `availabilityFlow` vor dem ersten Screen-Render emittiert
+- [x] **TFLITE-03**: DiagnosticsScreen zeigt TFLite-Status reaktiv — aktualisiert sich sobald Initialisierung abgeschlossen ist
 
 ### Erkennungszonen
 
-- [ ] **ZONE-01**: Im ZoneEditorScreen gezeichnete Zone wird in DataStore gespeichert und überlebt App-Neustart
-- [ ] **ZONE-02**: Gespeicherte Zone wird beim Monitoring korrekt aus DataStore geladen und an CameraAnalyzer übergeben
+- [x] **ZONE-01**: Im ZoneEditorScreen gezeichnete Zone wird in DataStore gespeichert und überlebt App-Neustart
+- [x] **ZONE-02**: Gespeicherte Zone wird beim Monitoring korrekt aus DataStore geladen und an CameraAnalyzer übergeben
 
 ### Ereignis-Verwaltung
 
-- [ ] **EVENT-01**: Nutzer kann einzelne Ereignisse aus der Timeline löschen (Swipe-to-delete oder Delete-Button in EventDetailScreen)
-- [ ] **EVENT-02**: Löschvorgang entfernt zugehörige EventTriggerEntities und das HavenEvent aus Room
+- [x] **EVENT-01**: Nutzer kann einzelne Ereignisse aus der Timeline löschen (Swipe-to-delete oder Delete-Button in EventDetailScreen)
+- [x] **EVENT-02**: Löschvorgang entfernt zugehörige EventTriggerEntities und das HavenEvent aus Room
 
 ### Sensor / Kamera Stabilität
 
-- [ ] **SENSOR-01**: Nach TFLite-Fix: CameraAnalyzer läuft stabil ohne Crashes bei aktivem ML-Modus
-- [ ] **SENSOR-02**: FusedMotionMonitor verursacht keine ungewollten Trigger während der Kalibrierungsphase
+- [x] **SENSOR-01**: Nach TFLite-Fix: CameraAnalyzer läuft stabil ohne Crashes bei aktivem ML-Modus
+- [x] **SENSOR-02**: FusedMotionMonitor verursacht keine ungewollten Trigger während der Kalibrierungsphase
 
 ### Videoaufzeichnung bei Sensorauslösung
 
@@ -87,15 +87,15 @@ Geplante Features für Phase 3+, noch nicht begonnen.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TFLITE-01 | Phase 3 | Pending |
-| TFLITE-02 | Phase 3 | Pending |
-| TFLITE-03 | Phase 3 | Pending |
-| ZONE-01 | Phase 3 | Pending |
-| ZONE-02 | Phase 3 | Pending |
-| EVENT-01 | Phase 3 | Pending |
-| EVENT-02 | Phase 3 | Pending |
-| SENSOR-01 | Phase 3 | Pending |
-| SENSOR-02 | Phase 3 | Pending |
+| TFLITE-01 | Phase 3 | Complete |
+| TFLITE-02 | Phase 3 | Complete |
+| TFLITE-03 | Phase 3 | Complete |
+| ZONE-01 | Phase 3 | Complete |
+| ZONE-02 | Phase 3 | Complete |
+| EVENT-01 | Phase 3 | Complete |
+| EVENT-02 | Phase 3 | Complete |
+| SENSOR-01 | Phase 3 | Complete |
+| SENSOR-02 | Phase 3 | Complete |
 | REC-01 | Phase 3 | Pending |
 | REC-02 | Phase 3 | Pending |
 | REC-03 | Phase 3 | Pending |
