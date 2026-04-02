@@ -33,6 +33,7 @@ data class SettingsUiState(
     val lightEnabled: Boolean = true,
     val micEnabled: Boolean = true,
     val cameraEnabled: Boolean = true,
+    val clipDurationSeconds: Int = 30,
 )
 
 @HiltViewModel
@@ -83,7 +84,8 @@ class SettingsViewModel @Inject constructor(
             settingsRepository.calibrationSeconds,
             _languageTag,
             settingsRepository.detectionZone,
-        ) { cal, lang, zone -> Triple(cal, lang, zone) },
+            settingsRepository.clipDurationSeconds,
+        ) { cal, lang, zone, clipDur -> listOf(cal, lang, zone, clipDur) },
         combine(
             objectDetector.availabilityFlow,
             settingsRepository.motionEnabled,
@@ -94,7 +96,12 @@ class SettingsViewModel @Inject constructor(
             SensorsConfig(tflite, motion, light, mic, camera)
         },
     ) { primary, secondary, sensors ->
-        val (calibrationSeconds, languageTag, detectionZone) = secondary
+        @Suppress("UNCHECKED_CAST")
+        val secondaryList = secondary as List<Any?>
+        val calibrationSeconds = secondaryList[0] as Int
+        val languageTag = secondaryList[1] as String
+        val detectionZone = secondaryList[2] as DetectionZone?
+        val clipDurationSeconds = secondaryList[3] as Int
         SettingsUiState(
             sensitivity = primary.sensitivity,
             cameraPosition = primary.cameraPosition,
@@ -108,6 +115,7 @@ class SettingsViewModel @Inject constructor(
             lightEnabled = sensors.lightEnabled,
             micEnabled = sensors.micEnabled,
             cameraEnabled = sensors.cameraEnabled,
+            clipDurationSeconds = clipDurationSeconds,
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, SettingsUiState())
 
@@ -145,6 +153,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setCameraEnabled(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setCameraEnabled(enabled) }
+    }
+
+    fun setClipDurationSeconds(seconds: Int) {
+        viewModelScope.launch { settingsRepository.setClipDurationSeconds(seconds) }
     }
 
     fun setLanguage(tag: String) {

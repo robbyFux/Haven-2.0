@@ -59,6 +59,11 @@
     <string name="detection_all">Alle Objekte (KI)</string>
     <string name="detection_ai_unavailable">KI-Modell nicht verfügbar</string>
 
+    <string name="settings_clip_duration_title">Clip-Dauer</string>
+    <string name="clip_duration_10s">10 s – kurz</string>
+    <string name="clip_duration_30s">30 s – Standard</string>
+    <string name="clip_duration_60s">60 s – lang</string>
+
     <string name="settings_calibration_title">Kalibrierungsdauer</string>
     <string name="calibration_5s">5 s – schnell</string>
     <string name="calibration_10s">10 s – Standard</string>

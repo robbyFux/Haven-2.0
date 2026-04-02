@@ -10,6 +10,11 @@ import android.util.Size
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.FallbackStrategy
+import androidx.camera.video.Quality
+import androidx.camera.video.QualitySelector
+import androidx.camera.video.Recorder
+import androidx.camera.video.VideoCapture
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
@@ -25,6 +30,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.havenapp.main.detection.HavenObjectDetector
 import org.havenapp.main.media.CameraAnalyzer
+import org.havenapp.main.media.ClipRecorder
 import org.havenapp.main.sensor.CameraPosition
 import org.havenapp.main.sensor.FusedMotionMonitor
 import org.havenapp.main.sensor.LightMonitor
@@ -80,8 +86,10 @@ class MonitorService : LifecycleService() {
     private var wakeLock: PowerManager.WakeLock? = null
     private var currentEventId: Long? = null
     private var cameraAnalyzer: CameraAnalyzer? = null
+    private var clipRecorder: ClipRecorder? = null
     private val cameraExecutor = Executors.newSingleThreadExecutor()
     private var monitoringJob: Job? = null
+    private var clipDurationSecs: Int = 30
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
@@ -111,6 +119,7 @@ class MonitorService : LifecycleService() {
             val lightEnabled = settingsRepository.lightEnabled.first()
             val micEnabled = settingsRepository.micEnabled.first()
             val cameraEnabled = settingsRepository.cameraEnabled.first()
+            clipDurationSecs = settingsRepository.clipDurationSeconds.first()
 
             // --- Phase 1: Countdown ---
             if (countdownSecs > 0) {
@@ -181,7 +190,20 @@ class MonitorService : LifecycleService() {
             // Sensor-Flow läuft ab Kalibrierungsstart; currentEventId ist null
             // solange kalibriert wird → Events werden erst danach persistiert.
             sensorFlow.collect { trigger ->
-                currentEventId?.let { eventRepository.recordTrigger(it, trigger) }
+                currentEventId?.let { eventId ->
+                    val triggerId = eventRepository.recordTrigger(eventId, trigger)
+                    // Start clip on first trigger (REC-01); ClipRecorder guards against parallel clips (REC-03)
+                    clipRecorder?.startClip(
+                        context = this@MonitorService,
+                        filesDir = filesDir,
+                        durationSeconds = clipDurationSecs,
+                    ) { clipPath ->
+                        // Link clip to the trigger that caused it (REC-02)
+                        lifecycleScope.launch {
+                            eventRepository.updateTriggerMediaPath(triggerId, clipPath)
+                        }
+                    }
+                }
             }
         }
     }
@@ -200,6 +222,8 @@ class MonitorService : LifecycleService() {
             currentEventId = null
         }
 
+        clipRecorder?.stopIfRecording()
+        clipRecorder = null
         cameraAnalyzer?.reset()
         cameraAnalyzer = null
         _state.value = MonitorState.IDLE
@@ -230,9 +254,31 @@ class MonitorService : LifecycleService() {
                 .build()
                 .also { it.setAnalyzer(cameraExecutor, analyzer) }
 
+            val recorder = Recorder.Builder()
+                .setQualitySelector(
+                    QualitySelector.fromOrderedList(
+                        listOf(Quality.HD, Quality.SD),
+                        FallbackStrategy.lowerQualityOrHigherThan(Quality.SD),
+                    )
+                )
+                .build()
+            val videoCaptureUseCase = VideoCapture.withOutput(recorder)
+
+            // Attempt to bind both ImageAnalysis and VideoCapture together.
+            // Falls back to ImageAnalysis-only on LEGACY hardware where VideoCapture
+            // cannot be combined with other use cases.
             runCatching {
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis)
+                cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis, videoCaptureUseCase)
+            }.onSuccess {
+                clipRecorder = ClipRecorder().also { it.attach(videoCaptureUseCase) }
+            }.onFailure { err ->
+                appLogger.w(TAG, "VideoCapture binding failed (LEGACY hardware?), disabling clip recording: ${err.message}")
+                runCatching {
+                    cameraProvider.unbindAll()
+                    cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis)
+                }
+                clipRecorder = ClipRecorder().also { it.setUnavailable() }
             }
         }, mainExecutor)
     }

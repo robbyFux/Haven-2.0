@@ -23,4 +23,7 @@ interface EventTriggerDao {
 
     @Query("DELETE FROM event_triggers WHERE eventId = :eventId AND timestamp >= :cutoffMs")
     suspend fun deleteSince(eventId: Long, cutoffMs: Long)
+
+    @Query("UPDATE event_triggers SET mediaPath = :mediaPath WHERE id = :triggerId")
+    suspend fun updateMediaPath(triggerId: Long, mediaPath: String)
 }

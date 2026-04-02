@@ -171,6 +171,20 @@ fun SettingsScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
+            SettingsSection(title = stringResource(R.string.settings_clip_duration_title)) {
+                Column(modifier = Modifier.selectableGroup()) {
+                    CLIP_DURATION_OPTIONS.forEach { secs ->
+                        RadioRow(
+                            label = clipDurationLabel(secs),
+                            selected = uiState.clipDurationSeconds == secs,
+                            onClick = { viewModel.setClipDurationSeconds(secs) },
+                        )
+                    }
+                }
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
             SettingsSection(title = stringResource(R.string.settings_calibration_title)) {
                 Column(modifier = Modifier.selectableGroup()) {
                     CALIBRATION_OPTIONS.forEach { secs ->
@@ -224,6 +238,7 @@ fun SettingsScreen(
 
 private val COUNTDOWN_OPTIONS = listOf(0, 15, 30, 60, 90, 120)
 private val CALIBRATION_OPTIONS = listOf(5, 10, 20, 30)
+private val CLIP_DURATION_OPTIONS = listOf(10, 30, 60)
 private val LANGUAGE_OPTIONS = listOf(
     "system" to "System default / Systemsprache",
     "en" to "English",
@@ -233,6 +248,14 @@ private val LANGUAGE_OPTIONS = listOf(
 @Composable
 private fun countdownLabel(seconds: Int): String = when (seconds) {
     0 -> stringResource(R.string.countdown_no_delay)
+    else -> stringResource(R.string.countdown_seconds, seconds)
+}
+
+@Composable
+private fun clipDurationLabel(seconds: Int): String = when (seconds) {
+    10 -> stringResource(R.string.clip_duration_10s)
+    30 -> stringResource(R.string.clip_duration_30s)
+    60 -> stringResource(R.string.clip_duration_60s)
     else -> stringResource(R.string.countdown_seconds, seconds)
 }
 

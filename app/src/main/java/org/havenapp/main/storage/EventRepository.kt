@@ -20,7 +20,8 @@ class EventRepository @Inject constructor(
         return eventDao.insert(entity)
     }
 
-    suspend fun recordTrigger(eventId: Long, trigger: TriggerEvent) {
+    /** Records a trigger and returns the new row ID for subsequent media path updates. */
+    suspend fun recordTrigger(eventId: Long, trigger: TriggerEvent): Long {
         val entity = EventTriggerEntity(
             eventId = eventId,
             type = trigger.type.id,
@@ -29,7 +30,12 @@ class EventRepository @Inject constructor(
             mediaPath = trigger.mediaPath,
             severity = trigger.severity.ordinal,
         )
-        triggerDao.insert(entity)
+        return triggerDao.insert(entity)
+    }
+
+    /** Links a recorded video clip to the trigger that caused it (REC-02). */
+    suspend fun updateTriggerMediaPath(triggerId: Long, mediaPath: String) {
+        triggerDao.updateMediaPath(triggerId, mediaPath)
     }
 
     suspend fun closeEvent(eventId: Long) {

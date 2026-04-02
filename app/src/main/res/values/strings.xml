@@ -59,6 +59,11 @@
     <string name="detection_all">All objects (AI)</string>
     <string name="detection_ai_unavailable">AI model not available</string>
 
+    <string name="settings_clip_duration_title">Clip duration</string>
+    <string name="clip_duration_10s">10 s – short</string>
+    <string name="clip_duration_30s">30 s – default</string>
+    <string name="clip_duration_60s">60 s – extended</string>
+
     <string name="settings_calibration_title">Calibration duration</string>
     <string name="calibration_5s">5 s – fast</string>
     <string name="calibration_10s">10 s – default</string>

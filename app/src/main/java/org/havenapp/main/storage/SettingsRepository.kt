@@ -30,6 +30,7 @@ class SettingsRepository @Inject constructor(
         private val KEY_LIGHT_ENABLED = booleanPreferencesKey("sensor_light_enabled")
         private val KEY_MIC_ENABLED = booleanPreferencesKey("sensor_mic_enabled")
         private val KEY_CAMERA_ENABLED = booleanPreferencesKey("sensor_camera_enabled")
+        private val KEY_CLIP_DURATION_SECONDS = intPreferencesKey("clip_duration_seconds")
     }
 
     val sensitivity: Flow<Sensitivity> = dataStore.data.map { prefs ->
@@ -98,4 +99,13 @@ class SettingsRepository @Inject constructor(
     suspend fun setLightEnabled(enabled: Boolean) { dataStore.edit { it[KEY_LIGHT_ENABLED] = enabled } }
     suspend fun setMicEnabled(enabled: Boolean) { dataStore.edit { it[KEY_MIC_ENABLED] = enabled } }
     suspend fun setCameraEnabled(enabled: Boolean) { dataStore.edit { it[KEY_CAMERA_ENABLED] = enabled } }
+
+    /** Clip duration in seconds for video recording on sensor trigger. Default: 30 s. */
+    val clipDurationSeconds: Flow<Int> = dataStore.data.map { prefs ->
+        prefs[KEY_CLIP_DURATION_SECONDS] ?: 30
+    }
+
+    suspend fun setClipDurationSeconds(seconds: Int) {
+        dataStore.edit { it[KEY_CLIP_DURATION_SECONDS] = seconds }
+    }
 }
