@@ -43,7 +43,7 @@ Phase-2-Bugfix + fehlende Phase-2-Features: Bugfixes für vollständige Nutzbark
 
 - [ ] **SEC-03**: Optionaler App-PIN (4–6-stellig, in Settings aktivierbar) — wenn aktiv, muss der PIN beim App-Start korrekt eingegeben werden bevor die UI zugänglich ist
 - [ ] **SEC-04**: App sperrt sich automatisch wenn sie in den Hintergrund geht (konfigurierbar: sofort / nach 30 s / nie)
-- [ ] **SEC-05**: PIN-Hash wird AES-GCM-verschlüsselt in DataStore gespeichert (kein Klartext)
+- [ ] **SEC-05**: PIN-Hash wird als SHA-256(PIN + random Salt) in DataStore gespeichert (kein Klartext-PIN)
 
 ## v2 Requirements
 
