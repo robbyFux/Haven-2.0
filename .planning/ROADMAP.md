@@ -1,4 +1,4 @@
-# Roadmap: Haven 2.0 — Phase-2-Bugfix Milestone
+# Roadmap: Haven 2.0 — Phase-2-Complete Milestone
 
 ## Overview
 
@@ -32,11 +32,18 @@ an optional app PIN. One phase delivers a fully secured, fully functional monito
   6. Recorded clip is linked to the triggering event in Room and playable in EventDetailScreen
   7. Recorded video files are AES-GCM encrypted in internal storage (Android Keystore)
   8. When app PIN is enabled in Settings, the app requires PIN entry on start and after backgrounding
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Verify quick-task fixes and add FusedMotionMonitor calibration guard
+- [ ] 03-02-PLAN.md — Video recording infrastructure (ClipRecorder + CameraX VideoCapture)
+- [ ] 03-03-PLAN.md — Encrypted storage (AES-GCM) and ExoPlayer video playback
+- [ ] 03-04-PLAN.md — App PIN lock with auto-lock on background
+
 **UI hint**: yes
 
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 3. Phase-2-Complete | 0/? | Not started | - |
+| 3. Phase-2-Complete | 0/4 | Planned | - |
