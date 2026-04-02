@@ -19,6 +19,7 @@ import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import java.io.File
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +32,7 @@ import kotlinx.coroutines.launch
 import org.havenapp.main.detection.HavenObjectDetector
 import org.havenapp.main.media.CameraAnalyzer
 import org.havenapp.main.media.ClipRecorder
+import org.havenapp.main.security.MediaEncryptionManager
 import org.havenapp.main.sensor.CameraPosition
 import org.havenapp.main.sensor.FusedMotionMonitor
 import org.havenapp.main.sensor.LightMonitor
@@ -197,10 +199,16 @@ class MonitorService : LifecycleService() {
                         context = this@MonitorService,
                         filesDir = filesDir,
                         durationSeconds = clipDurationSecs,
-                    ) { clipPath ->
-                        // Link clip to the trigger that caused it (REC-02)
+                    ) { rawClipPath ->
+                        // Encrypt the raw video file (SEC-01), then link path to trigger (REC-02)
                         lifecycleScope.launch {
-                            eventRepository.updateTriggerMediaPath(triggerId, clipPath)
+                            val encryptedPath = runCatching {
+                                MediaEncryptionManager.encryptInPlace(File(rawClipPath))
+                            }.getOrElse { err ->
+                                appLogger.e(TAG, "Failed to encrypt clip: ${err.message}")
+                                rawClipPath  // fallback: store unencrypted path
+                            }
+                            eventRepository.updateTriggerMediaPath(triggerId, encryptedPath)
                         }
                     }
                 }
