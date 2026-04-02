@@ -89,6 +89,26 @@
     <string name="about_version">Version</string>
     <string name="about_build">Build</string>
 
+    <!-- PIN Lock -->
+    <string name="pin_enter_prompt">Enter PIN to access Haven</string>
+    <string name="pin_wrong">Wrong PIN – try again</string>
+    <string name="pin_backspace">Delete</string>
+    <string name="pin_confirm">Confirm</string>
+
+    <string name="settings_pin_title">App PIN</string>
+    <string name="settings_pin_enable">Enable PIN</string>
+    <string name="settings_pin_change">Change PIN</string>
+    <string name="settings_pin_enter">Enter PIN</string>
+    <string name="settings_pin_confirm">Confirm PIN</string>
+    <string name="settings_pin_setup_title">Set up PIN</string>
+    <string name="settings_pin_change_title">Change PIN</string>
+    <string name="settings_pin_mismatch">PINs do not match</string>
+    <string name="settings_pin_too_short">PIN must be 4–6 digits</string>
+    <string name="settings_autolock_title">Auto-lock</string>
+    <string name="settings_autolock_immediate">Immediately</string>
+    <string name="settings_autolock_30s">After 30 seconds</string>
+    <string name="settings_autolock_never">Never</string>
+
     <!-- Zone Editor -->
     <string name="settings_zone_title">Detection zone</string>
     <string name="settings_zone_none">Full frame (no zone)</string>

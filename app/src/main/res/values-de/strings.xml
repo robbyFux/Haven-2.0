@@ -89,6 +89,26 @@
     <string name="about_version">Version</string>
     <string name="about_build">Build</string>
 
+    <!-- PIN Lock -->
+    <string name="pin_enter_prompt">PIN eingeben</string>
+    <string name="pin_wrong">Falsche PIN – erneut versuchen</string>
+    <string name="pin_backspace">Löschen</string>
+    <string name="pin_confirm">Bestätigen</string>
+
+    <string name="settings_pin_title">App-PIN</string>
+    <string name="settings_pin_enable">PIN aktivieren</string>
+    <string name="settings_pin_change">PIN ändern</string>
+    <string name="settings_pin_enter">PIN eingeben</string>
+    <string name="settings_pin_confirm">PIN bestätigen</string>
+    <string name="settings_pin_setup_title">PIN einrichten</string>
+    <string name="settings_pin_change_title">PIN ändern</string>
+    <string name="settings_pin_mismatch">PINs stimmen nicht überein</string>
+    <string name="settings_pin_too_short">PIN muss 4–6 Ziffern lang sein</string>
+    <string name="settings_autolock_title">Automatisch sperren</string>
+    <string name="settings_autolock_immediate">Sofort</string>
+    <string name="settings_autolock_30s">Nach 30 Sekunden</string>
+    <string name="settings_autolock_never">Nie</string>
+
     <!-- Zone Editor -->
     <string name="settings_zone_title">Erkennungszone</string>
     <string name="settings_zone_none">Vollbild (keine Zone)</string>

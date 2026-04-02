@@ -15,6 +15,8 @@ import kotlinx.coroutines.launch
 import org.havenapp.main.detection.DetectionMode
 import org.havenapp.main.detection.DetectionZone
 import org.havenapp.main.detection.HavenObjectDetector
+import org.havenapp.main.security.AppLockState
+import org.havenapp.main.security.PinHashManager
 import org.havenapp.main.sensor.CameraPosition
 import org.havenapp.main.sensor.Sensitivity
 import org.havenapp.main.storage.SettingsRepository
@@ -167,5 +169,38 @@ class SettingsViewModel @Inject constructor(
         }
         AppCompatDelegate.setApplicationLocales(localeList)
         _languageTag.value = tag
+    }
+
+    // PIN lock (SEC-03, SEC-04, SEC-05)
+
+    val pinEnabled: StateFlow<Boolean> = settingsRepository.pinEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    val pinHash: StateFlow<String?> = settingsRepository.pinHash
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val pinSalt: StateFlow<String?> = settingsRepository.pinSalt
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val autoLockDelaySeconds: StateFlow<Int> = settingsRepository.autoLockDelaySeconds
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    fun setPin(pin: String) {
+        viewModelScope.launch {
+            val result = PinHashManager.hashPin(pin)
+            settingsRepository.setPinCredentials(result.hash, result.salt)
+            settingsRepository.setPinEnabled(true)
+        }
+    }
+
+    fun clearPin() {
+        viewModelScope.launch {
+            settingsRepository.clearPinCredentials()
+            AppLockState.unlock()
+        }
+    }
+
+    fun setAutoLockDelay(seconds: Int) {
+        viewModelScope.launch { settingsRepository.setAutoLockDelaySeconds(seconds) }
     }
 }

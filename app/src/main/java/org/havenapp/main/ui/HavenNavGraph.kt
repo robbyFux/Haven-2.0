@@ -15,6 +15,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -22,9 +24,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import org.havenapp.main.R
+import org.havenapp.main.security.AppLockState
+import org.havenapp.main.security.PinHashManager
 import org.havenapp.main.ui.diagnostics.DiagnosticsScreen
+import org.havenapp.main.ui.lock.PinLockScreen
 import org.havenapp.main.ui.monitor.MonitorScreen
 import org.havenapp.main.ui.settings.SettingsScreen
+import org.havenapp.main.ui.settings.SettingsViewModel
 import org.havenapp.main.ui.settings.ZoneEditorScreen
 import org.havenapp.main.ui.timeline.EventDetailScreen
 import org.havenapp.main.ui.timeline.TimelineScreen
@@ -56,6 +62,20 @@ private val bottomNavRoutes = setOf(Routes.MONITOR, Routes.TIMELINE, Routes.SETT
 
 @Composable
 fun HavenNavGraph(navController: NavHostController) {
+    val locked by AppLockState.locked.collectAsStateWithLifecycle()
+    val settingsVm: SettingsViewModel = hiltViewModel()
+    val pinEnabled by settingsVm.pinEnabled.collectAsStateWithLifecycle()
+    val pinHash by settingsVm.pinHash.collectAsStateWithLifecycle()
+    val pinSalt by settingsVm.pinSalt.collectAsStateWithLifecycle()
+
+    if (locked && pinEnabled && pinHash != null && pinSalt != null) {
+        PinLockScreen(
+            onVerify = { pin -> PinHashManager.verifyPin(pin, pinHash!!, pinSalt!!) },
+            onUnlocked = { AppLockState.unlock() },
+        )
+        return
+    }
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
