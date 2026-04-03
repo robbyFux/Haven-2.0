@@ -1,6 +1,11 @@
 package org.havenapp.main.ui.timeline
 
+import android.app.Activity
+import android.content.pm.ActivityInfo
 import android.net.Uri
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,12 +15,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,13 +36,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -63,6 +77,8 @@ fun EventDetailScreen(
     viewModel: EventDetailViewModel = hiltViewModel(),
 ) {
     val triggers by viewModel.triggers.collectAsStateWithLifecycle()
+    val requestedPaths by viewModel.requestedPaths.collectAsStateWithLifecycle()
+    val playbackPaths by viewModel.playbackPaths.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -108,6 +124,8 @@ fun EventDetailScreen(
                     TriggerCard(
                         trigger = trigger,
                         viewModel = viewModel,
+                        requestedPaths = requestedPaths,
+                        playbackPaths = playbackPaths,
                         modifier = Modifier.padding(vertical = 4.dp),
                     )
                 }
@@ -120,6 +138,8 @@ fun EventDetailScreen(
 private fun TriggerCard(
     trigger: EventTriggerEntity,
     viewModel: EventDetailViewModel,
+    requestedPaths: Set<String>,
+    playbackPaths: Map<String, String>,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -164,49 +184,155 @@ private fun TriggerCard(
                     )
                 }
             }
+
             trigger.mediaPath?.let { path ->
                 Spacer(Modifier.height(8.dp))
-                VideoPlayerCard(
-                    mediaPath = path,
-                    cacheDir = context.cacheDir,
-                    viewModel = viewModel,
-                )
+                val isRequested = requestedPaths.contains(path)
+                val resolvedPath = playbackPaths[path]
+
+                when {
+                    // Not yet requested: show tappable placeholder thumbnail
+                    !isRequested -> {
+                        MediaThumbnailPlaceholder(
+                            onClick = { viewModel.requestPlayback(path, context.cacheDir) },
+                        )
+                    }
+                    // Requested but decryption still in progress: show spinner
+                    resolvedPath == null -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                    // Decryption complete: show player
+                    else -> {
+                        VideoPlayerCard(resolvedPath = resolvedPath)
+                    }
+                }
             }
+        }
+    }
+}
+
+/**
+ * Static placeholder shown in the trigger list before the user taps to play.
+ * Tapping calls [onClick] which schedules decryption and switches to the spinner state.
+ */
+@Composable
+private fun MediaThumbnailPlaceholder(onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp)
+            .background(
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(8.dp),
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Filled.PlayCircle,
+                contentDescription = stringResource(R.string.detail_play_video),
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.detail_play_video),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
-private fun VideoPlayerCard(
-    mediaPath: String,
-    cacheDir: File,
-    viewModel: EventDetailViewModel,
-) {
+private fun VideoPlayerCard(resolvedPath: String) {
     val context = LocalContext.current
-    val playbackPath = remember(mediaPath) {
-        viewModel.preparePlaybackFile(mediaPath, cacheDir)
-    }
+    val activity = context as? Activity
+    val isFullscreen = remember { mutableStateOf(false) }
+
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build()
     }
-    DisposableEffect(playbackPath) {
-        val uri = Uri.fromFile(File(playbackPath))
+    DisposableEffect(resolvedPath) {
+        val uri = Uri.fromFile(File(resolvedPath))
         exoPlayer.setMediaItem(MediaItem.fromUri(uri))
         exoPlayer.prepare()
-        onDispose { exoPlayer.release() }
+        onDispose {
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            exoPlayer.release()
+        }
     }
-    AndroidView(
-        factory = { ctx ->
-            PlayerView(ctx).apply {
-                player = exoPlayer
-                useController = true
+
+    // Lock/restore orientation with fullscreen state.
+    LaunchedEffect(isFullscreen.value) {
+        activity?.requestedOrientation = if (isFullscreen.value)
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        else
+            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+    }
+
+    // Back button exits fullscreen instead of navigating away.
+    BackHandler(enabled = isFullscreen.value) {
+        isFullscreen.value = false
+    }
+
+    // Inline (normal) player — hidden while fullscreen dialog is open so the
+    // same ExoPlayer instance can be reattached to the dialog's PlayerView.
+    if (!isFullscreen.value) {
+        AndroidView(
+            factory = { ctx ->
+                PlayerView(ctx).apply {
+                    player = exoPlayer
+                    useController = true
+                    setFullscreenButtonClickListener { isFullscreen.value = true }
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
+        )
+    }
+
+    // Fullscreen dialog — renders the same ExoPlayer instance edge-to-edge.
+    if (isFullscreen.value) {
+        Dialog(
+            onDismissRequest = { isFullscreen.value = false },
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                dismissOnBackPress = true,
+                dismissOnClickOutside = false,
+            ),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black),
+            ) {
+                AndroidView(
+                    factory = { ctx ->
+                        PlayerView(ctx).apply {
+                            player = exoPlayer
+                            useController = true
+                            setFullscreenButtonClickListener { isFullscreen.value = false }
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp),
-    )
+        }
+    }
 }
 
 private fun TriggerType.label(): String = when (this) {
