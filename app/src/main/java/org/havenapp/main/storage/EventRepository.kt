@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import org.havenapp.main.events.TriggerEvent
 import org.havenapp.main.storage.dao.EventDao
 import org.havenapp.main.storage.dao.EventTriggerDao
+import org.havenapp.main.storage.dao.TriggerCount
 import org.havenapp.main.storage.entity.EventEntity
 import org.havenapp.main.storage.entity.EventTriggerEntity
 import javax.inject.Inject
@@ -59,4 +60,7 @@ class EventRepository @Inject constructor(
 
     fun observeRecentTriggers(limit: Int = 100): Flow<List<EventTriggerEntity>> =
         triggerDao.observeRecent(limit)
+
+    fun observeTriggerCountsPerEvent(): Flow<List<TriggerCount>> =
+        triggerDao.observeCountsPerEvent()
 }

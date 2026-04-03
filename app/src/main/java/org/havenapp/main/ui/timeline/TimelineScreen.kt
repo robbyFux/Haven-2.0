@@ -108,6 +108,7 @@ fun TimelineScreen(
                     ) {
                         EventCard(
                             event = event,
+                            triggerCount = uiState.triggerCounts[event.id] ?: 0,
                             onClick = { onOpenDetail(event.id) },
                             modifier = Modifier.fillMaxWidth(),
                         )
@@ -119,7 +120,12 @@ fun TimelineScreen(
 }
 
 @Composable
-private fun EventCard(event: EventEntity, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun EventCard(
+    event: EventEntity,
+    triggerCount: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val dateFormatter = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
     val timeFormatter = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
     Card(
@@ -148,13 +154,25 @@ private fun EventCard(event: EventEntity, onClick: () -> Unit, modifier: Modifie
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            if (event.endTime != null) {
-                val durationSec = (event.endTime - event.startTime) / 1000
-                Text(
-                    text = "${durationSec}s",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (event.endTime != null) {
+                    val durationSec = (event.endTime - event.startTime) / 1000
+                    Text(
+                        text = "${durationSec}s",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (triggerCount > 0) {
+                    Text(
+                        text = "$triggerCount ×",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
             }
         }
     }
