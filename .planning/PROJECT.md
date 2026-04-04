@@ -19,18 +19,23 @@ und Ereignisse erfassen, ohne dass etwas stillschweigend fehlschlägt.
 
 - ✓ Foreground Service mit WakeLock (MonitorService) — Phase 1
 - ✓ State Machine IDLE → COUNTDOWN → CALIBRATING → ACTIVE — Phase 1
-- ✓ FusedMotionMonitor (Accel + Gyro Complementary Filter) — Phase 2
-- ✓ LightMonitor mit EMA-Baseline — Phase 1/2
+- ✓ FusedMotionMonitor (Accel + Gyro Complementary Filter, SENSOR_DELAY_GAME) — Phase 2/3
+- ✓ LightMonitor dual-rate EMA (emaFast α=0.1, emaSlow α=0.02) + cross-sensor Suppression — Phase 1/2/3
+- ✓ RecentTriggerState (prozess-globaler Trigger-Zeitstempel-Tracker) — Phase 3
 - ✓ MicrophoneMonitor (dezibel-basiert) — Phase 1
 - ✓ CameraAnalyzer 3-Stufen-Pipeline (Luma-Diff → pHash → TFLite) — Phase 2
 - ✓ HavenObjectDetector (EfficientDet Lite 0, graceful degradation) — Phase 2
 - ✓ DetectionZone (normalisierte Koordinaten, ZoneEditorScreen) — Phase 2
 - ✓ Room-Datenbank (HavenEvent + EventTriggerEntity) — Phase 1
-- ✓ DataStore Settings (Sensitivity, CameraPosition, DetectionMode, Zone …) — Phase 1/2
-- ✓ UI: MonitorScreen, TimelineScreen, EventDetailScreen, SettingsScreen, DiagnosticsScreen — Phase 1/2
+- ✓ DataStore Settings (Sensitivity, CameraPosition, DetectionMode, Zone, PIN, AutoLock, MediaEncryption …) — Phase 1/2/3
+- ✓ UI: MonitorScreen, TimelineScreen, EventDetailScreen (FilterChip-Filter), SettingsScreen, DiagnosticsScreen — Phase 1/2/3
 - ✓ Kalibrierungs-Wizard (Noise-Floor-Anzeige) — Phase 2
 - ✓ Stop-Cooldown (30 s retroaktiv verwerfen) — Phase 2
 - ✓ AppLogger (In-App-Ringpuffer, DiagnosticsScreen) — Phase 2
+- ✓ ClipRecorder (CameraX-Videoaufzeichnung bei Trigger) — Phase 3 (REC-01–03)
+- ✓ MediaEncryptionManager (AES-GCM via Android Keystore, konfigurierbar) — Phase 3 (SEC-01–02)
+- ✓ AppLockState + PinHashManager + PinLockScreen (PIN-Sperre, ProcessLifecycleOwner Auto-Lock) — Phase 3 (SEC-03–05)
+- ✓ ExoPlayer-Videowiedergabe in EventDetailScreen (verschlüsselte .enc-Dekryptierung) — Phase 3
 
 ### Active
 
@@ -49,10 +54,11 @@ und Ereignisse erfassen, ohne dass etwas stillschweigend fehlschlägt.
 
 ## Context
 
-**Aktueller Stand:** Phasen 1 und 2 abgeschlossen. Grundlegende Sensor- und Kamera-Pipeline
-ist implementiert. Zwei Fehler blockieren die vollständige Nutzbarkeit von Phase 2:
-TFLite-Erkennungsmodi sind in der UI nicht wählbar, und Erkennungszonen werden nicht gespeichert.
-Außerdem fehlt eine Lösch-Funktion für Ereignisse in der Timeline.
+**Aktueller Stand:** Phase 3 abgeschlossen (2026-04-04). Videoaufzeichnung, AES-GCM-Verschlüsselung,
+ExoPlayer-Wiedergabe, App-PIN-Sperre mit Auto-Lock, dual-rate EMA LightMonitor mit Cross-Sensor-
+Suppression, schnellere Sensor-Abtastrate (SENSOR_DELAY_GAME) und FilterChip-Triggerfilter sind
+implementiert und auf Gerät verifiziert. Offenes Issue: Kamera-Bewegungserkennung (CAMERA-Trigger)
+triggert nicht zuverlässig bei Handbewegung — wird separat untersucht.
 
 **Referenz-Apps analysiert:** Haven 0.2.1 (Java, legacy), AlfredCamera (decompiled Protobuf-Schemas).
 
@@ -100,4 +106,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-31 after initialization*
+*Last updated: 2026-04-04 — Phase 3 complete*
