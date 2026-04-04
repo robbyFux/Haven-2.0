@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -26,6 +27,8 @@ import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,9 +40,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -80,6 +85,22 @@ fun EventDetailScreen(
     val requestedPaths by viewModel.requestedPaths.collectAsStateWithLifecycle()
     val playbackPaths by viewModel.playbackPaths.collectAsStateWithLifecycle()
 
+    // Filter state: null = show all, non-null = show only that type (D-08, D-10)
+    var selectedTriggerType by remember { mutableStateOf<TriggerType?>(null) }
+
+    // Derive available types from the trigger list (D-08: dynamic, not hardcoded)
+    val availableTypes = remember(triggers) {
+        triggers.mapNotNull { TriggerType.fromId(it.type) }.distinct().sortedBy { it.ordinal }
+    }
+
+    // Filtered trigger list via derivedStateOf (per D-08: derivedStateOf computation)
+    val filteredTriggers by remember {
+        derivedStateOf {
+            if (selectedTriggerType == null) triggers
+            else triggers.filter { TriggerType.fromId(it.type) == selectedTriggerType }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -114,20 +135,55 @@ fun EventDetailScreen(
                 )
             }
         } else {
-            LazyColumn(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 16.dp),
+                    .padding(padding),
             ) {
-                items(triggers, key = { it.id }) { trigger ->
-                    TriggerCard(
-                        trigger = trigger,
-                        viewModel = viewModel,
-                        requestedPaths = requestedPaths,
-                        playbackPaths = playbackPaths,
-                        modifier = Modifier.padding(vertical = 4.dp),
-                    )
+                // FilterChip row (D-08)
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    item {
+                        FilterChip(
+                            selected = selectedTriggerType == null,
+                            onClick = { selectedTriggerType = null },
+                            label = { Text(stringResource(R.string.filter_all)) },
+                            colors = FilterChipDefaults.filterChipColors(),
+                        )
+                    }
+                    items(availableTypes.size) { index ->
+                        val type = availableTypes[index]
+                        FilterChip(
+                            selected = selectedTriggerType == type,
+                            onClick = {
+                                selectedTriggerType = if (selectedTriggerType == type) null else type
+                            },
+                            label = { Text(type.label()) },
+                            colors = FilterChipDefaults.filterChipColors(),
+                        )
+                    }
+                }
+
+                // Filtered trigger list
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 16.dp),
+                ) {
+                    items(filteredTriggers, key = { it.id }) { trigger ->
+                        TriggerCard(
+                            trigger = trigger,
+                            viewModel = viewModel,
+                            requestedPaths = requestedPaths,
+                            playbackPaths = playbackPaths,
+                            modifier = Modifier.padding(vertical = 4.dp),
+                        )
+                    }
                 }
             }
         }

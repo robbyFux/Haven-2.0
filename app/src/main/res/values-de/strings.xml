@@ -35,6 +35,7 @@
     <string name="detail_empty">Keine Auslöser aufgezeichnet</string>
     <string name="detail_play_video">Tippen zum Abspielen</string>
     <string name="action_delete_event">Ereignis löschen</string>
+    <string name="filter_all">Alle</string>
 
     <!-- Settings Screen -->
     <string name="settings_sensitivity_title">Empfindlichkeit</string>
