@@ -125,9 +125,9 @@ class FusedMotionMonitor @Inject constructor(
                 override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) = Unit
             }
 
-            sensorManager.registerListener(accelListener, accelSensor, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager.registerListener(accelListener, accelSensor, SensorManager.SENSOR_DELAY_GAME)
             if (gyroSensor != null) {
-                sensorManager.registerListener(gyroListener, gyroSensor, SensorManager.SENSOR_DELAY_NORMAL)
+                sensorManager.registerListener(gyroListener, gyroSensor, SensorManager.SENSOR_DELAY_GAME)
             }
 
             awaitClose {
