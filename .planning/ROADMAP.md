@@ -20,7 +20,7 @@ an optional app PIN. One phase delivers a fully secured, fully functional monito
 ## Phase Details
 
 ### Phase 3: Phase-2-Complete
-**Goal**: All Phase 2 features work as specified + video clip recording on sensor trigger + encrypted local storage + optional app PIN
+**Goal**: All Phase 2 features work as specified + video clip recording on sensor trigger + encrypted local storage + optional app PIN + sensor calibration improvements
 **Depends on**: Phase 2 (complete)
 **Requirements**: TFLITE-01, TFLITE-02, TFLITE-03, ZONE-01, ZONE-02, EVENT-01, EVENT-02, SENSOR-01, SENSOR-02, REC-01, REC-02, REC-03, SEC-01, SEC-02, SEC-03, SEC-04, SEC-05
 **Success Criteria** (what must be TRUE):
@@ -32,13 +32,19 @@ an optional app PIN. One phase delivers a fully secured, fully functional monito
   6. Recorded clip is linked to the triggering event in Room and playable in EventDetailScreen
   7. Recorded video files are AES-GCM encrypted in internal storage (Android Keystore)
   8. When app PIN is enabled in Settings, the app requires PIN entry on start and after backgrounding
-**Plans**: 4 plans
+  9. LightMonitor uses dual-rate EMA and cross-sensor suppression to reduce false alarms
+  10. FusedMotionMonitor responds faster with SENSOR_DELAY_GAME
+  11. EventDetailScreen supports filtering triggers by sensor type
+**Plans**: 7 plans
 
 Plans:
 - [x] 03-01-PLAN.md — Verify quick-task fixes and add FusedMotionMonitor calibration guard
 - [x] 03-02-PLAN.md — Video recording infrastructure (ClipRecorder + CameraX VideoCapture)
 - [x] 03-03-PLAN.md — Encrypted storage (AES-GCM) and ExoPlayer video playback
 - [ ] 03-04-PLAN.md — App PIN lock with auto-lock on background
+- [ ] 03-05-PLAN.md — LightMonitor dual-rate EMA + cross-sensor suppression + Settings
+- [ ] 03-06-PLAN.md — FusedMotionMonitor latency fix (SENSOR_DELAY_GAME)
+- [ ] 03-07-PLAN.md — EventDetailScreen trigger type filter chips
 
 **UI hint**: yes
 
@@ -46,4 +52,4 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 3. Phase-2-Complete | 2/4 | In Progress|  |
+| 3. Phase-2-Complete | 2/7 | In Progress|  |
