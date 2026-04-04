@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.3
 milestone_name: Phase-2-Complete
 status: executing
-stopped_at: "Completed 03-phase-2-complete plan 05: Dual-rate EMA LightMonitor with cross-sensor suppression — awaiting checkpoint:human-verify at Task 2"
-last_updated: "2026-04-04T15:40:42.616Z"
+stopped_at: "Completed 03-phase-2-complete plan 07 Task 1: FilterChip row in EventDetailScreen — stopped at Task 2 checkpoint:human-verify"
+last_updated: "2026-04-04T16:46:21.281Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 ## Current Position
 
 Phase: 03 (phase-2-complete) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 Status: Ready to execute
 Last activity: 2026-04-04
 
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-phase-2-complete P03 | 5 | 2 tasks | 7 files |
 | Phase 03 P06 | 3 | 1 tasks | 1 files |
 | Phase 03 P05 | 15 | 1 tasks | 8 files |
+| Phase 03-phase-2-complete P07 | 1 | 1 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,7 @@ Recent decisions affecting current work:
 - [Phase 03]: SENSOR_DELAY_GAME chosen for FusedMotionMonitor: ~10x faster sampling (~20ms vs ~200ms) with acceptable battery impact for security monitoring
 - [Phase 03-phase-2-complete]: LightMonitor no longer implements SensorMonitor: 3-param observe() replaces 2-param interface; MonitorService injects concrete type
 - [Phase 03-phase-2-complete]: RecentTriggerState is a plain Kotlin object (not Hilt) for process-global cross-sensor priority gate in LightMonitor
+- [Phase 03-phase-2-complete]: derivedStateOf used for filteredTriggers in EventDetailScreen: more efficient than keyed remember for computed state depending on other Compose snapshot state
 
 ### Pending Todos
 
@@ -95,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T15:40:42.613Z
-Stopped at: Completed 03-phase-2-complete plan 05: Dual-rate EMA LightMonitor with cross-sensor suppression — awaiting checkpoint:human-verify at Task 2
+Last session: 2026-04-04T16:46:21.278Z
+Stopped at: Completed 03-phase-2-complete plan 07 Task 1: FilterChip row in EventDetailScreen — stopped at Task 2 checkpoint:human-verify
 Resume file: None

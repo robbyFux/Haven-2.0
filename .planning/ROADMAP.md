@@ -15,7 +15,7 @@ an optional app PIN. One phase delivers a fully secured, fully functional monito
 
 ## Phases
 
-- [ ] **Phase 3: Phase-2-Complete** - Fix all Phase 2 bugs, add video clip recording on trigger, encrypt stored media (Android Keystore), and add optional app PIN
+- [x] **Phase 3: Phase-2-Complete** - Fix all Phase 2 bugs, add video clip recording on trigger, encrypt stored media (Android Keystore), and add optional app PIN (completed 2026-04-04)
 
 ## Phase Details
 
@@ -44,7 +44,7 @@ Plans:
 - [x] 03-04-PLAN.md — App PIN lock with auto-lock on background
 - [x] 03-05-PLAN.md — LightMonitor dual-rate EMA + cross-sensor suppression + Settings
 - [x] 03-06-PLAN.md — FusedMotionMonitor latency fix (SENSOR_DELAY_GAME)
-- [ ] 03-07-PLAN.md — EventDetailScreen trigger type filter chips
+- [x] 03-07-PLAN.md — EventDetailScreen trigger type filter chips
 
 **UI hint**: yes
 
@@ -52,4 +52,4 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 3. Phase-2-Complete | 6/7 | In Progress|  |
+| 3. Phase-2-Complete | 7/7 | Complete   | 2026-04-04 |
