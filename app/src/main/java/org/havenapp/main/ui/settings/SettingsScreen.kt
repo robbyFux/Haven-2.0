@@ -233,7 +233,7 @@ fun SettingsScreen(
             SettingsSection(title = stringResource(R.string.settings_pin_title)) {
                 SensorToggleRow(
                     label = stringResource(R.string.settings_pin_enable),
-                    checked = pinEnabled,
+                    checked = pinEnabled == true,
                     onCheckedChange = { enabled ->
                         if (enabled) {
                             // Enabling: open setup dialog if no hash stored yet
@@ -244,7 +244,7 @@ fun SettingsScreen(
                         }
                     },
                 )
-                if (pinEnabled && pinHash != null) {
+                if (pinEnabled == true && pinHash != null) {
                     Spacer(Modifier.height(8.dp))
                     OutlinedButton(onClick = {
                         pinDialogIsChange = true
@@ -276,6 +276,26 @@ fun SettingsScreen(
                         )
                     }
                 }
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+            // Security section
+            SettingsSection(title = stringResource(R.string.settings_security_title)) {
+                SensorToggleRow(
+                    label = stringResource(R.string.settings_media_encryption_label),
+                    checked = uiState.mediaEncryptionEnabled,
+                    onCheckedChange = { viewModel.setMediaEncryptionEnabled(it) },
+                )
+                Text(
+                    text = stringResource(R.string.settings_media_encryption_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (uiState.mediaEncryptionEnabled)
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    else
+                        Color(0xFFFFB300),
+                    modifier = Modifier.padding(start = 4.dp, top = 4.dp),
+                )
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))

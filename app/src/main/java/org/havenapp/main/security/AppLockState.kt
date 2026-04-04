@@ -10,9 +10,13 @@ import kotlinx.coroutines.flow.asStateFlow
  * This is a plain Kotlin object (not Hilt-injected) because it must be
  * initialized in [org.havenapp.main.HavenApplication.onCreate] before any Activity starts.
  * Compose UI observes [locked] via collectAsStateWithLifecycle.
+ *
+ * The initial value is `true` (pessimistic lock). On every cold start the app begins
+ * locked. [HavenNavGraph] unlocks automatically once DataStore confirms PIN is disabled,
+ * or shows [PinLockScreen] if PIN is enabled.
  */
 object AppLockState {
-    private val _locked = MutableStateFlow(false)
+    private val _locked = MutableStateFlow(true)
     val locked: StateFlow<Boolean> = _locked.asStateFlow()
 
     fun lock() { _locked.value = true }

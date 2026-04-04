@@ -36,6 +36,7 @@ data class SettingsUiState(
     val micEnabled: Boolean = true,
     val cameraEnabled: Boolean = true,
     val clipDurationSeconds: Int = 30,
+    val mediaEncryptionEnabled: Boolean = true,
 )
 
 @HiltViewModel
@@ -87,7 +88,8 @@ class SettingsViewModel @Inject constructor(
             _languageTag,
             settingsRepository.detectionZone,
             settingsRepository.clipDurationSeconds,
-        ) { cal, lang, zone, clipDur -> listOf(cal, lang, zone, clipDur) },
+            settingsRepository.mediaEncryptionEnabled,
+        ) { cal, lang, zone, clipDur, encEnabled -> listOf(cal, lang, zone, clipDur, encEnabled) },
         combine(
             objectDetector.availabilityFlow,
             settingsRepository.motionEnabled,
@@ -104,6 +106,7 @@ class SettingsViewModel @Inject constructor(
         val languageTag = secondaryList[1] as String
         val detectionZone = secondaryList[2] as DetectionZone?
         val clipDurationSeconds = secondaryList[3] as Int
+        val mediaEncryptionEnabled = secondaryList[4] as Boolean
         SettingsUiState(
             sensitivity = primary.sensitivity,
             cameraPosition = primary.cameraPosition,
@@ -118,6 +121,7 @@ class SettingsViewModel @Inject constructor(
             micEnabled = sensors.micEnabled,
             cameraEnabled = sensors.cameraEnabled,
             clipDurationSeconds = clipDurationSeconds,
+            mediaEncryptionEnabled = mediaEncryptionEnabled,
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, SettingsUiState())
 
@@ -161,6 +165,10 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setClipDurationSeconds(seconds) }
     }
 
+    fun setMediaEncryptionEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setMediaEncryptionEnabled(enabled) }
+    }
+
     fun setLanguage(tag: String) {
         val localeList = if (tag == "system") {
             LocaleListCompat.getEmptyLocaleList()
@@ -173,8 +181,14 @@ class SettingsViewModel @Inject constructor(
 
     // PIN lock (SEC-03, SEC-04, SEC-05)
 
-    val pinEnabled: StateFlow<Boolean> = settingsRepository.pinEnabled
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+    /**
+     * Nullable: `null` means DataStore hasn't emitted yet (loading state).
+     * [HavenNavGraph] must wait for a non-null value before deciding to show PinLockScreen
+     * or auto-unlock. This prevents the false-unlock window that occurred when the initial
+     * value `false` caused the guard to pass before DataStore initialised.
+     */
+    val pinEnabled: StateFlow<Boolean?> = settingsRepository.pinEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val pinHash: StateFlow<String?> = settingsRepository.pinHash
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)

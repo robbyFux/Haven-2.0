@@ -122,6 +122,7 @@ class MonitorService : LifecycleService() {
             val micEnabled = settingsRepository.micEnabled.first()
             val cameraEnabled = settingsRepository.cameraEnabled.first()
             clipDurationSecs = settingsRepository.clipDurationSeconds.first()
+            val mediaEncryptionEnabled = settingsRepository.mediaEncryptionEnabled.first()
 
             // --- Phase 1: Countdown ---
             if (countdownSecs > 0) {
@@ -193,6 +194,14 @@ class MonitorService : LifecycleService() {
             // solange kalibriert wird → Events werden erst danach persistiert.
             sensorFlow.collect { trigger ->
                 currentEventId?.let { eventId ->
+                    // Suppress duplicate DB writes while a clip is recording (REC-04).
+                    // The clip itself is the evidence for the trigger window; writing
+                    // 100 identical microphone or light events to Room during a 30-second
+                    // recording would flood the Timeline. Skip recording + clip start if
+                    // ClipRecorder is actively recording. The CAMERA_VIDEO trigger written
+                    // at clip-end is the single DB record for that recording window.
+                    if (clipRecorder?.isRecording == true) return@collect
+
                     val triggerId = eventRepository.recordTrigger(eventId, trigger)
                     // Start clip on first trigger (REC-01); ClipRecorder guards against parallel clips (REC-03)
                     clipRecorder?.startClip(
@@ -200,15 +209,20 @@ class MonitorService : LifecycleService() {
                         filesDir = filesDir,
                         durationSeconds = clipDurationSecs,
                     ) { rawClipPath ->
-                        // Encrypt the raw video file (SEC-01), then link path to trigger (REC-02)
+                        // Optionally encrypt the raw video file (SEC-01), then link path to trigger (REC-02).
+                        // When mediaEncryptionEnabled is false the plain .mp4 path is stored directly.
                         lifecycleScope.launch {
-                            val encryptedPath = runCatching {
-                                MediaEncryptionManager.encryptInPlace(File(rawClipPath))
-                            }.getOrElse { err ->
-                                appLogger.e(TAG, "Failed to encrypt clip: ${err.message}")
-                                rawClipPath  // fallback: store unencrypted path
+                            val finalPath = if (mediaEncryptionEnabled) {
+                                runCatching {
+                                    MediaEncryptionManager.encryptInPlace(File(rawClipPath))
+                                }.getOrElse { err ->
+                                    appLogger.e(TAG, "Failed to encrypt clip: ${err.message}")
+                                    rawClipPath  // fallback: store unencrypted path
+                                }
+                            } else {
+                                rawClipPath
                             }
-                            eventRepository.updateTriggerMediaPath(triggerId, encryptedPath)
+                            eventRepository.updateTriggerMediaPath(triggerId, finalPath)
                         }
                     }
                 }

@@ -31,6 +31,9 @@ class ClipRecorder {
     private var _isAvailable = false
     val isAvailable: Boolean get() = _isAvailable
 
+    /** True while a clip is actively being recorded. Thread-safe (AtomicReference). */
+    val isRecording: Boolean get() = activeRecording.get() != null
+
     /** Called by MonitorService after successful camera binding. */
     fun attach(videoCapture: VideoCapture<Recorder>) {
         this.videoCapture = videoCapture

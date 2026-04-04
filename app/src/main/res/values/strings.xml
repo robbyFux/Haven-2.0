@@ -33,6 +33,7 @@
     <!-- Event Detail Screen -->
     <string name="detail_title">Trigger detail</string>
     <string name="detail_empty">No triggers recorded</string>
+    <string name="detail_play_video">Tap to play</string>
     <string name="action_delete_event">Delete event</string>
 
     <!-- Settings Screen -->
@@ -108,6 +109,11 @@
     <string name="settings_autolock_immediate">Immediately</string>
     <string name="settings_autolock_30s">After 30 seconds</string>
     <string name="settings_autolock_never">Never</string>
+
+    <!-- Security Settings -->
+    <string name="settings_security_title">Security</string>
+    <string name="settings_media_encryption_label">Encrypt media clips</string>
+    <string name="settings_media_encryption_note">When disabled, video clips are stored as unencrypted .mp4 files. Existing encrypted files are not affected.</string>
 
     <!-- Zone Editor -->
     <string name="settings_zone_title">Detection zone</string>

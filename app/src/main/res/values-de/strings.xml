@@ -33,6 +33,7 @@
     <!-- Event Detail Screen -->
     <string name="detail_title">Einzelereignisse</string>
     <string name="detail_empty">Keine Auslöser aufgezeichnet</string>
+    <string name="detail_play_video">Tippen zum Abspielen</string>
     <string name="action_delete_event">Ereignis löschen</string>
 
     <!-- Settings Screen -->
@@ -108,6 +109,11 @@
     <string name="settings_autolock_immediate">Sofort</string>
     <string name="settings_autolock_30s">Nach 30 Sekunden</string>
     <string name="settings_autolock_never">Nie</string>
+
+    <!-- Security Settings -->
+    <string name="settings_security_title">Sicherheit</string>
+    <string name="settings_media_encryption_label">Medien verschlüsseln</string>
+    <string name="settings_media_encryption_note">Wenn deaktiviert, werden Videoclips als unverschlüsselte .mp4-Dateien gespeichert. Vorhandene verschlüsselte Dateien werden nicht verändert.</string>
 
     <!-- Zone Editor -->
     <string name="settings_zone_title">Erkennungszone</string>

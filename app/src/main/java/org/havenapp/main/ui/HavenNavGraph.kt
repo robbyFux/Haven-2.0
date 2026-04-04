@@ -1,5 +1,7 @@
 package org.havenapp.main.ui
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
@@ -11,6 +13,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -64,11 +67,28 @@ private val bottomNavRoutes = setOf(Routes.MONITOR, Routes.TIMELINE, Routes.SETT
 fun HavenNavGraph(navController: NavHostController) {
     val locked by AppLockState.locked.collectAsStateWithLifecycle()
     val settingsVm: SettingsViewModel = hiltViewModel()
+    // pinEnabled is null while DataStore hasn't emitted yet (loading state).
     val pinEnabled by settingsVm.pinEnabled.collectAsStateWithLifecycle()
     val pinHash by settingsVm.pinHash.collectAsStateWithLifecycle()
     val pinSalt by settingsVm.pinSalt.collectAsStateWithLifecycle()
 
-    if (locked && pinEnabled && pinHash != null && pinSalt != null) {
+    // If DataStore hasn't emitted yet, pinEnabled is null. Show nothing (blank screen)
+    // while we wait — avoids the false-unlock window that let content flash before the
+    // PIN screen appeared. AppLockState starts locked=true, so this is safe.
+    if (pinEnabled == null) {
+        Box(modifier = Modifier.fillMaxSize())
+        return
+    }
+
+    // Auto-unlock if PIN is disabled: AppLockState starts locked=true on every cold
+    // start, so we must explicitly unlock once DataStore confirms PIN is off.
+    LaunchedEffect(pinEnabled) {
+        if (pinEnabled == false) {
+            AppLockState.unlock()
+        }
+    }
+
+    if (locked && pinEnabled == true && pinHash != null && pinSalt != null) {
         PinLockScreen(
             onVerify = { pin -> PinHashManager.verifyPin(pin, pinHash!!, pinSalt!!) },
             onUnlocked = { AppLockState.unlock() },

@@ -32,6 +32,7 @@ class SettingsRepository @Inject constructor(
         private val KEY_CAMERA_ENABLED = booleanPreferencesKey("sensor_camera_enabled")
         private val KEY_CLIP_DURATION_SECONDS = intPreferencesKey("clip_duration_seconds")
         private val KEY_MEDIA_ENCRYPTED_V1 = booleanPreferencesKey("media_encrypted_v1")
+        private val KEY_MEDIA_ENCRYPTION_ENABLED = booleanPreferencesKey("media_encryption_enabled")
         private val KEY_PIN_ENABLED = booleanPreferencesKey("pin_enabled")
         private val KEY_PIN_HASH = stringPreferencesKey("pin_hash")
         private val KEY_PIN_SALT = stringPreferencesKey("pin_salt")
@@ -121,6 +122,19 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setMediaEncryptedV1(done: Boolean) {
         dataStore.edit { it[KEY_MEDIA_ENCRYPTED_V1] = done }
+    }
+
+    /**
+     * Whether newly recorded video clips should be AES-GCM encrypted before storage.
+     * Default: true (encryption on). Setting to false stores clips as plain .mp4.
+     * Existing .enc files are never re-processed when toggling this setting.
+     */
+    val mediaEncryptionEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[KEY_MEDIA_ENCRYPTION_ENABLED] ?: true
+    }
+
+    suspend fun setMediaEncryptionEnabled(enabled: Boolean) {
+        dataStore.edit { it[KEY_MEDIA_ENCRYPTION_ENABLED] = enabled }
     }
 
     // PIN lock settings (SEC-03, SEC-04, SEC-05)
