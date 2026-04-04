@@ -42,7 +42,7 @@ Plans:
 - [x] 03-02-PLAN.md — Video recording infrastructure (ClipRecorder + CameraX VideoCapture)
 - [x] 03-03-PLAN.md — Encrypted storage (AES-GCM) and ExoPlayer video playback
 - [x] 03-04-PLAN.md — App PIN lock with auto-lock on background
-- [ ] 03-05-PLAN.md — LightMonitor dual-rate EMA + cross-sensor suppression + Settings
+- [x] 03-05-PLAN.md — LightMonitor dual-rate EMA + cross-sensor suppression + Settings
 - [x] 03-06-PLAN.md — FusedMotionMonitor latency fix (SENSOR_DELAY_GAME)
 - [ ] 03-07-PLAN.md — EventDetailScreen trigger type filter chips
 
@@ -52,4 +52,4 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 3. Phase-2-Complete | 5/7 | In Progress|  |
+| 3. Phase-2-Complete | 6/7 | In Progress|  |
