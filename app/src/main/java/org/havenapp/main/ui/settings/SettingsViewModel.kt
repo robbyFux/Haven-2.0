@@ -217,4 +217,11 @@ class SettingsViewModel @Inject constructor(
     fun setAutoLockDelay(seconds: Int) {
         viewModelScope.launch { settingsRepository.setAutoLockDelaySeconds(seconds) }
     }
+
+    val lightSuppressMotionSeconds: StateFlow<Int> = settingsRepository.lightSuppressMotionSeconds
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 10)
+
+    fun setLightSuppressMotionSeconds(seconds: Int) {
+        viewModelScope.launch { settingsRepository.setLightSuppressMotionSeconds(seconds) }
+    }
 }

@@ -126,4 +126,11 @@
     <string name="zone_editor_no_zone">Keine Zone – Vollbild ist aktiv</string>
     <string name="zone_editor_clear">Löschen</string>
     <string name="zone_editor_save">Speichern</string>
+
+    <!-- Light Suppress -->
+    <string name="settings_light_suppress_title">Licht bei Bewegung unterdrücken</string>
+    <string name="light_suppress_off">Aus</string>
+    <string name="light_suppress_10s">10 s</string>
+    <string name="light_suppress_30s">30 s</string>
+    <string name="light_suppress_60s">60 s</string>
 </resources>

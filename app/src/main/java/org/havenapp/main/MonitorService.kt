@@ -38,6 +38,7 @@ import org.havenapp.main.sensor.FusedMotionMonitor
 import org.havenapp.main.sensor.LightMonitor
 import org.havenapp.main.sensor.MicrophoneMonitor
 import org.havenapp.main.sensor.MonitorState
+import org.havenapp.main.sensor.RecentTriggerState
 import org.havenapp.main.storage.EventRepository
 import org.havenapp.main.storage.SettingsRepository
 import java.util.concurrent.Executors
@@ -123,6 +124,7 @@ class MonitorService : LifecycleService() {
             val cameraEnabled = settingsRepository.cameraEnabled.first()
             clipDurationSecs = settingsRepository.clipDurationSeconds.first()
             val mediaEncryptionEnabled = settingsRepository.mediaEncryptionEnabled.first()
+            val lightSuppressMotionSeconds = settingsRepository.lightSuppressMotionSeconds.first()
 
             // --- Phase 1: Countdown ---
             if (countdownSecs > 0) {
@@ -175,7 +177,7 @@ class MonitorService : LifecycleService() {
 
             val sensorFlows = buildList {
                 if (motionEnabled) add(fusedMotionMonitor.observe(sensitivity, calibrationMs))
-                if (lightEnabled) add(lightMonitor.observe(sensitivity, calibrationMs))
+                if (lightEnabled) add(lightMonitor.observe(sensitivity, calibrationMs, lightSuppressMotionSeconds * 1000L))
                 if (micEnabled) add(microphoneMonitor.observe(sensitivity, calibrationMs))
                 if (analyzer != null) add(analyzer.events)
             }
@@ -194,6 +196,8 @@ class MonitorService : LifecycleService() {
             // solange kalibriert wird → Events werden erst danach persistiert.
             sensorFlow.collect { trigger ->
                 currentEventId?.let { eventId ->
+                    RecentTriggerState.record(trigger.type)
+
                     // Suppress duplicate DB writes while a clip is recording (REC-04).
                     // The clip itself is the evidence for the trigger window; writing
                     // 100 identical microphone or light events to Room during a 30-second
@@ -246,6 +250,7 @@ class MonitorService : LifecycleService() {
 
         clipRecorder?.stopIfRecording()
         clipRecorder = null
+        RecentTriggerState.reset()
         cameraAnalyzer?.reset()
         cameraAnalyzer = null
         _state.value = MonitorState.IDLE

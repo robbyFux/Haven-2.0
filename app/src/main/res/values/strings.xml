@@ -126,4 +126,11 @@
     <string name="zone_editor_no_zone">No zone – full frame is active</string>
     <string name="zone_editor_clear">Clear</string>
     <string name="zone_editor_save">Save</string>
+
+    <!-- Light Suppress -->
+    <string name="settings_light_suppress_title">Suppress light on motion</string>
+    <string name="light_suppress_off">Off</string>
+    <string name="light_suppress_10s">10 s</string>
+    <string name="light_suppress_30s">30 s</string>
+    <string name="light_suppress_60s">60 s</string>
 </resources>

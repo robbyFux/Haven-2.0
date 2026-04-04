@@ -37,6 +37,7 @@ class SettingsRepository @Inject constructor(
         private val KEY_PIN_HASH = stringPreferencesKey("pin_hash")
         private val KEY_PIN_SALT = stringPreferencesKey("pin_salt")
         private val KEY_AUTO_LOCK_DELAY_SECONDS = intPreferencesKey("auto_lock_delay_seconds")
+        private val KEY_LIGHT_SUPPRESS_MOTION_SECONDS = intPreferencesKey("light_suppress_motion_seconds")
     }
 
     val sensitivity: Flow<Sensitivity> = dataStore.data.map { prefs ->
@@ -177,5 +178,15 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setAutoLockDelaySeconds(seconds: Int) {
         dataStore.edit { it[KEY_AUTO_LOCK_DELAY_SECONDS] = seconds }
+    }
+
+    // Light sensor cross-sensor suppression window (D-04, D-05)
+
+    val lightSuppressMotionSeconds: Flow<Int> = dataStore.data.map { prefs ->
+        prefs[KEY_LIGHT_SUPPRESS_MOTION_SECONDS] ?: 10
+    }
+
+    suspend fun setLightSuppressMotionSeconds(seconds: Int) {
+        dataStore.edit { it[KEY_LIGHT_SUPPRESS_MOTION_SECONDS] = seconds }
     }
 }

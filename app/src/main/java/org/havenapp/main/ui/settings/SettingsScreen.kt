@@ -151,6 +151,21 @@ fun SettingsScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
+            SettingsSection(title = stringResource(R.string.settings_light_suppress_title)) {
+                val lightSuppressSeconds by viewModel.lightSuppressMotionSeconds.collectAsStateWithLifecycle()
+                Column(modifier = Modifier.selectableGroup()) {
+                    LIGHT_SUPPRESS_OPTIONS.forEach { secs ->
+                        RadioRow(
+                            label = lightSuppressLabel(secs),
+                            selected = lightSuppressSeconds == secs,
+                            onClick = { viewModel.setLightSuppressMotionSeconds(secs) },
+                        )
+                    }
+                }
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
             SettingsSection(title = stringResource(R.string.settings_zone_title)) {
                 val zone = uiState.detectionZone
                 Text(
@@ -435,6 +450,7 @@ private fun AutoLockOption(label: String, selected: Boolean, onClick: () -> Unit
 private val COUNTDOWN_OPTIONS = listOf(0, 15, 30, 60, 90, 120)
 private val CALIBRATION_OPTIONS = listOf(5, 10, 20, 30)
 private val CLIP_DURATION_OPTIONS = listOf(10, 30, 60)
+private val LIGHT_SUPPRESS_OPTIONS = listOf(0, 10, 30, 60)
 private val LANGUAGE_OPTIONS = listOf(
     "system" to "System default / Systemsprache",
     "en" to "English",
@@ -461,6 +477,15 @@ private fun calibrationLabel(seconds: Int): String = when (seconds) {
     10 -> stringResource(R.string.calibration_10s)
     20 -> stringResource(R.string.calibration_20s)
     30 -> stringResource(R.string.calibration_30s)
+    else -> stringResource(R.string.countdown_seconds, seconds)
+}
+
+@Composable
+private fun lightSuppressLabel(seconds: Int): String = when (seconds) {
+    0 -> stringResource(R.string.light_suppress_off)
+    10 -> stringResource(R.string.light_suppress_10s)
+    30 -> stringResource(R.string.light_suppress_30s)
+    60 -> stringResource(R.string.light_suppress_60s)
     else -> stringResource(R.string.countdown_seconds, seconds)
 }
 
