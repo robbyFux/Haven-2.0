@@ -41,9 +41,9 @@ Phase-2-Bugfix + fehlende Phase-2-Features: Bugfixes für vollständige Nutzbark
 
 ### App-PIN
 
-- [ ] **SEC-03**: Optionaler App-PIN (4–6-stellig, in Settings aktivierbar) — wenn aktiv, muss der PIN beim App-Start korrekt eingegeben werden bevor die UI zugänglich ist
-- [ ] **SEC-04**: App sperrt sich automatisch wenn sie in den Hintergrund geht (konfigurierbar: sofort / nach 30 s / nie)
-- [ ] **SEC-05**: PIN-Hash wird als SHA-256(PIN + random Salt) in DataStore gespeichert (kein Klartext-PIN)
+- [x] **SEC-03**: Optionaler App-PIN (4–6-stellig, in Settings aktivierbar) — wenn aktiv, muss der PIN beim App-Start korrekt eingegeben werden bevor die UI zugänglich ist
+- [x] **SEC-04**: App sperrt sich automatisch wenn sie in den Hintergrund geht (konfigurierbar: sofort / nach 30 s / nie)
+- [x] **SEC-05**: PIN-Hash wird als SHA-256(PIN + random Salt) in DataStore gespeichert (kein Klartext-PIN)
 
 ## v2 Requirements
 
@@ -101,9 +101,9 @@ Geplante Features für Phase 3+, noch nicht begonnen.
 | REC-03 | Phase 3 | Complete |
 | SEC-01 | Phase 3 | Complete |
 | SEC-02 | Phase 3 | Complete |
-| SEC-03 | Phase 3 | Pending |
-| SEC-04 | Phase 3 | Pending |
-| SEC-05 | Phase 3 | Pending |
+| SEC-03 | Phase 3 | Complete |
+| SEC-04 | Phase 3 | Complete |
+| SEC-05 | Phase 3 | Complete |
 
 **Coverage:**
 - v1 requirements: 17 total
