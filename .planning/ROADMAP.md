@@ -41,9 +41,9 @@ Plans:
 - [x] 03-01-PLAN.md — Verify quick-task fixes and add FusedMotionMonitor calibration guard
 - [x] 03-02-PLAN.md — Video recording infrastructure (ClipRecorder + CameraX VideoCapture)
 - [x] 03-03-PLAN.md — Encrypted storage (AES-GCM) and ExoPlayer video playback
-- [ ] 03-04-PLAN.md — App PIN lock with auto-lock on background
+- [x] 03-04-PLAN.md — App PIN lock with auto-lock on background
 - [ ] 03-05-PLAN.md — LightMonitor dual-rate EMA + cross-sensor suppression + Settings
-- [ ] 03-06-PLAN.md — FusedMotionMonitor latency fix (SENSOR_DELAY_GAME)
+- [x] 03-06-PLAN.md — FusedMotionMonitor latency fix (SENSOR_DELAY_GAME)
 - [ ] 03-07-PLAN.md — EventDetailScreen trigger type filter chips
 
 **UI hint**: yes
@@ -52,4 +52,4 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 3. Phase-2-Complete | 2/7 | In Progress|  |
+| 3. Phase-2-Complete | 5/7 | In Progress|  |
