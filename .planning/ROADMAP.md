@@ -50,19 +50,23 @@ Plans:
 
 **UI hint**: yes
 
+### Phase 4: NotificationEngine
+
+**Goal:** NotificationEngine mit Signal- und Mattermost-Kanal — konfigurierbare Kanäle, Schwellwerte (LOW–CRITICAL), Anti-Flood-Cooldown; Settings-Gruppierung für bessere Übersichtlichkeit; App-Logging-Level (Normal/Debug) in den Einstellungen
+**Requirements**: NOTIF-01, NOTIF-02, NOTIF-03, NOTIF-04, NOTIF-05
+**Depends on:** Phase 3
+**Plans:** 5 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Foundation: OkHttp dep, HavenAlertChannel interface, NotificationRule, NetworkModule, DataStore keys, AppLogger LogLevel
+- [ ] 04-02-PLAN.md — Channel implementations: SignalRestChannel, MattermostChannel, CameraAnalyzer lastJpegFrame
+- [ ] 04-03-PLAN.md — Settings UI restructuring: CategoryCard layout, string resources
+- [ ] 04-04-PLAN.md — NotificationRouter + MonitorService integration + Heartbeat
+- [ ] 04-05-PLAN.md — Notification Settings UI: config dialogs, rule controls, LogLevel toggle
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 3. Phase-2-Complete | 7/7 | Complete   | 2026-04-04 |
-| 4. NotificationEngine | 0/0 | Not planned | — |
-
-### Phase 4: NotificationEngine
-
-**Goal:** NotificationEngine mit Signal- und Mattermost-Kanal — konfigurierbare Kanäle, Schwellwerte (LOW–CRITICAL), Anti-Flood-Cooldown; Settings-Gruppierung für bessere Übersichtlichkeit; App-Logging-Level (Normal/Debug) in den Einstellungen
-**Requirements**: TBD
-**Depends on:** Phase 3
-**Plans:** 0 plans
-
-Plans:
-- [ ] TBD (run /gsd:plan-phase 4 to break down)
+| 4. NotificationEngine | 0/5 | Planned | — |

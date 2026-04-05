@@ -47,28 +47,26 @@ Phase-2-Bugfix + fehlende Phase-2-Features: Bugfixes für vollständige Nutzbark
 
 ## v2 Requirements
 
-Geplante Features für Phase 3+, noch nicht begonnen.
+### Benachrichtigungen (Phase 4)
 
-### Benachrichtigungen (Phase 3)
+- [ ] **NOTIF-01**: NotificationEngine mit abstrahiertem HavenAlertChannel-Interface (`send(event, attachment)` + `sendHeartbeat()`) und NotificationRouter der Events über aktive Kanäle routet
+- [ ] **NOTIF-02**: SignalRestChannel — POST an signal-cli REST API `/v2/send` mit Nachricht, Absender, Empfänger, optionalem Bearer-Token und optionalem Base64-JPEG-Anhang
+- [ ] **NOTIF-03**: MattermostChannel — POST an Incoming Webhook mit Markdown-formatierter Nachricht, Username "Haven", Emoji ":shield:" — kein Dateianhang
+- [ ] **NOTIF-04**: NotificationRule-Konfiguration in Settings: minSeverity (LOW–CRITICAL), Cooldown (Off/1/5/15/30 min), Trigger-Typ-Whitelist (Checkboxen), attachMedia Toggle; Signal/Mattermost-Konfigurationsdialoge; Settings-Gruppierung in 5 Category-Cards
+- [ ] **NOTIF-05**: Heartbeat-Timer pro Kanal (Off/15/30/60 min) als Coroutine-Loop im MonitorService — automatisch gestoppt bei Monitoring-Ende
 
-- **NOTIF-01**: NotificationEngine mit abstrahiertem Channel-Interface
-- **NOTIF-02**: SignalRestChannel (signal-cli REST API, self-hosted)
-- **NOTIF-03**: MattermostChannel (Incoming Webhook)
-- **NOTIF-04**: NotificationRules-Editor (Trigger → Kanal)
-- **NOTIF-05**: Heartbeat-Timer (Signal / Mattermost)
-
-### Zeitpläne (Phase 3)
+### Zeitpläne (Phase 5+)
 
 - **SCHED-01**: Armed/Disarmed-Zeitpläne
 - **SCHED-02**: Timeline-Filter und Clip-Player
 
-### Netzwerk (Phase 4)
+### Netzwerk (Phase 5+)
 
 - **NET-01**: WebRTC Live-Stream
 - **NET-02**: QR-Code Pairing
 - **NET-03**: Geräteverwaltung (Admin/Viewer/ReadOnly)
 
-### Hardening (Phase 5)
+### Hardening (Phase 5+)
 
 - **HARD-01**: Telefon-Manipulations-Erkennung
 - **HARD-02**: Audit-Logs
@@ -78,7 +76,7 @@ Geplante Features für Phase 3+, noch nicht begonnen.
 
 | Feature | Reason |
 |---------|--------|
-| Signal-CLI direkt einbetten | Veraltete API, nicht mehr wartbar — stattdessen REST API (Phase 3) |
+| Signal-CLI direkt einbetten | Veraltete API, nicht mehr wartbar — stattdessen REST API (Phase 4) |
 | Firebase Analytics / AdServices | Privacy-Prinzip — keine Cloud-Dienste |
 | Cloud-only Speicherung | Local-first ist Kernprinzip |
 | Java-Neucode | Projekt ist vollständig Kotlin |
@@ -104,12 +102,19 @@ Geplante Features für Phase 3+, noch nicht begonnen.
 | SEC-03 | Phase 3 | Complete |
 | SEC-04 | Phase 3 | Complete |
 | SEC-05 | Phase 3 | Complete |
+| NOTIF-01 | Phase 4 | Planned |
+| NOTIF-02 | Phase 4 | Planned |
+| NOTIF-03 | Phase 4 | Planned |
+| NOTIF-04 | Phase 4 | Planned |
+| NOTIF-05 | Phase 4 | Planned |
 
 **Coverage:**
 - v1 requirements: 17 total
 - Mapped to phases: 17
-- Unmapped: 0 ✓
+- Unmapped: 0
+- v2 requirements: 5 (Phase 4) + 8 (future)
+- Phase 4 mapped: 5/5
 
 ---
 *Requirements defined: 2026-03-31*
-*Last updated: 2026-04-02 — Phase 3 erweitert: Videoaufzeichnung (REC-01–03), Verschlüsselung (SEC-01–02), App-PIN (SEC-03–05)*
+*Last updated: 2026-04-05 — Phase 4 requirements added: NOTIF-01 through NOTIF-05*
