@@ -181,6 +181,16 @@
     <string name="log_level_normal">Normal</string>
     <string name="log_level_debug">Debug</string>
 
+    <!-- Signal Intent channel (P2 fallback) -->
+    <string name="settings_signal_intent_title">Signal (App)</string>
+    <string name="settings_signal_intent_enabled">Signal-App aktiviert</string>
+    <string name="settings_signal_intent_configure">Signal-App konfigurieren</string>
+    <string name="settings_signal_intent_configured">Empfänger: %1$s</string>
+    <string name="settings_signal_intent_not_configured">Nicht konfiguriert</string>
+    <string name="settings_signal_intent_recipient">Empfängernummer (E.164)</string>
+    <string name="settings_signal_intent_dialog_hint">Erfordert installierte Signal-App. Öffnet Signal beim Alarm. Heartbeat nicht unterstützt.</string>
+    <string name="settings_signal_intent_note">Fallback: öffnet Signal-App auf dem Gerät. Kein Server nötig.</string>
+
     <string name="dialog_save">Speichern</string>
     <string name="dialog_cancel">Abbrechen</string>
     <string name="dialog_test">Testen</string>

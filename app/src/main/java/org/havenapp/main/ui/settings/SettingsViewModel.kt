@@ -279,6 +279,12 @@ class SettingsViewModel @Inject constructor(
     val heartbeatMattermostMinutes: StateFlow<Int> = settingsRepository.heartbeatMattermostMinutes
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
+    val signalIntentEnabled: StateFlow<Boolean> = settingsRepository.signalIntentEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    val signalIntentRecipient: StateFlow<String> = settingsRepository.signalIntentRecipient
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
+
     val logLevelDebug: StateFlow<Boolean> = settingsRepository.logLevel
         .map { it == "DEBUG" }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
@@ -321,6 +327,14 @@ class SettingsViewModel @Inject constructor(
 
     fun setHeartbeatMattermostMinutes(minutes: Int) {
         viewModelScope.launch { settingsRepository.setHeartbeatMattermostMinutes(minutes) }
+    }
+
+    fun setSignalIntentEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setSignalIntentEnabled(enabled) }
+    }
+
+    fun setSignalIntentRecipient(recipient: String) {
+        viewModelScope.launch { settingsRepository.setSignalIntentRecipient(recipient) }
     }
 
     fun setLogLevel(debug: Boolean) {

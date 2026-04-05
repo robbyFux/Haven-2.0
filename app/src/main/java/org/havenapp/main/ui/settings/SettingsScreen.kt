@@ -78,6 +78,8 @@ fun SettingsScreen(
     val attachMedia by viewModel.attachMedia.collectAsStateWithLifecycle()
     val heartbeatSignalMin by viewModel.heartbeatSignalMinutes.collectAsStateWithLifecycle()
     val heartbeatMattermostMin by viewModel.heartbeatMattermostMinutes.collectAsStateWithLifecycle()
+    val signalIntentEnabled by viewModel.signalIntentEnabled.collectAsStateWithLifecycle()
+    val signalIntentRecipient by viewModel.signalIntentRecipient.collectAsStateWithLifecycle()
     val logLevelDebug by viewModel.logLevelDebug.collectAsStateWithLifecycle()
 
     // Dialog state for PIN setup / change
@@ -87,6 +89,7 @@ fun SettingsScreen(
     // Dialog state for notification channel config
     var showSignalDialog by remember { mutableStateOf(false) }
     var showMattermostDialog by remember { mutableStateOf(false) }
+    var showSignalIntentDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -391,6 +394,31 @@ fun SettingsScreen(
                     }
                 }
 
+                // Signal Intent fallback channel
+                SettingsSection(title = stringResource(R.string.settings_signal_intent_title)) {
+                    SensorToggleRow(
+                        label = stringResource(R.string.settings_signal_intent_enabled),
+                        checked = signalIntentEnabled,
+                        onCheckedChange = { viewModel.setSignalIntentEnabled(it) },
+                    )
+                    OutlinedButton(
+                        onClick = { showSignalIntentDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = if (signalIntentRecipient.isNotBlank())
+                                stringResource(R.string.settings_signal_intent_configured, signalIntentRecipient)
+                            else stringResource(R.string.settings_signal_intent_not_configured),
+                        )
+                    }
+                    Text(
+                        text = stringResource(R.string.settings_signal_intent_note),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+
                 // NotificationRule (D-05)
                 SettingsSection(title = stringResource(R.string.settings_notification_rule_title)) {
                     // minSeverity (radio group)
@@ -564,6 +592,18 @@ fun SettingsScreen(
             initialWebhookUrl = mattermostWebhookUrl,
             onDismiss = { showMattermostDialog = false },
             onSave = { url -> viewModel.setMattermostWebhookUrl(url) },
+        )
+    }
+
+    // Signal Intent recipient dialog
+    if (showSignalIntentDialog) {
+        SignalIntentConfigDialog(
+            initialRecipient = signalIntentRecipient,
+            onDismiss = { showSignalIntentDialog = false },
+            onSave = { recipient ->
+                viewModel.setSignalIntentRecipient(recipient)
+                showSignalIntentDialog = false
+            },
         )
     }
 }
@@ -773,6 +813,44 @@ private fun MattermostConfigDialog(
                 onSave(webhookUrl.trim())
                 onDismiss()
             }) { Text(stringResource(R.string.dialog_save)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.dialog_cancel)) }
+        },
+    )
+}
+
+@Composable
+private fun SignalIntentConfigDialog(
+    initialRecipient: String,
+    onDismiss: () -> Unit,
+    onSave: (recipient: String) -> Unit,
+) {
+    var recipient by remember { mutableStateOf(initialRecipient) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_signal_intent_configure)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(R.string.settings_signal_intent_dialog_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OutlinedTextField(
+                    value = recipient,
+                    onValueChange = { recipient = it },
+                    label = { Text(stringResource(R.string.settings_signal_intent_recipient)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(recipient.trim()) }) {
+                Text(stringResource(R.string.dialog_save))
+            }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.dialog_cancel)) }
