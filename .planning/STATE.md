@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v0.4
 milestone_name: NotificationEngine
 status: executing
-stopped_at: "Completed 04-notification-engine plan 03: SettingsScreen Card Layout and Phase 4 Strings"
-last_updated: "2026-04-05T21:18:35.979Z"
+stopped_at: "Completed 04-notification-engine plan 02: Channel Implementations"
+last_updated: "2026-04-05T21:19:15.110Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 2
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 ## Current Position
 
 Phase: 04 (notification-engine) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-04-05
 
@@ -60,6 +60,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-phase-2-complete P07 | 1 | 1 tasks | 3 files |
 | Phase 04-notification-engine P01 | 8 | 2 tasks | 7 files |
 | Phase 04-notification-engine P03 | 5 | 2 tasks | 3 files |
+| Phase 04-notification-engine P02 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,9 @@ Recent decisions affecting current work:
 - [Phase 04-notification-engine]: AppLogger.currentLogLevel uses @Volatile (not @Synchronized) for low-contention reads on the hot logging path
 - [Phase 04-notification-engine]: LogLevel toggle uses local remember placeholder (plan 05 wires to SettingsViewModel.logLevelDebug)
 - [Phase 04-notification-engine]: CategoryCard is private composable within SettingsScreen.kt; Notifications card uses placeholder text for plan 05
+- [Phase 04-notification-engine]: SignalRestChannel and MattermostChannel are plain Kotlin classes (not Hilt singletons): instantiated per monitoring session with a settings snapshot
+- [Phase 04-notification-engine]: MattermostChannel.send() explicitly ignores attachment parameter — Mattermost Incoming Webhooks do not support binary file uploads
+- [Phase 04-notification-engine]: lastJpegFrame uses full-color NV21 JPEG (same UV-plane extraction as buildBitmap) for better notification thumbnails
 
 ### Roadmap Evolution
 
@@ -108,6 +112,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T21:18:35.976Z
-Stopped at: Completed 04-notification-engine plan 03: SettingsScreen Card Layout and Phase 4 Strings
+Last session: 2026-04-05T21:19:07.750Z
+Stopped at: Completed 04-notification-engine plan 02: Channel Implementations
 Resume file: None

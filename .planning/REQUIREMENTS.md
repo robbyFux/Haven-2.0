@@ -50,8 +50,8 @@ Phase-2-Bugfix + fehlende Phase-2-Features: Bugfixes für vollständige Nutzbark
 ### Benachrichtigungen (Phase 4)
 
 - [x] **NOTIF-01**: NotificationEngine mit abstrahiertem HavenAlertChannel-Interface (`send(event, attachment)` + `sendHeartbeat()`) und NotificationRouter der Events über aktive Kanäle routet
-- [ ] **NOTIF-02**: SignalRestChannel — POST an signal-cli REST API `/v2/send` mit Nachricht, Absender, Empfänger, optionalem Bearer-Token und optionalem Base64-JPEG-Anhang
-- [ ] **NOTIF-03**: MattermostChannel — POST an Incoming Webhook mit Markdown-formatierter Nachricht, Username "Haven", Emoji ":shield:" — kein Dateianhang
+- [x] **NOTIF-02**: SignalRestChannel — POST an signal-cli REST API `/v2/send` mit Nachricht, Absender, Empfänger, optionalem Bearer-Token und optionalem Base64-JPEG-Anhang
+- [x] **NOTIF-03**: MattermostChannel — POST an Incoming Webhook mit Markdown-formatierter Nachricht, Username "Haven", Emoji ":shield:" — kein Dateianhang
 - [x] **NOTIF-04**: NotificationRule-Konfiguration in Settings: minSeverity (LOW–CRITICAL), Cooldown (Off/1/5/15/30 min), Trigger-Typ-Whitelist (Checkboxen), attachMedia Toggle; Signal/Mattermost-Konfigurationsdialoge; Settings-Gruppierung in 5 Category-Cards
 - [ ] **NOTIF-05**: Heartbeat-Timer pro Kanal (Off/15/30/60 min) als Coroutine-Loop im MonitorService — automatisch gestoppt bei Monitoring-Ende
 
