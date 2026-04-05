@@ -134,4 +134,56 @@
     <string name="light_suppress_10s">10 s</string>
     <string name="light_suppress_30s">30 s</string>
     <string name="light_suppress_60s">60 s</string>
+
+    <!-- Settings Category Cards (Phase 4, D-14/D-16) -->
+    <string name="settings_cat_detection">Detection</string>
+    <string name="settings_cat_recording">Recording</string>
+    <string name="settings_cat_security">Security</string>
+    <string name="settings_cat_notifications">Notifications</string>
+    <string name="settings_cat_app">App</string>
+
+    <!-- Notification Settings (Phase 4) -->
+    <string name="settings_signal_title">Signal</string>
+    <string name="settings_signal_configure">Configure Signal</string>
+    <string name="settings_signal_enabled">Signal enabled</string>
+    <string name="settings_signal_server_url">Server URL</string>
+    <string name="settings_signal_sender">Sender number</string>
+    <string name="settings_signal_recipient">Recipient number</string>
+    <string name="settings_signal_bearer_token">Bearer token (optional)</string>
+    <string name="settings_signal_configured">Configured: %1$s</string>
+    <string name="settings_signal_not_configured">Not configured</string>
+
+    <string name="settings_mattermost_title">Mattermost</string>
+    <string name="settings_mattermost_configure">Configure Mattermost</string>
+    <string name="settings_mattermost_enabled">Mattermost enabled</string>
+    <string name="settings_mattermost_webhook_url">Webhook URL</string>
+    <string name="settings_mattermost_configured">Configured: %1$s</string>
+    <string name="settings_mattermost_not_configured">Not configured</string>
+
+    <string name="settings_notification_rule_title">Alert rules</string>
+    <string name="settings_min_severity">Minimum severity</string>
+    <string name="settings_cooldown">Cooldown</string>
+    <string name="cooldown_off">Off</string>
+    <string name="cooldown_1min">1 minute</string>
+    <string name="cooldown_5min">5 minutes</string>
+    <string name="cooldown_15min">15 minutes</string>
+    <string name="cooldown_30min">30 minutes</string>
+    <string name="settings_trigger_types">Trigger types</string>
+    <string name="settings_attach_media">Attach image (Signal only)</string>
+
+    <string name="settings_heartbeat_title">Heartbeat</string>
+    <string name="heartbeat_off">Off</string>
+    <string name="heartbeat_15min">15 minutes</string>
+    <string name="heartbeat_30min">30 minutes</string>
+    <string name="heartbeat_60min">60 minutes</string>
+
+    <!-- Log Level (Phase 4, D-17) -->
+    <string name="settings_log_level_title">Log level</string>
+    <string name="log_level_normal">Normal</string>
+    <string name="log_level_debug">Debug</string>
+
+    <!-- Dialog buttons -->
+    <string name="dialog_save">Save</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_test">Test</string>
 </resources>

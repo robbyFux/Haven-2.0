@@ -134,4 +134,54 @@
     <string name="light_suppress_10s">10 s</string>
     <string name="light_suppress_30s">30 s</string>
     <string name="light_suppress_60s">60 s</string>
+
+    <!-- Settings Category Cards (Phase 4) -->
+    <string name="settings_cat_detection">Erkennung</string>
+    <string name="settings_cat_recording">Aufzeichnung</string>
+    <string name="settings_cat_security">Sicherheit</string>
+    <string name="settings_cat_notifications">Benachrichtigungen</string>
+    <string name="settings_cat_app">App</string>
+
+    <!-- Notification Settings (Phase 4) -->
+    <string name="settings_signal_title">Signal</string>
+    <string name="settings_signal_configure">Signal konfigurieren</string>
+    <string name="settings_signal_enabled">Signal aktiviert</string>
+    <string name="settings_signal_server_url">Server-URL</string>
+    <string name="settings_signal_sender">Absendernummer</string>
+    <string name="settings_signal_recipient">Empfängernummer</string>
+    <string name="settings_signal_bearer_token">Bearer-Token (optional)</string>
+    <string name="settings_signal_configured">Konfiguriert: %1$s</string>
+    <string name="settings_signal_not_configured">Nicht konfiguriert</string>
+
+    <string name="settings_mattermost_title">Mattermost</string>
+    <string name="settings_mattermost_configure">Mattermost konfigurieren</string>
+    <string name="settings_mattermost_enabled">Mattermost aktiviert</string>
+    <string name="settings_mattermost_webhook_url">Webhook-URL</string>
+    <string name="settings_mattermost_configured">Konfiguriert: %1$s</string>
+    <string name="settings_mattermost_not_configured">Nicht konfiguriert</string>
+
+    <string name="settings_notification_rule_title">Alarmregeln</string>
+    <string name="settings_min_severity">Mindestschweregrad</string>
+    <string name="settings_cooldown">Abklingzeit</string>
+    <string name="cooldown_off">Aus</string>
+    <string name="cooldown_1min">1 Minute</string>
+    <string name="cooldown_5min">5 Minuten</string>
+    <string name="cooldown_15min">15 Minuten</string>
+    <string name="cooldown_30min">30 Minuten</string>
+    <string name="settings_trigger_types">Auslösertypen</string>
+    <string name="settings_attach_media">Bild anhängen (nur Signal)</string>
+
+    <string name="settings_heartbeat_title">Heartbeat</string>
+    <string name="heartbeat_off">Aus</string>
+    <string name="heartbeat_15min">15 Minuten</string>
+    <string name="heartbeat_30min">30 Minuten</string>
+    <string name="heartbeat_60min">60 Minuten</string>
+
+    <string name="settings_log_level_title">Log-Level</string>
+    <string name="log_level_normal">Normal</string>
+    <string name="log_level_debug">Debug</string>
+
+    <string name="dialog_save">Speichern</string>
+    <string name="dialog_cancel">Abbrechen</string>
+    <string name="dialog_test">Testen</string>
 </resources>
