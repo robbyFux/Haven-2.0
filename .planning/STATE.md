@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.4
 milestone_name: NotificationEngine
 status: executing
-stopped_at: "Completed 04-notification-engine plan 02: Channel Implementations"
-last_updated: "2026-04-05T21:19:15.110Z"
+stopped_at: "Checkpoint: 04-05 Task 3 human-verify — awaiting UI verification on device"
+last_updated: "2026-04-05T21:25:36.252Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 2
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 12
-  completed_plans: 10
+  completed_plans: 12
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 ## Current Position
 
 Phase: 04 (notification-engine) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-04-05
 
@@ -61,6 +61,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-notification-engine P01 | 8 | 2 tasks | 7 files |
 | Phase 04-notification-engine P03 | 5 | 2 tasks | 3 files |
 | Phase 04-notification-engine P02 | 2 | 2 tasks | 3 files |
+| Phase 04-notification-engine P04 | 15 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,8 @@ Recent decisions affecting current work:
 - [Phase 04-notification-engine]: SignalRestChannel and MattermostChannel are plain Kotlin classes (not Hilt singletons): instantiated per monitoring session with a settings snapshot
 - [Phase 04-notification-engine]: MattermostChannel.send() explicitly ignores attachment parameter — Mattermost Incoming Webhooks do not support binary file uploads
 - [Phase 04-notification-engine]: lastJpegFrame uses full-color NV21 JPEG (same UV-plane extraction as buildBitmap) for better notification thumbnails
+- [Phase 04-notification-engine]: Notification StateFlows are individual ViewModel properties (not in SettingsUiState): avoids bloating combined data class and keeps UI collections independent
+- [Phase 04-notification-engine]: setLogLevel() calls appLogger.setLogLevel() directly before coroutine for instant effect, then persists to DataStore asynchronously
 
 ### Roadmap Evolution
 
@@ -112,6 +115,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T21:19:07.750Z
-Stopped at: Completed 04-notification-engine plan 02: Channel Implementations
+Last session: 2026-04-05T21:25:09.877Z
+Stopped at: Checkpoint: 04-05 Task 3 human-verify — awaiting UI verification on device
 Resume file: None
