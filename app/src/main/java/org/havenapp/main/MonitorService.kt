@@ -164,7 +164,7 @@ class MonitorService : LifecycleService() {
                 }
             }
 
-            appLogger.i(TAG, "Monitoring started: sensitivity=$sensitivity, mode=$detectionMode, camera=$cameraEnabled, motion=$motionEnabled, light=$lightEnabled, mic=$micEnabled")
+            appLogger.i(TAG, "Monitoring started: sensitivity=$sensitivity cameraMotionThreshold=${sensitivity.cameraMotionThreshold}, mode=$detectionMode, camera=$cameraEnabled, motion=$motionEnabled, light=$lightEnabled, mic=$micEnabled")
 
             val analyzer: CameraAnalyzer? = if (cameraEnabled) {
                 CameraAnalyzer(sensitivity, detectionMode, objectDetector, detectionZone)
@@ -298,12 +298,17 @@ class MonitorService : LifecycleService() {
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis, videoCaptureUseCase)
             }.onSuccess {
+                appLogger.i(TAG, "Camera bound: imageAnalysis + videoCapture (${cameraSelector})")
                 clipRecorder = ClipRecorder().also { it.attach(videoCaptureUseCase) }
             }.onFailure { err ->
                 appLogger.w(TAG, "VideoCapture binding failed (LEGACY hardware?), disabling clip recording: ${err.message}")
                 runCatching {
                     cameraProvider.unbindAll()
                     cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis)
+                }.onSuccess {
+                    appLogger.i(TAG, "Camera bound: imageAnalysis-only (LEGACY fallback)")
+                }.onFailure { err2 ->
+                    appLogger.e(TAG, "Camera binding FAILED entirely — no frames will arrive: ${err2.message}")
                 }
                 clipRecorder = ClipRecorder().also { it.setUnavailable() }
             }
