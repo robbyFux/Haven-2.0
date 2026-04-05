@@ -11,11 +11,13 @@ an optional app PIN. One phase delivers a fully secured, fully functional monito
 
 - ✅ **v0.1 Foundation** — Phase 1 (shipped)
 - ✅ **v0.2 Detection Intelligence** — Phase 2 (shipped)
-- 🚧 **v0.3 Phase-2-Complete** — Phase 3 (in progress)
+- ✅ **v0.3 Phase-2-Complete** — Phase 3 (complete)
+- 🚧 **v0.4 NotificationEngine** — Phase 4 (planned)
 
 ## Phases
 
 - [x] **Phase 3: Phase-2-Complete** - Fix all Phase 2 bugs, add video clip recording on trigger, encrypt stored media (Android Keystore), and add optional app PIN (completed 2026-04-04)
+- [ ] **Phase 4: NotificationEngine** - Signal+Mattermost alerts, configurable channels and severity thresholds, anti-flood cooldown, Settings grouping, Debug logging level
 
 ## Phase Details
 
@@ -53,3 +55,14 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 3. Phase-2-Complete | 7/7 | Complete   | 2026-04-04 |
+| 4. NotificationEngine | 0/0 | Not planned | — |
+
+### Phase 4: NotificationEngine
+
+**Goal:** NotificationEngine mit Signal- und Mattermost-Kanal — konfigurierbare Kanäle, Schwellwerte (LOW–CRITICAL), Anti-Flood-Cooldown; Settings-Gruppierung für bessere Übersichtlichkeit; App-Logging-Level (Normal/Debug) in den Einstellungen
+**Requirements**: TBD
+**Depends on:** Phase 3
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 4 to break down)

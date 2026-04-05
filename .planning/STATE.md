@@ -4,8 +4,8 @@ milestone: v0.3
 milestone_name: Phase-2-Complete
 status: executing
 stopped_at: "Completed 03-phase-2-complete plan 07 Task 1: FilterChip row in EventDetailScreen — stopped at Task 2 checkpoint:human-verify"
-last_updated: "2026-04-04T21:34:14.605Z"
-last_activity: 2026-04-04
+last_updated: "2026-04-05T00:00:00.000Z"
+last_activity: 2026-04-05
 progress:
   total_phases: 1
   completed_phases: 1
@@ -78,6 +78,10 @@ Recent decisions affecting current work:
 - [Phase 03-phase-2-complete]: LightMonitor no longer implements SensorMonitor: 3-param observe() replaces 2-param interface; MonitorService injects concrete type
 - [Phase 03-phase-2-complete]: RecentTriggerState is a plain Kotlin object (not Hilt) for process-global cross-sensor priority gate in LightMonitor
 - [Phase 03-phase-2-complete]: derivedStateOf used for filteredTriggers in EventDetailScreen: more efficient than keyed remember for computed state depending on other Compose snapshot state
+
+### Roadmap Evolution
+
+- Phase 4 added: NotificationEngine — Signal+Mattermost alerts, configurable channels and severity thresholds, anti-flood cooldown, Settings grouping, Debug logging level (2026-04-05)
 
 ### Pending Todos
 
