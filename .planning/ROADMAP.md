@@ -55,12 +55,12 @@ Plans:
 **Goal:** NotificationEngine mit Signal- und Mattermost-Kanal — konfigurierbare Kanäle, Schwellwerte (LOW–CRITICAL), Anti-Flood-Cooldown; Settings-Gruppierung für bessere Übersichtlichkeit; App-Logging-Level (Normal/Debug) in den Einstellungen
 **Requirements**: NOTIF-01, NOTIF-02, NOTIF-03, NOTIF-04, NOTIF-05
 **Depends on:** Phase 3
-**Plans:** 1/5 plans executed
+**Plans:** 3/5 plans executed
 
 Plans:
 - [x] 04-01-PLAN.md — Foundation: OkHttp dep, HavenAlertChannel interface, NotificationRule, NetworkModule, DataStore keys, AppLogger LogLevel
-- [ ] 04-02-PLAN.md — Channel implementations: SignalRestChannel, MattermostChannel, CameraAnalyzer lastJpegFrame
-- [ ] 04-03-PLAN.md — Settings UI restructuring: CategoryCard layout, string resources
+- [x] 04-02-PLAN.md — Channel implementations: SignalRestChannel, MattermostChannel, CameraAnalyzer lastJpegFrame
+- [x] 04-03-PLAN.md — Settings UI restructuring: CategoryCard layout, string resources
 - [ ] 04-04-PLAN.md — NotificationRouter + MonitorService integration + Heartbeat
 - [ ] 04-05-PLAN.md — Notification Settings UI: config dialogs, rule controls, LogLevel toggle
 
@@ -69,4 +69,4 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 3. Phase-2-Complete | 7/7 | Complete   | 2026-04-04 |
-| 4. NotificationEngine | 1/5 | In Progress|  |
+| 4. NotificationEngine | 3/5 | In Progress|  |
