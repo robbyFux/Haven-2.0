@@ -10,15 +10,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.havenapp.main.detection.DetectionMode
 import org.havenapp.main.detection.DetectionZone
 import org.havenapp.main.detection.HavenObjectDetector
+import org.havenapp.main.events.Severity
+import org.havenapp.main.events.TriggerType
 import org.havenapp.main.security.AppLockState
 import org.havenapp.main.security.PinHashManager
 import org.havenapp.main.sensor.CameraPosition
 import org.havenapp.main.sensor.Sensitivity
+import org.havenapp.main.storage.AppLogger
 import org.havenapp.main.storage.SettingsRepository
 import javax.inject.Inject
 
@@ -43,6 +47,7 @@ data class SettingsUiState(
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     objectDetector: HavenObjectDetector,
+    private val appLogger: AppLogger,
 ) : ViewModel() {
 
     init {
@@ -50,6 +55,14 @@ class SettingsViewModel @Inject constructor(
         // as soon as the user opens Settings. Without this, availabilityFlow stays
         // false and PERSON/PET/VEHICLE/ALL modes remain permanently disabled.
         viewModelScope.launch(Dispatchers.IO) { objectDetector.initialize() }
+
+        // Sync AppLogger log level from DataStore on startup (D-19)
+        viewModelScope.launch {
+            settingsRepository.logLevel.collect { level ->
+                val logLevel = if (level == "DEBUG") AppLogger.LogLevel.DEBUG else AppLogger.LogLevel.NORMAL
+                appLogger.setLogLevel(logLevel)
+            }
+        }
     }
 
     private val _languageTag = MutableStateFlow(currentLanguageTag())
@@ -223,5 +236,97 @@ class SettingsViewModel @Inject constructor(
 
     fun setLightSuppressMotionSeconds(seconds: Int) {
         viewModelScope.launch { settingsRepository.setLightSuppressMotionSeconds(seconds) }
+    }
+
+    // ── Notification settings (Phase 4) ─────────────────────────────────────
+
+    val signalEnabled: StateFlow<Boolean> = settingsRepository.signalEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    val signalServerUrl: StateFlow<String> = settingsRepository.signalServerUrl
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
+
+    val signalSender: StateFlow<String> = settingsRepository.signalSender
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
+
+    val signalRecipient: StateFlow<String> = settingsRepository.signalRecipient
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
+
+    val signalBearerToken: StateFlow<String> = settingsRepository.signalBearerToken
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
+
+    val mattermostEnabled: StateFlow<Boolean> = settingsRepository.mattermostEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    val mattermostWebhookUrl: StateFlow<String> = settingsRepository.mattermostWebhookUrl
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
+
+    val minSeverity: StateFlow<Severity> = settingsRepository.minSeverity
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Severity.MEDIUM)
+
+    val cooldownMs: StateFlow<Long> = settingsRepository.cooldownMs
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 60_000L)
+
+    val notificationTriggerTypes: StateFlow<Set<TriggerType>> = settingsRepository.notificationTriggerTypes
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
+    val attachMedia: StateFlow<Boolean> = settingsRepository.attachMedia
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+
+    val heartbeatSignalMinutes: StateFlow<Int> = settingsRepository.heartbeatSignalMinutes
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    val heartbeatMattermostMinutes: StateFlow<Int> = settingsRepository.heartbeatMattermostMinutes
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    val logLevelDebug: StateFlow<Boolean> = settingsRepository.logLevel
+        .map { it == "DEBUG" }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    fun setSignalEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setSignalEnabled(enabled) }
+    }
+
+    fun setSignalConfig(serverUrl: String, sender: String, recipient: String, bearerToken: String) {
+        viewModelScope.launch { settingsRepository.setSignalConfig(serverUrl, sender, recipient, bearerToken) }
+    }
+
+    fun setMattermostEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setMattermostEnabled(enabled) }
+    }
+
+    fun setMattermostWebhookUrl(url: String) {
+        viewModelScope.launch { settingsRepository.setMattermostWebhookUrl(url) }
+    }
+
+    fun setMinSeverity(severity: Severity) {
+        viewModelScope.launch { settingsRepository.setMinSeverity(severity) }
+    }
+
+    fun setCooldownMs(ms: Long) {
+        viewModelScope.launch { settingsRepository.setCooldownMs(ms) }
+    }
+
+    fun setNotificationTriggerTypes(types: Set<TriggerType>) {
+        viewModelScope.launch { settingsRepository.setNotificationTriggerTypes(types) }
+    }
+
+    fun setAttachMedia(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setAttachMedia(enabled) }
+    }
+
+    fun setHeartbeatSignalMinutes(minutes: Int) {
+        viewModelScope.launch { settingsRepository.setHeartbeatSignalMinutes(minutes) }
+    }
+
+    fun setHeartbeatMattermostMinutes(minutes: Int) {
+        viewModelScope.launch { settingsRepository.setHeartbeatMattermostMinutes(minutes) }
+    }
+
+    fun setLogLevel(debug: Boolean) {
+        val level = if (debug) "DEBUG" else "NORMAL"
+        val logLevel = if (debug) AppLogger.LogLevel.DEBUG else AppLogger.LogLevel.NORMAL
+        viewModelScope.launch { settingsRepository.setLogLevel(level) }
+        appLogger.setLogLevel(logLevel)  // immediate effect (D-19)
     }
 }
