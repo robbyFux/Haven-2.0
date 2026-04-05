@@ -2,6 +2,7 @@ package org.havenapp.main.ui.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,15 +12,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
@@ -58,6 +61,9 @@ fun SettingsScreen(
     val pinHash by viewModel.pinHash.collectAsStateWithLifecycle()
     val autoLockDelaySeconds by viewModel.autoLockDelaySeconds.collectAsStateWithLifecycle()
 
+    // TODO: Plan 05 wires to SettingsViewModel.logLevelDebug
+    var logLevelDebug by remember { mutableStateOf(false) }
+
     // Dialog state for PIN setup / change
     var showPinDialog by remember { mutableStateOf(false) }
     var pinDialogIsChange by remember { mutableStateOf(false) }
@@ -73,267 +79,284 @@ fun SettingsScreen(
                 .padding(padding)
                 .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            SettingsSection(title = stringResource(R.string.settings_sensitivity_title)) {
-                Column(modifier = Modifier.selectableGroup()) {
-                    Sensitivity.entries.forEach { s ->
-                        RadioRow(
-                            label = s.label(),
-                            selected = uiState.sensitivity == s,
-                            onClick = { viewModel.setSensitivity(s) },
+            Spacer(Modifier.height(0.dp))
+
+            // Card 1 — Detection
+            CategoryCard(title = stringResource(R.string.settings_cat_detection)) {
+                SettingsSection(title = stringResource(R.string.settings_sensitivity_title)) {
+                    Column(modifier = Modifier.selectableGroup()) {
+                        Sensitivity.entries.forEach { s ->
+                            RadioRow(
+                                label = s.label(),
+                                selected = uiState.sensitivity == s,
+                                onClick = { viewModel.setSensitivity(s) },
+                            )
+                        }
+                    }
+                }
+
+                SettingsSection(title = stringResource(R.string.settings_camera_title)) {
+                    Column(modifier = Modifier.selectableGroup()) {
+                        CameraPosition.entries.forEach { pos ->
+                            RadioRow(
+                                label = pos.label(),
+                                selected = uiState.cameraPosition == pos,
+                                onClick = { viewModel.setCameraPosition(pos) },
+                            )
+                        }
+                    }
+                }
+
+                SettingsSection(title = stringResource(R.string.settings_detection_title)) {
+                    Column(modifier = Modifier.selectableGroup()) {
+                        DetectionMode.entries.forEach { mode ->
+                            val aiEnabled = !mode.requiresML || uiState.tfliteAvailable
+                            RadioRow(
+                                label = mode.label(),
+                                selected = uiState.detectionMode == mode,
+                                onClick = { viewModel.setDetectionMode(mode) },
+                                enabled = aiEnabled,
+                            )
+                        }
+                    }
+                    if (!uiState.tfliteAvailable) {
+                        Text(
+                            text = stringResource(R.string.detection_ai_unavailable),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFFFB300),
+                            modifier = Modifier.padding(start = 4.dp, top = 4.dp),
                         )
                     }
                 }
-            }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-            SettingsSection(title = stringResource(R.string.settings_camera_title)) {
-                Column(modifier = Modifier.selectableGroup()) {
-                    CameraPosition.entries.forEach { pos ->
-                        RadioRow(
-                            label = pos.label(),
-                            selected = uiState.cameraPosition == pos,
-                            onClick = { viewModel.setCameraPosition(pos) },
-                        )
-                    }
-                }
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-            SettingsSection(title = stringResource(R.string.settings_detection_title)) {
-                Column(modifier = Modifier.selectableGroup()) {
-                    DetectionMode.entries.forEach { mode ->
-                        val aiEnabled = !mode.requiresML || uiState.tfliteAvailable
-                        RadioRow(
-                            label = mode.label(),
-                            selected = uiState.detectionMode == mode,
-                            onClick = { viewModel.setDetectionMode(mode) },
-                            enabled = aiEnabled,
-                        )
-                    }
-                }
-                if (!uiState.tfliteAvailable) {
+                SettingsSection(title = stringResource(R.string.settings_zone_title)) {
+                    val zone = uiState.detectionZone
                     Text(
-                        text = stringResource(R.string.detection_ai_unavailable),
+                        text = if (zone != null)
+                            stringResource(
+                                R.string.settings_zone_active,
+                                ((zone.right - zone.left) * 100).toInt(),
+                                ((zone.bottom - zone.top) * 100).toInt(),
+                            )
+                        else
+                            stringResource(R.string.settings_zone_none),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(onClick = onOpenZoneEditor) {
+                        Text(stringResource(R.string.settings_zone_edit))
+                    }
+                }
+
+                SettingsSection(title = stringResource(R.string.settings_sensors_title)) {
+                    SensorToggleRow(
+                        label = stringResource(R.string.calibration_sensor_motion),
+                        checked = uiState.motionEnabled,
+                        onCheckedChange = { viewModel.setMotionEnabled(it) },
+                    )
+                    SensorToggleRow(
+                        label = stringResource(R.string.calibration_sensor_light),
+                        checked = uiState.lightEnabled,
+                        onCheckedChange = { viewModel.setLightEnabled(it) },
+                    )
+                    SensorToggleRow(
+                        label = stringResource(R.string.calibration_sensor_mic),
+                        checked = uiState.micEnabled,
+                        onCheckedChange = { viewModel.setMicEnabled(it) },
+                    )
+                    SensorToggleRow(
+                        label = stringResource(R.string.calibration_sensor_camera),
+                        checked = uiState.cameraEnabled,
+                        onCheckedChange = { viewModel.setCameraEnabled(it) },
+                    )
+                }
+
+                SettingsSection(title = stringResource(R.string.settings_light_suppress_title)) {
+                    val lightSuppressSeconds by viewModel.lightSuppressMotionSeconds.collectAsStateWithLifecycle()
+                    Column(modifier = Modifier.selectableGroup()) {
+                        LIGHT_SUPPRESS_OPTIONS.forEach { secs ->
+                            RadioRow(
+                                label = lightSuppressLabel(secs),
+                                selected = lightSuppressSeconds == secs,
+                                onClick = { viewModel.setLightSuppressMotionSeconds(secs) },
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Card 2 — Recording
+            CategoryCard(title = stringResource(R.string.settings_cat_recording)) {
+                SettingsSection(title = stringResource(R.string.settings_countdown_title)) {
+                    Column(modifier = Modifier.selectableGroup()) {
+                        COUNTDOWN_OPTIONS.forEach { secs ->
+                            RadioRow(
+                                label = countdownLabel(secs),
+                                selected = uiState.countdownSeconds == secs,
+                                onClick = { viewModel.setCountdownSeconds(secs) },
+                            )
+                        }
+                    }
+                }
+
+                SettingsSection(title = stringResource(R.string.settings_calibration_title)) {
+                    Column(modifier = Modifier.selectableGroup()) {
+                        CALIBRATION_OPTIONS.forEach { secs ->
+                            RadioRow(
+                                label = calibrationLabel(secs),
+                                selected = uiState.calibrationSeconds == secs,
+                                onClick = { viewModel.setCalibrationSeconds(secs) },
+                            )
+                        }
+                    }
+                }
+
+                SettingsSection(title = stringResource(R.string.settings_clip_duration_title)) {
+                    Column(modifier = Modifier.selectableGroup()) {
+                        CLIP_DURATION_OPTIONS.forEach { secs ->
+                            RadioRow(
+                                label = clipDurationLabel(secs),
+                                selected = uiState.clipDurationSeconds == secs,
+                                onClick = { viewModel.setClipDurationSeconds(secs) },
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Card 3 — Security
+            CategoryCard(title = stringResource(R.string.settings_cat_security)) {
+                // PIN lock section (SEC-03, SEC-04, SEC-05)
+                SettingsSection(title = stringResource(R.string.settings_pin_title)) {
+                    SensorToggleRow(
+                        label = stringResource(R.string.settings_pin_enable),
+                        checked = pinEnabled == true,
+                        onCheckedChange = { enabled ->
+                            if (enabled) {
+                                // Enabling: open setup dialog if no hash stored yet
+                                pinDialogIsChange = false
+                                showPinDialog = true
+                            } else {
+                                viewModel.clearPin()
+                            }
+                        },
+                    )
+                    if (pinEnabled == true && pinHash != null) {
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedButton(onClick = {
+                            pinDialogIsChange = true
+                            showPinDialog = true
+                        }) {
+                            Text(stringResource(R.string.settings_pin_change))
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.settings_autolock_title),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
+                        )
+                        Column(modifier = Modifier.selectableGroup()) {
+                            AutoLockOption(
+                                label = stringResource(R.string.settings_autolock_immediate),
+                                selected = autoLockDelaySeconds == 0,
+                                onClick = { viewModel.setAutoLockDelay(0) },
+                            )
+                            AutoLockOption(
+                                label = stringResource(R.string.settings_autolock_30s),
+                                selected = autoLockDelaySeconds == 30,
+                                onClick = { viewModel.setAutoLockDelay(30) },
+                            )
+                            AutoLockOption(
+                                label = stringResource(R.string.settings_autolock_never),
+                                selected = autoLockDelaySeconds == -1,
+                                onClick = { viewModel.setAutoLockDelay(-1) },
+                            )
+                        }
+                    }
+                }
+
+                // Security section
+                SettingsSection(title = stringResource(R.string.settings_security_title)) {
+                    SensorToggleRow(
+                        label = stringResource(R.string.settings_media_encryption_label),
+                        checked = uiState.mediaEncryptionEnabled,
+                        onCheckedChange = { viewModel.setMediaEncryptionEnabled(it) },
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_media_encryption_note),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFFFFB300),
+                        color = if (uiState.mediaEncryptionEnabled)
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        else
+                            Color(0xFFFFB300),
                         modifier = Modifier.padding(start = 4.dp, top = 4.dp),
                     )
                 }
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-            SettingsSection(title = stringResource(R.string.settings_sensors_title)) {
-                SensorToggleRow(
-                    label = stringResource(R.string.calibration_sensor_motion),
-                    checked = uiState.motionEnabled,
-                    onCheckedChange = { viewModel.setMotionEnabled(it) },
-                )
-                SensorToggleRow(
-                    label = stringResource(R.string.calibration_sensor_light),
-                    checked = uiState.lightEnabled,
-                    onCheckedChange = { viewModel.setLightEnabled(it) },
-                )
-                SensorToggleRow(
-                    label = stringResource(R.string.calibration_sensor_mic),
-                    checked = uiState.micEnabled,
-                    onCheckedChange = { viewModel.setMicEnabled(it) },
-                )
-                SensorToggleRow(
-                    label = stringResource(R.string.calibration_sensor_camera),
-                    checked = uiState.cameraEnabled,
-                    onCheckedChange = { viewModel.setCameraEnabled(it) },
-                )
+            // Card 4 — Notifications (placeholder for plan 05)
+            CategoryCard(title = stringResource(R.string.settings_cat_notifications)) {
+                // TODO: Plan 05 adds Signal, Mattermost, rule config, and heartbeat sections here
+                Text("—", style = MaterialTheme.typography.bodyMedium)
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-            SettingsSection(title = stringResource(R.string.settings_light_suppress_title)) {
-                val lightSuppressSeconds by viewModel.lightSuppressMotionSeconds.collectAsStateWithLifecycle()
-                Column(modifier = Modifier.selectableGroup()) {
-                    LIGHT_SUPPRESS_OPTIONS.forEach { secs ->
-                        RadioRow(
-                            label = lightSuppressLabel(secs),
-                            selected = lightSuppressSeconds == secs,
-                            onClick = { viewModel.setLightSuppressMotionSeconds(secs) },
-                        )
-                    }
-                }
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-            SettingsSection(title = stringResource(R.string.settings_zone_title)) {
-                val zone = uiState.detectionZone
-                Text(
-                    text = if (zone != null)
-                        stringResource(
-                            R.string.settings_zone_active,
-                            ((zone.right - zone.left) * 100).toInt(),
-                            ((zone.bottom - zone.top) * 100).toInt(),
-                        )
-                    else
-                        stringResource(R.string.settings_zone_none),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.height(8.dp))
-                OutlinedButton(onClick = onOpenZoneEditor) {
-                    Text(stringResource(R.string.settings_zone_edit))
-                }
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-            SettingsSection(title = stringResource(R.string.settings_countdown_title)) {
-                Column(modifier = Modifier.selectableGroup()) {
-                    COUNTDOWN_OPTIONS.forEach { secs ->
-                        RadioRow(
-                            label = countdownLabel(secs),
-                            selected = uiState.countdownSeconds == secs,
-                            onClick = { viewModel.setCountdownSeconds(secs) },
-                        )
-                    }
-                }
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-            SettingsSection(title = stringResource(R.string.settings_clip_duration_title)) {
-                Column(modifier = Modifier.selectableGroup()) {
-                    CLIP_DURATION_OPTIONS.forEach { secs ->
-                        RadioRow(
-                            label = clipDurationLabel(secs),
-                            selected = uiState.clipDurationSeconds == secs,
-                            onClick = { viewModel.setClipDurationSeconds(secs) },
-                        )
-                    }
-                }
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-            SettingsSection(title = stringResource(R.string.settings_calibration_title)) {
-                Column(modifier = Modifier.selectableGroup()) {
-                    CALIBRATION_OPTIONS.forEach { secs ->
-                        RadioRow(
-                            label = calibrationLabel(secs),
-                            selected = uiState.calibrationSeconds == secs,
-                            onClick = { viewModel.setCalibrationSeconds(secs) },
-                        )
-                    }
-                }
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-            SettingsSection(title = stringResource(R.string.settings_language_title)) {
-                Column(modifier = Modifier.selectableGroup()) {
-                    LANGUAGE_OPTIONS.forEach { (tag, label) ->
-                        RadioRow(
-                            label = label,
-                            selected = uiState.languageTag == tag,
-                            onClick = { viewModel.setLanguage(tag) },
-                        )
-                    }
-                }
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-            // PIN lock section (SEC-03, SEC-04, SEC-05)
-            SettingsSection(title = stringResource(R.string.settings_pin_title)) {
-                SensorToggleRow(
-                    label = stringResource(R.string.settings_pin_enable),
-                    checked = pinEnabled == true,
-                    onCheckedChange = { enabled ->
-                        if (enabled) {
-                            // Enabling: open setup dialog if no hash stored yet
-                            pinDialogIsChange = false
-                            showPinDialog = true
-                        } else {
-                            viewModel.clearPin()
-                        }
-                    },
-                )
-                if (pinEnabled == true && pinHash != null) {
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedButton(onClick = {
-                        pinDialogIsChange = true
-                        showPinDialog = true
-                    }) {
-                        Text(stringResource(R.string.settings_pin_change))
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(R.string.settings_autolock_title),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
-                    )
+            // Card 5 — App
+            CategoryCard(title = stringResource(R.string.settings_cat_app)) {
+                SettingsSection(title = stringResource(R.string.settings_language_title)) {
                     Column(modifier = Modifier.selectableGroup()) {
-                        AutoLockOption(
-                            label = stringResource(R.string.settings_autolock_immediate),
-                            selected = autoLockDelaySeconds == 0,
-                            onClick = { viewModel.setAutoLockDelay(0) },
+                        LANGUAGE_OPTIONS.forEach { (tag, label) ->
+                            RadioRow(
+                                label = label,
+                                selected = uiState.languageTag == tag,
+                                onClick = { viewModel.setLanguage(tag) },
+                            )
+                        }
+                    }
+                }
+
+                SettingsSection(title = stringResource(R.string.settings_log_level_title)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = if (logLevelDebug) stringResource(R.string.log_level_debug)
+                                   else stringResource(R.string.log_level_normal),
+                            style = MaterialTheme.typography.bodyMedium,
                         )
-                        AutoLockOption(
-                            label = stringResource(R.string.settings_autolock_30s),
-                            selected = autoLockDelaySeconds == 30,
-                            onClick = { viewModel.setAutoLockDelay(30) },
+                        Switch(
+                            checked = logLevelDebug,
+                            onCheckedChange = { logLevelDebug = it },
                         )
-                        AutoLockOption(
-                            label = stringResource(R.string.settings_autolock_never),
-                            selected = autoLockDelaySeconds == -1,
-                            onClick = { viewModel.setAutoLockDelay(-1) },
-                        )
+                    }
+                }
+
+                SettingsSection(title = stringResource(R.string.settings_about_title)) {
+                    Text(
+                        text = "${stringResource(R.string.about_version)}: ${BuildConfig.VERSION_NAME}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(vertical = 4.dp),
+                    )
+                    Text(
+                        text = "${stringResource(R.string.about_build)}: ${BuildConfig.VERSION_CODE}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.padding(bottom = 16.dp),
+                    )
+                    OutlinedButton(
+                        onClick = onOpenDiagnostics,
+                        modifier = Modifier.padding(bottom = 16.dp),
+                    ) {
+                        Text(stringResource(R.string.settings_open_diagnostics))
                     }
                 }
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-            // Security section
-            SettingsSection(title = stringResource(R.string.settings_security_title)) {
-                SensorToggleRow(
-                    label = stringResource(R.string.settings_media_encryption_label),
-                    checked = uiState.mediaEncryptionEnabled,
-                    onCheckedChange = { viewModel.setMediaEncryptionEnabled(it) },
-                )
-                Text(
-                    text = stringResource(R.string.settings_media_encryption_note),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (uiState.mediaEncryptionEnabled)
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    else
-                        Color(0xFFFFB300),
-                    modifier = Modifier.padding(start = 4.dp, top = 4.dp),
-                )
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-            SettingsSection(title = stringResource(R.string.settings_about_title)) {
-                Text(
-                    text = "${stringResource(R.string.about_version)}: ${BuildConfig.VERSION_NAME}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(vertical = 4.dp),
-                )
-                Text(
-                    text = "${stringResource(R.string.about_build)}: ${BuildConfig.VERSION_CODE}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    modifier = Modifier.padding(bottom = 16.dp),
-                )
-                OutlinedButton(
-                    onClick = onOpenDiagnostics,
-                    modifier = Modifier.padding(bottom = 16.dp),
-                ) {
-                    Text(stringResource(R.string.settings_open_diagnostics))
-                }
-            }
+            Spacer(Modifier.height(16.dp))
         }
     }
 
@@ -350,6 +373,31 @@ fun SettingsScreen(
                 showPinDialog = false
             },
         )
+    }
+}
+
+@Composable
+private fun CategoryCard(
+    title: String,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        ),
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(12.dp))
+            content()
+        }
     }
 }
 
