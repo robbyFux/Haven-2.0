@@ -55,6 +55,20 @@ class CameraAnalyzer(
     private var lastTfliteMs = 0L
     private val TFLITE_MIN_INTERVAL_MS = 1_500L
 
+    /**
+     * Last confirmed-motion frame as JPEG (quality 60, < 200 KB typical).
+     * Updated on every frame that passes Stage 1+2 motion confirmation.
+     * Read by NotificationRouter for CAMERA-type alert attachments (D-12).
+     *
+     * Known approximate behavior: the frame at notification send time may be
+     * slightly newer than the triggering event (last frame wins). Acceptable for
+     * alert thumbnails — exact frame synchronisation would complicate the pipeline.
+     *
+     * @Volatile: single writer (camera executor thread), multiple readers (notification coroutine).
+     */
+    @Volatile var lastJpegFrame: ByteArray? = null
+        private set
+
     init {
         if (detectionMode.requiresML) {
             objectDetector?.initialize()
@@ -102,6 +116,27 @@ class CameraAnalyzer(
             }
 
             if (!motionConfirmed) return
+
+            // Capture JPEG for notification attachment (D-12, < 200 KB at quality 60)
+            runCatching {
+                val uPlane = image.planes[1]
+                val vPlane = image.planes[2]
+                val uBuf = uPlane.buffer
+                val vBuf = vPlane.buffer
+                val nv21 = ByteArray(width * height * 3 / 2)
+                luma.copyInto(nv21, destinationOffset = 0)
+                var uvIdx = width * height
+                for (row in 0 until height / 2) {
+                    for (col in 0 until width / 2) {
+                        nv21[uvIdx++] = vBuf.get(row * vPlane.rowStride + col * vPlane.pixelStride)
+                        nv21[uvIdx++] = uBuf.get(row * uPlane.rowStride + col * uPlane.pixelStride)
+                    }
+                }
+                val out = ByteArrayOutputStream()
+                YuvImage(nv21, ImageFormat.NV21, width, height, null)
+                    .compressToJpeg(Rect(0, 0, width, height), 60, out)
+                lastJpegFrame = out.toByteArray()
+            }
 
             // Stufe 3: TFLite (nur wenn Modus ML verlangt, Detektor verfügbar und Drosselung erlaubt)
             if (detectionMode.requiresML && objectDetector?.isAvailable == true) {
