@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.3
-milestone_name: Phase-2-Complete
+milestone: v0.4
+milestone_name: NotificationEngine
 status: executing
-stopped_at: "Completed 03-phase-2-complete plan 07 Task 1: FilterChip row in EventDetailScreen — stopped at Task 2 checkpoint:human-verify"
-last_updated: "2026-04-05T00:00:00.000Z"
+stopped_at: "Completed 04-notification-engine plan 01: NotificationEngine Foundation"
+last_updated: "2026-04-05T21:12:18.425Z"
 last_activity: 2026-04-05
 progress:
-  total_phases: 1
+  total_phases: 2
   completed_phases: 1
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 12
+  completed_plans: 8
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Zuverlässige, privacy-respektierende Bewegungserkennung — die App muss starten, kalibrieren und Ereignisse erfassen, ohne dass etwas stillschweigend fehlschlägt.
-**Current focus:** Phase 03 — phase-2-complete
+**Current focus:** Phase 04 — notification-engine
 
 ## Current Position
 
-Phase: 03
-Plan: Not started
+Phase: 04 (notification-engine) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-04-04
+Last activity: 2026-04-05
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -58,6 +58,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03 P06 | 3 | 1 tasks | 1 files |
 | Phase 03 P05 | 15 | 1 tasks | 8 files |
 | Phase 03-phase-2-complete P07 | 1 | 1 tasks | 3 files |
+| Phase 04-notification-engine P01 | 8 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,9 @@ Recent decisions affecting current work:
 - [Phase 03-phase-2-complete]: LightMonitor no longer implements SensorMonitor: 3-param observe() replaces 2-param interface; MonitorService injects concrete type
 - [Phase 03-phase-2-complete]: RecentTriggerState is a plain Kotlin object (not Hilt) for process-global cross-sensor priority gate in LightMonitor
 - [Phase 03-phase-2-complete]: derivedStateOf used for filteredTriggers in EventDetailScreen: more efficient than keyed remember for computed state depending on other Compose snapshot state
+- [Phase 04-notification-engine]: HavenAlertChannel named to avoid android.app.NotificationChannel import clash in MonitorService
+- [Phase 04-notification-engine]: NotificationRule fields persisted as individual DataStore keys, consistent with existing SettingsRepository pattern
+- [Phase 04-notification-engine]: AppLogger.currentLogLevel uses @Volatile (not @Synchronized) for low-contention reads on the hot logging path
 
 ### Roadmap Evolution
 
@@ -101,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T16:46:21.278Z
-Stopped at: Completed 03-phase-2-complete plan 07 Task 1: FilterChip row in EventDetailScreen — stopped at Task 2 checkpoint:human-verify
+Last session: 2026-04-05T21:12:18.422Z
+Stopped at: Completed 04-notification-engine plan 01: NotificationEngine Foundation
 Resume file: None
