@@ -119,6 +119,9 @@ dependencies {
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.ui)
 
+    // OkHttp
+    implementation(libs.okhttp)
+
     // DataStore
     implementation(libs.datastore.preferences)
 
