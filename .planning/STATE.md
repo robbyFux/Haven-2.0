@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v0.4
 milestone_name: NotificationEngine
 status: executing
-stopped_at: "Checkpoint: 04-05 Task 3 human-verify — awaiting UI verification on device"
-last_updated: "2026-04-05T21:25:36.252Z"
+stopped_at: "Completed 04-notification-engine plan 04: NotificationRouter and MonitorService Integration"
+last_updated: "2026-04-05T21:25:50.410Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 2
@@ -92,6 +92,9 @@ Recent decisions affecting current work:
 - [Phase 04-notification-engine]: lastJpegFrame uses full-color NV21 JPEG (same UV-plane extraction as buildBitmap) for better notification thumbnails
 - [Phase 04-notification-engine]: Notification StateFlows are individual ViewModel properties (not in SettingsUiState): avoids bloating combined data class and keeps UI collections independent
 - [Phase 04-notification-engine]: setLogLevel() calls appLogger.setLogLevel() directly before coroutine for instant effect, then persists to DataStore asynchronously
+- [Phase 04-notification-engine]: NotificationRouter uses ordinal comparison for Severity enum since it is ordered LOW < MEDIUM < HIGH < CRITICAL
+- [Phase 04-notification-engine]: route() called in child launch{} to avoid blocking trigger collection loop on slow HTTP calls
+- [Phase 04-notification-engine]: Heartbeat coroutines use while(_state != ACTIVE) delay(500) guard before first heartbeat send
 
 ### Roadmap Evolution
 
@@ -115,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T21:25:09.877Z
-Stopped at: Checkpoint: 04-05 Task 3 human-verify — awaiting UI verification on device
+Last session: 2026-04-05T21:25:50.407Z
+Stopped at: Completed 04-notification-engine plan 04: NotificationRouter and MonitorService Integration
 Resume file: None
