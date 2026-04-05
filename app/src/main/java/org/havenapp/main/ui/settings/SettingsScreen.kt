@@ -43,9 +43,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material3.Checkbox
 import org.havenapp.main.BuildConfig
 import org.havenapp.main.R
 import org.havenapp.main.detection.DetectionMode
+import org.havenapp.main.events.Severity
+import org.havenapp.main.events.TriggerType
 import org.havenapp.main.sensor.CameraPosition
 import org.havenapp.main.sensor.Sensitivity
 
@@ -61,12 +64,29 @@ fun SettingsScreen(
     val pinHash by viewModel.pinHash.collectAsStateWithLifecycle()
     val autoLockDelaySeconds by viewModel.autoLockDelaySeconds.collectAsStateWithLifecycle()
 
-    // TODO: Plan 05 wires to SettingsViewModel.logLevelDebug
-    var logLevelDebug by remember { mutableStateOf(false) }
+    // Notification settings (Phase 4, plan 05)
+    val signalEnabled by viewModel.signalEnabled.collectAsStateWithLifecycle()
+    val signalServerUrl by viewModel.signalServerUrl.collectAsStateWithLifecycle()
+    val signalSender by viewModel.signalSender.collectAsStateWithLifecycle()
+    val signalRecipient by viewModel.signalRecipient.collectAsStateWithLifecycle()
+    val signalBearerToken by viewModel.signalBearerToken.collectAsStateWithLifecycle()
+    val mattermostEnabled by viewModel.mattermostEnabled.collectAsStateWithLifecycle()
+    val mattermostWebhookUrl by viewModel.mattermostWebhookUrl.collectAsStateWithLifecycle()
+    val minSeverity by viewModel.minSeverity.collectAsStateWithLifecycle()
+    val cooldownMs by viewModel.cooldownMs.collectAsStateWithLifecycle()
+    val triggerTypes by viewModel.notificationTriggerTypes.collectAsStateWithLifecycle()
+    val attachMedia by viewModel.attachMedia.collectAsStateWithLifecycle()
+    val heartbeatSignalMin by viewModel.heartbeatSignalMinutes.collectAsStateWithLifecycle()
+    val heartbeatMattermostMin by viewModel.heartbeatMattermostMinutes.collectAsStateWithLifecycle()
+    val logLevelDebug by viewModel.logLevelDebug.collectAsStateWithLifecycle()
 
     // Dialog state for PIN setup / change
     var showPinDialog by remember { mutableStateOf(false) }
     var pinDialogIsChange by remember { mutableStateOf(false) }
+
+    // Dialog state for notification channel config
+    var showSignalDialog by remember { mutableStateOf(false) }
+    var showMattermostDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -297,10 +317,159 @@ fun SettingsScreen(
                 }
             }
 
-            // Card 4 — Notifications (placeholder for plan 05)
+            // Card 4 — Notifications
             CategoryCard(title = stringResource(R.string.settings_cat_notifications)) {
-                // TODO: Plan 05 adds Signal, Mattermost, rule config, and heartbeat sections here
-                Text("—", style = MaterialTheme.typography.bodyMedium)
+                // Signal channel (D-02)
+                SettingsSection(title = stringResource(R.string.settings_signal_title)) {
+                    SensorToggleRow(
+                        label = stringResource(R.string.settings_signal_enabled),
+                        checked = signalEnabled,
+                        onCheckedChange = { viewModel.setSignalEnabled(it) },
+                    )
+                    OutlinedButton(
+                        onClick = { showSignalDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = if (signalServerUrl.isNotBlank())
+                                stringResource(R.string.settings_signal_configured, signalServerUrl)
+                            else stringResource(R.string.settings_signal_not_configured),
+                        )
+                    }
+                    // Heartbeat (D-08)
+                    SettingsSection(title = stringResource(R.string.settings_heartbeat_title)) {
+                        Column(modifier = Modifier.selectableGroup()) {
+                            listOf(
+                                0 to R.string.heartbeat_off,
+                                15 to R.string.heartbeat_15min,
+                                30 to R.string.heartbeat_30min,
+                                60 to R.string.heartbeat_60min,
+                            ).forEach { (min, labelRes) ->
+                                RadioRow(
+                                    label = stringResource(labelRes),
+                                    selected = heartbeatSignalMin == min,
+                                    onClick = { viewModel.setHeartbeatSignalMinutes(min) },
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Mattermost channel (D-02)
+                SettingsSection(title = stringResource(R.string.settings_mattermost_title)) {
+                    SensorToggleRow(
+                        label = stringResource(R.string.settings_mattermost_enabled),
+                        checked = mattermostEnabled,
+                        onCheckedChange = { viewModel.setMattermostEnabled(it) },
+                    )
+                    OutlinedButton(
+                        onClick = { showMattermostDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = if (mattermostWebhookUrl.isNotBlank())
+                                stringResource(R.string.settings_mattermost_configured, mattermostWebhookUrl)
+                            else stringResource(R.string.settings_mattermost_not_configured),
+                        )
+                    }
+                    // Heartbeat (D-08)
+                    SettingsSection(title = stringResource(R.string.settings_heartbeat_title)) {
+                        Column(modifier = Modifier.selectableGroup()) {
+                            listOf(
+                                0 to R.string.heartbeat_off,
+                                15 to R.string.heartbeat_15min,
+                                30 to R.string.heartbeat_30min,
+                                60 to R.string.heartbeat_60min,
+                            ).forEach { (min, labelRes) ->
+                                RadioRow(
+                                    label = stringResource(labelRes),
+                                    selected = heartbeatMattermostMin == min,
+                                    onClick = { viewModel.setHeartbeatMattermostMinutes(min) },
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // NotificationRule (D-05)
+                SettingsSection(title = stringResource(R.string.settings_notification_rule_title)) {
+                    // minSeverity (radio group)
+                    Text(
+                        text = stringResource(R.string.settings_min_severity),
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                    Column(modifier = Modifier.selectableGroup()) {
+                        Severity.entries.forEach { sev ->
+                            RadioRow(
+                                label = sev.name,
+                                selected = minSeverity == sev,
+                                onClick = { viewModel.setMinSeverity(sev) },
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    // cooldown (radio group)
+                    Text(
+                        text = stringResource(R.string.settings_cooldown),
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                    Column(modifier = Modifier.selectableGroup()) {
+                        listOf(
+                            0L to R.string.cooldown_off,
+                            60_000L to R.string.cooldown_1min,
+                            300_000L to R.string.cooldown_5min,
+                            900_000L to R.string.cooldown_15min,
+                            1_800_000L to R.string.cooldown_30min,
+                        ).forEach { (ms, labelRes) ->
+                            RadioRow(
+                                label = stringResource(labelRes),
+                                selected = cooldownMs == ms,
+                                onClick = { viewModel.setCooldownMs(ms) },
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    // trigger type whitelist (checkboxes)
+                    Text(
+                        text = stringResource(R.string.settings_trigger_types),
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                    val relevantTypes = listOf(
+                        TriggerType.CAMERA, TriggerType.CAMERA_PERSON, TriggerType.CAMERA_PET,
+                        TriggerType.CAMERA_VEHICLE, TriggerType.MICROPHONE,
+                        TriggerType.ACCELEROMETER, TriggerType.LIGHT, TriggerType.GYROSCOPE,
+                    )
+                    relevantTypes.forEach { type ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(
+                                checked = type in triggerTypes,
+                                onCheckedChange = { checked ->
+                                    val newSet = if (checked) triggerTypes + type else triggerTypes - type
+                                    viewModel.setNotificationTriggerTypes(newSet)
+                                },
+                            )
+                            Text(type.name, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    // attachMedia toggle
+                    SensorToggleRow(
+                        label = stringResource(R.string.settings_attach_media),
+                        checked = attachMedia,
+                        onCheckedChange = { viewModel.setAttachMedia(it) },
+                    )
+                }
             }
 
             // Card 5 — App
@@ -330,7 +499,7 @@ fun SettingsScreen(
                         )
                         Switch(
                             checked = logLevelDebug,
-                            onCheckedChange = { logLevelDebug = it },
+                            onCheckedChange = { viewModel.setLogLevel(it) },
                         )
                     }
                 }
@@ -372,6 +541,29 @@ fun SettingsScreen(
                 viewModel.setPin(pin)
                 showPinDialog = false
             },
+        )
+    }
+
+    // Signal config dialog
+    if (showSignalDialog) {
+        SignalConfigDialog(
+            initialServerUrl = signalServerUrl,
+            initialSender = signalSender,
+            initialRecipient = signalRecipient,
+            initialBearerToken = signalBearerToken,
+            onDismiss = { showSignalDialog = false },
+            onSave = { url, sender, recipient, token ->
+                viewModel.setSignalConfig(url, sender, recipient, token)
+            },
+        )
+    }
+
+    // Mattermost config dialog
+    if (showMattermostDialog) {
+        MattermostConfigDialog(
+            initialWebhookUrl = mattermostWebhookUrl,
+            onDismiss = { showMattermostDialog = false },
+            onSave = { url -> viewModel.setMattermostWebhookUrl(url) },
         )
     }
 }
@@ -493,6 +685,99 @@ private fun AutoLockOption(label: String, selected: Boolean, onClick: () -> Unit
             modifier = Modifier.padding(start = 12.dp),
         )
     }
+}
+
+@Composable
+private fun SignalConfigDialog(
+    initialServerUrl: String,
+    initialSender: String,
+    initialRecipient: String,
+    initialBearerToken: String,
+    onDismiss: () -> Unit,
+    onSave: (serverUrl: String, sender: String, recipient: String, bearerToken: String) -> Unit,
+) {
+    var serverUrl by remember { mutableStateOf(initialServerUrl) }
+    var sender by remember { mutableStateOf(initialSender) }
+    var recipient by remember { mutableStateOf(initialRecipient) }
+    var bearerToken by remember { mutableStateOf(initialBearerToken) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_signal_configure)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = serverUrl,
+                    onValueChange = { serverUrl = it },
+                    label = { Text(stringResource(R.string.settings_signal_server_url)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = sender,
+                    onValueChange = { sender = it },
+                    label = { Text(stringResource(R.string.settings_signal_sender)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = recipient,
+                    onValueChange = { recipient = it },
+                    label = { Text(stringResource(R.string.settings_signal_recipient)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = bearerToken,
+                    onValueChange = { bearerToken = it },
+                    label = { Text(stringResource(R.string.settings_signal_bearer_token)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                onSave(serverUrl.trim(), sender.trim(), recipient.trim(), bearerToken.trim())
+                onDismiss()
+            }) { Text(stringResource(R.string.dialog_save)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.dialog_cancel)) }
+        },
+    )
+}
+
+@Composable
+private fun MattermostConfigDialog(
+    initialWebhookUrl: String,
+    onDismiss: () -> Unit,
+    onSave: (webhookUrl: String) -> Unit,
+) {
+    var webhookUrl by remember { mutableStateOf(initialWebhookUrl) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_mattermost_configure)) },
+        text = {
+            OutlinedTextField(
+                value = webhookUrl,
+                onValueChange = { webhookUrl = it },
+                label = { Text(stringResource(R.string.settings_mattermost_webhook_url)) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                onSave(webhookUrl.trim())
+                onDismiss()
+            }) { Text(stringResource(R.string.dialog_save)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.dialog_cancel)) }
+        },
+    )
 }
 
 private val COUNTDOWN_OPTIONS = listOf(0, 15, 30, 60, 90, 120)
