@@ -43,6 +43,13 @@ import org.havenapp.main.storage.EventRepository
 import org.havenapp.main.storage.SettingsRepository
 import java.util.concurrent.Executors
 import javax.inject.Inject
+import okhttp3.OkHttpClient
+import org.havenapp.main.BuildConfig
+import org.havenapp.main.notify.HavenAlertChannel
+import org.havenapp.main.notify.MattermostChannel
+import org.havenapp.main.notify.NotificationRouter
+import org.havenapp.main.notify.NotificationRule
+import org.havenapp.main.notify.SignalRestChannel
 
 @AndroidEntryPoint
 class MonitorService : LifecycleService() {
@@ -85,6 +92,8 @@ class MonitorService : LifecycleService() {
     @Inject lateinit var lightMonitor: LightMonitor
     @Inject lateinit var microphoneMonitor: MicrophoneMonitor
     @Inject lateinit var appLogger: org.havenapp.main.storage.AppLogger
+    @Inject lateinit var notificationRouter: NotificationRouter
+    @Inject lateinit var httpClient: OkHttpClient
 
     private var wakeLock: PowerManager.WakeLock? = null
     private var currentEventId: Long? = null
@@ -125,6 +134,33 @@ class MonitorService : LifecycleService() {
             clipDurationSecs = settingsRepository.clipDurationSeconds.first()
             val mediaEncryptionEnabled = settingsRepository.mediaEncryptionEnabled.first()
             val lightSuppressMotionSeconds = settingsRepository.lightSuppressMotionSeconds.first()
+
+            // Notification settings snapshot (Phase 4)
+            val signalEnabled = settingsRepository.signalEnabled.first()
+            val signalServerUrl = settingsRepository.signalServerUrl.first()
+            val signalSender = settingsRepository.signalSender.first()
+            val signalRecipient = settingsRepository.signalRecipient.first()
+            val signalBearerToken = settingsRepository.signalBearerToken.first()
+            val mattermostEnabled = settingsRepository.mattermostEnabled.first()
+            val mattermostWebhookUrl = settingsRepository.mattermostWebhookUrl.first()
+            val heartbeatSignalMin = settingsRepository.heartbeatSignalMinutes.first()
+            val heartbeatMattermostMin = settingsRepository.heartbeatMattermostMinutes.first()
+
+            val notifRule = NotificationRule(
+                minSeverity = settingsRepository.minSeverity.first(),
+                cooldownMs = settingsRepository.cooldownMs.first(),
+                triggerTypes = settingsRepository.notificationTriggerTypes.first(),
+                attachMedia = settingsRepository.attachMedia.first(),
+            )
+            val notifChannels = buildList<HavenAlertChannel> {
+                if (signalEnabled) {
+                    add(SignalRestChannel(httpClient, signalServerUrl, signalSender, signalRecipient, signalBearerToken))
+                }
+                if (mattermostEnabled) {
+                    add(MattermostChannel(httpClient, mattermostWebhookUrl))
+                }
+            }
+            notificationRouter.initialize(notifRule, notifChannels)
 
             // --- Phase 1: Countdown ---
             if (countdownSecs > 0) {
@@ -191,6 +227,36 @@ class MonitorService : LifecycleService() {
                 updateNotification()
             }
 
+            // Heartbeat coroutines (Phase 4, D-08/D-09/D-10)
+            // Launched inside monitoringJob — auto-cancelled on stop via structured concurrency.
+            val signalChannel = notifChannels.filterIsInstance<SignalRestChannel>().firstOrNull()
+            val mattermostChannel = notifChannels.filterIsInstance<MattermostChannel>().firstOrNull()
+
+            if (signalChannel != null && heartbeatSignalMin > 0) {
+                launch {
+                    // Wait for monitoring to become ACTIVE before first heartbeat
+                    while (_state.value != MonitorState.ACTIVE) delay(500)
+                    while (true) {
+                        delay(heartbeatSignalMin * 60_000L)
+                        val msg = "Haven alive - v${BuildConfig.VERSION_NAME} - ${_state.value} - ${java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())}"
+                        runCatching { signalChannel.sendHeartbeat(msg) }
+                            .onFailure { appLogger.e(TAG, "Signal heartbeat failed: ${it.message}") }
+                    }
+                }
+            }
+
+            if (mattermostChannel != null && heartbeatMattermostMin > 0) {
+                launch {
+                    while (_state.value != MonitorState.ACTIVE) delay(500)
+                    while (true) {
+                        delay(heartbeatMattermostMin * 60_000L)
+                        val msg = "Haven alive - v${BuildConfig.VERSION_NAME} - ${_state.value} - ${java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())}"
+                        runCatching { mattermostChannel.sendHeartbeat(msg) }
+                            .onFailure { appLogger.e(TAG, "Mattermost heartbeat failed: ${it.message}") }
+                    }
+                }
+            }
+
             // --- Phase 3: Aktive Überwachung ---
             // Sensor-Flow läuft ab Kalibrierungsstart; currentEventId ist null
             // solange kalibriert wird → Events werden erst danach persistiert.
@@ -207,6 +273,13 @@ class MonitorService : LifecycleService() {
                     if (clipRecorder?.isRecording == true) return@collect
 
                     val triggerId = eventRepository.recordTrigger(eventId, trigger)
+
+                    // Route to notification channels (Phase 4)
+                    launch {
+                        val frame = cameraAnalyzer?.lastJpegFrame
+                        notificationRouter.route(trigger, frame)
+                    }
+
                     // Start clip on first trigger (REC-01); ClipRecorder guards against parallel clips (REC-03)
                     clipRecorder?.startClip(
                         context = this@MonitorService,
@@ -236,6 +309,7 @@ class MonitorService : LifecycleService() {
 
     private fun stopMonitoring() {
         appLogger.i(TAG, "Monitoring stopped")
+        notificationRouter.reset()
         monitoringJob?.cancel()
         monitoringJob = null
 
