@@ -22,6 +22,13 @@ class AppLogger @Inject constructor() {
 
     enum class Level { DEBUG, INFO, WARN, ERROR }
 
+    /** Controls in-app ring-buffer verbosity. DEBUG captures all levels; NORMAL drops DEBUG entries. */
+    enum class LogLevel { NORMAL, DEBUG }
+
+    @Volatile var currentLogLevel: LogLevel = LogLevel.NORMAL
+
+    fun setLogLevel(level: LogLevel) { currentLogLevel = level }
+
     data class Entry(
         val timestamp: Long,
         val level: Level,
@@ -34,6 +41,7 @@ class AppLogger @Inject constructor() {
 
     @Synchronized
     fun log(level: Level, tag: String, message: String) {
+        if (level == Level.DEBUG && currentLogLevel == LogLevel.NORMAL) return
         when (level) {
             Level.DEBUG -> Log.d(tag, message)
             Level.INFO  -> Log.i(tag, message)

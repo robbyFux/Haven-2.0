@@ -5,11 +5,15 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.havenapp.main.detection.DetectionMode
 import org.havenapp.main.detection.DetectionZone
+import org.havenapp.main.events.Severity
+import org.havenapp.main.events.TriggerType
 import org.havenapp.main.sensor.CameraPosition
 import org.havenapp.main.sensor.Sensitivity
 import javax.inject.Inject
@@ -38,6 +42,25 @@ class SettingsRepository @Inject constructor(
         private val KEY_PIN_SALT = stringPreferencesKey("pin_salt")
         private val KEY_AUTO_LOCK_DELAY_SECONDS = intPreferencesKey("auto_lock_delay_seconds")
         private val KEY_LIGHT_SUPPRESS_MOTION_SECONDS = intPreferencesKey("light_suppress_motion_seconds")
+
+        // Notification channels (D-02, D-03)
+        private val KEY_SIGNAL_ENABLED = booleanPreferencesKey("signal_enabled")
+        private val KEY_SIGNAL_SERVER_URL = stringPreferencesKey("signal_server_url")
+        private val KEY_SIGNAL_SENDER = stringPreferencesKey("signal_sender_number")
+        private val KEY_SIGNAL_RECIPIENT = stringPreferencesKey("signal_recipient_number")
+        private val KEY_SIGNAL_BEARER_TOKEN = stringPreferencesKey("signal_bearer_token")
+        private val KEY_MATTERMOST_ENABLED = booleanPreferencesKey("mattermost_enabled")
+        private val KEY_MATTERMOST_WEBHOOK_URL = stringPreferencesKey("mattermost_webhook_url")
+        // NotificationRule (D-05, D-06)
+        private val KEY_MIN_SEVERITY = stringPreferencesKey("notification_min_severity")
+        private val KEY_COOLDOWN_MS = longPreferencesKey("notification_cooldown_ms")
+        private val KEY_TRIGGER_TYPE_WHITELIST = stringSetPreferencesKey("notification_trigger_types")
+        private val KEY_ATTACH_MEDIA = booleanPreferencesKey("notification_attach_media")
+        // Heartbeat (D-08)
+        private val KEY_HEARTBEAT_SIGNAL_MIN = intPreferencesKey("heartbeat_signal_minutes")
+        private val KEY_HEARTBEAT_MATTERMOST_MIN = intPreferencesKey("heartbeat_mattermost_minutes")
+        // Logging (D-18)
+        private val KEY_LOG_LEVEL = stringPreferencesKey("log_level")
     }
 
     val sensitivity: Flow<Sensitivity> = dataStore.data.map { prefs ->
@@ -188,5 +211,108 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setLightSuppressMotionSeconds(seconds: Int) {
         dataStore.edit { it[KEY_LIGHT_SUPPRESS_MOTION_SECONDS] = seconds }
+    }
+
+    // ── Signal channel ───────────────────────────────────────────────────────
+
+    val signalEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_SIGNAL_ENABLED] ?: false }
+    val signalServerUrl: Flow<String> = dataStore.data.map { it[KEY_SIGNAL_SERVER_URL] ?: "" }
+    val signalSender: Flow<String> = dataStore.data.map { it[KEY_SIGNAL_SENDER] ?: "" }
+    val signalRecipient: Flow<String> = dataStore.data.map { it[KEY_SIGNAL_RECIPIENT] ?: "" }
+    val signalBearerToken: Flow<String> = dataStore.data.map { it[KEY_SIGNAL_BEARER_TOKEN] ?: "" }
+
+    suspend fun setSignalEnabled(enabled: Boolean) {
+        dataStore.edit { it[KEY_SIGNAL_ENABLED] = enabled }
+    }
+
+    suspend fun setSignalConfig(
+        serverUrl: String,
+        sender: String,
+        recipient: String,
+        bearerToken: String,
+    ) {
+        dataStore.edit { prefs ->
+            prefs[KEY_SIGNAL_SERVER_URL] = serverUrl
+            prefs[KEY_SIGNAL_SENDER] = sender
+            prefs[KEY_SIGNAL_RECIPIENT] = recipient
+            prefs[KEY_SIGNAL_BEARER_TOKEN] = bearerToken
+        }
+    }
+
+    // ── Mattermost channel ───────────────────────────────────────────────────
+
+    val mattermostEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_MATTERMOST_ENABLED] ?: false }
+    val mattermostWebhookUrl: Flow<String> = dataStore.data.map { it[KEY_MATTERMOST_WEBHOOK_URL] ?: "" }
+
+    suspend fun setMattermostEnabled(enabled: Boolean) {
+        dataStore.edit { it[KEY_MATTERMOST_ENABLED] = enabled }
+    }
+
+    suspend fun setMattermostWebhookUrl(url: String) {
+        dataStore.edit { it[KEY_MATTERMOST_WEBHOOK_URL] = url }
+    }
+
+    // ── NotificationRule ─────────────────────────────────────────────────────
+
+    val minSeverity: Flow<Severity> = dataStore.data.map { prefs ->
+        prefs[KEY_MIN_SEVERITY]
+            ?.let { runCatching { Severity.valueOf(it) }.getOrNull() }
+            ?: Severity.MEDIUM
+    }
+
+    val cooldownMs: Flow<Long> = dataStore.data.map { it[KEY_COOLDOWN_MS] ?: 60_000L }
+
+    val notificationTriggerTypes: Flow<Set<TriggerType>> = dataStore.data.map { prefs ->
+        prefs[KEY_TRIGGER_TYPE_WHITELIST]
+            ?.mapNotNull { s -> TriggerType.entries.find { t -> t.name == s } }
+            ?.toSet()
+            ?: setOf(
+                TriggerType.CAMERA, TriggerType.CAMERA_PERSON,
+                TriggerType.CAMERA_PET, TriggerType.CAMERA_VEHICLE,
+                TriggerType.MICROPHONE,
+            )
+    }
+
+    val attachMedia: Flow<Boolean> = dataStore.data.map { it[KEY_ATTACH_MEDIA] ?: true }
+
+    suspend fun setMinSeverity(severity: Severity) {
+        dataStore.edit { it[KEY_MIN_SEVERITY] = severity.name }
+    }
+
+    suspend fun setCooldownMs(ms: Long) {
+        dataStore.edit { it[KEY_COOLDOWN_MS] = ms }
+    }
+
+    suspend fun setNotificationTriggerTypes(types: Set<TriggerType>) {
+        dataStore.edit { it[KEY_TRIGGER_TYPE_WHITELIST] = types.map { t -> t.name }.toSet() }
+    }
+
+    suspend fun setAttachMedia(enabled: Boolean) {
+        dataStore.edit { it[KEY_ATTACH_MEDIA] = enabled }
+    }
+
+    // ── Heartbeat ────────────────────────────────────────────────────────────
+
+    /** 0 = Off; positive value = interval in minutes */
+    val heartbeatSignalMinutes: Flow<Int> = dataStore.data.map { it[KEY_HEARTBEAT_SIGNAL_MIN] ?: 0 }
+
+    /** 0 = Off; positive value = interval in minutes */
+    val heartbeatMattermostMinutes: Flow<Int> = dataStore.data.map { it[KEY_HEARTBEAT_MATTERMOST_MIN] ?: 0 }
+
+    suspend fun setHeartbeatSignalMinutes(minutes: Int) {
+        dataStore.edit { it[KEY_HEARTBEAT_SIGNAL_MIN] = minutes }
+    }
+
+    suspend fun setHeartbeatMattermostMinutes(minutes: Int) {
+        dataStore.edit { it[KEY_HEARTBEAT_MATTERMOST_MIN] = minutes }
+    }
+
+    // ── Log level ────────────────────────────────────────────────────────────
+
+    /** "NORMAL" or "DEBUG". Default: "NORMAL" */
+    val logLevel: Flow<String> = dataStore.data.map { it[KEY_LOG_LEVEL] ?: "NORMAL" }
+
+    suspend fun setLogLevel(level: String) {
+        dataStore.edit { it[KEY_LOG_LEVEL] = level }
     }
 }
