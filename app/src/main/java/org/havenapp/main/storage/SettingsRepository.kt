@@ -56,6 +56,11 @@ class SettingsRepository @Inject constructor(
         private val KEY_COOLDOWN_MS = longPreferencesKey("notification_cooldown_ms")
         private val KEY_TRIGGER_TYPE_WHITELIST = stringSetPreferencesKey("notification_trigger_types")
         private val KEY_ATTACH_MEDIA = booleanPreferencesKey("notification_attach_media")
+        // Pushover channel
+        private val KEY_PUSHOVER_ENABLED = booleanPreferencesKey("pushover_enabled")
+        private val KEY_PUSHOVER_USER_KEY = stringPreferencesKey("pushover_user_key")
+        private val KEY_PUSHOVER_APP_TOKEN = stringPreferencesKey("pushover_app_token")
+        private val KEY_HEARTBEAT_PUSHOVER_MIN = intPreferencesKey("heartbeat_pushover_minutes")
         // Heartbeat (D-08)
         private val KEY_HEARTBEAT_SIGNAL_MIN = intPreferencesKey("heartbeat_signal_minutes")
         private val KEY_HEARTBEAT_MATTERMOST_MIN = intPreferencesKey("heartbeat_mattermost_minutes")
@@ -250,6 +255,29 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setMattermostWebhookUrl(url: String) {
         dataStore.edit { it[KEY_MATTERMOST_WEBHOOK_URL] = url }
+    }
+
+    // ── Pushover channel ─────────────────────────────────────────────────────
+
+    val pushoverEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_PUSHOVER_ENABLED] ?: false }
+    val pushoverUserKey: Flow<String> = dataStore.data.map { it[KEY_PUSHOVER_USER_KEY] ?: "" }
+    val pushoverAppToken: Flow<String> = dataStore.data.map { it[KEY_PUSHOVER_APP_TOKEN] ?: "" }
+    /** 0 = Off; positive value = interval in minutes */
+    val heartbeatPushoverMinutes: Flow<Int> = dataStore.data.map { it[KEY_HEARTBEAT_PUSHOVER_MIN] ?: 0 }
+
+    suspend fun setPushoverEnabled(enabled: Boolean) {
+        dataStore.edit { it[KEY_PUSHOVER_ENABLED] = enabled }
+    }
+
+    suspend fun setPushoverConfig(userKey: String, appToken: String) {
+        dataStore.edit { prefs ->
+            prefs[KEY_PUSHOVER_USER_KEY] = userKey
+            prefs[KEY_PUSHOVER_APP_TOKEN] = appToken
+        }
+    }
+
+    suspend fun setHeartbeatPushoverMinutes(minutes: Int) {
+        dataStore.edit { it[KEY_HEARTBEAT_PUSHOVER_MIN] = minutes }
     }
 
     // ── NotificationRule ─────────────────────────────────────────────────────

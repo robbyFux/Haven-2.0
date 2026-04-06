@@ -323,6 +323,30 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setHeartbeatMattermostMinutes(minutes) }
     }
 
+    val pushoverEnabled: StateFlow<Boolean> = settingsRepository.pushoverEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    val pushoverUserKey: StateFlow<String> = settingsRepository.pushoverUserKey
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
+
+    val pushoverAppToken: StateFlow<String> = settingsRepository.pushoverAppToken
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
+
+    val heartbeatPushoverMinutes: StateFlow<Int> = settingsRepository.heartbeatPushoverMinutes
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    fun setPushoverEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setPushoverEnabled(enabled) }
+    }
+
+    fun setPushoverConfig(userKey: String, appToken: String) {
+        viewModelScope.launch { settingsRepository.setPushoverConfig(userKey, appToken) }
+    }
+
+    fun setHeartbeatPushoverMinutes(minutes: Int) {
+        viewModelScope.launch { settingsRepository.setHeartbeatPushoverMinutes(minutes) }
+    }
+
     fun setLogLevel(debug: Boolean) {
         val level = if (debug) "DEBUG" else "NORMAL"
         val logLevel = if (debug) AppLogger.LogLevel.DEBUG else AppLogger.LogLevel.NORMAL
