@@ -36,6 +36,15 @@ und Ereignisse erfassen, ohne dass etwas stillschweigend fehlschlägt.
 - ✓ MediaEncryptionManager (AES-GCM via Android Keystore, konfigurierbar) — Phase 3 (SEC-01–02)
 - ✓ AppLockState + PinHashManager + PinLockScreen (PIN-Sperre, ProcessLifecycleOwner Auto-Lock) — Phase 3 (SEC-03–05)
 - ✓ ExoPlayer-Videowiedergabe in EventDetailScreen (verschlüsselte .enc-Dekryptierung) — Phase 3
+- ✓ HavenAlertChannel-Interface + NotificationRouter (Severity-Filter, Trigger-Whitelist, Anti-Flood-Cooldown) — Phase 4 (NOTIF-01)
+- ✓ SignalRestChannel (signal-cli REST API, Bearer-Auth, base64-JPEG-Anhang) — Phase 4 (NOTIF-02)
+- ✓ MattermostChannel (Incoming Webhook, Markdown, username "Haven", ":shield:") — Phase 4 (NOTIF-03)
+- ✓ PushoverChannel (multipart POST, Priority-Mapping, JPEG-Anhang, Emergency-Priority für CRITICAL) — Phase 4 (NOTIF-03+)
+- ✓ NotificationRule-Settings-UI (minSeverity, Cooldown, Trigger-Whitelist, attachMedia, Channel-Dialoge) — Phase 4 (NOTIF-04)
+- ✓ Settings in 5 CategoryCards gruppiert — Phase 4 (NOTIF-04)
+- ✓ Heartbeat-Coroutinen pro Kanal (Off/15/30/60 min, auto-cancelled via structured concurrency) — Phase 4 (NOTIF-05)
+- ✓ AppLogger LogLevel (Normal/Debug), sofort wirksam + DataStore-persistent — Phase 4
+- ✓ Event-Löschung löscht zugehörige Mediendateien (Video-Clips) — Quick Fix
 
 ### Active
 
@@ -46,19 +55,18 @@ und Ereignisse erfassen, ohne dass etwas stillschweigend fehlschlägt.
 
 ### Out of Scope
 
-- Signal REST / Mattermost / NotificationEngine — Phase 3, noch nicht begonnen
-- WebRTC / Multi-Device Pairing — Phase 4
-- Keystore-Verschlüsselung der Medien — Phase 5
-- Self-hosted Backend — Phase 4/5
-- Zeitpläne (Armed/Disarmed/Night) — Phase 3
+- WebRTC / Multi-Device Pairing — Phase 5
+- Keystore-Verschlüsselung der Medien — Phase 5/6
+- Self-hosted Backend — Phase 5/6
+- Zeitpläne (Armed/Disarmed/Night) — Phase 5
 
 ## Context
 
-**Aktueller Stand:** Phase 3 abgeschlossen (2026-04-04). Videoaufzeichnung, AES-GCM-Verschlüsselung,
-ExoPlayer-Wiedergabe, App-PIN-Sperre mit Auto-Lock, dual-rate EMA LightMonitor mit Cross-Sensor-
-Suppression, schnellere Sensor-Abtastrate (SENSOR_DELAY_GAME) und FilterChip-Triggerfilter sind
-implementiert und auf Gerät verifiziert. Offenes Issue: Kamera-Bewegungserkennung (CAMERA-Trigger)
-triggert nicht zuverlässig bei Handbewegung — wird separat untersucht.
+**Aktueller Stand:** Phase 4 abgeschlossen (2026-04-06). NotificationEngine vollständig implementiert:
+SignalRestChannel (signal-cli REST API), MattermostChannel (Webhook), PushoverChannel (Pushover API)
+mit konfigurierbaren Severity-Schwellwerten, Anti-Flood-Cooldown, Trigger-Whitelist, Medienanhängen
+und Heartbeat-Timern pro Kanal. Settings in 5 CategoryCards gruppiert. AppLogger LogLevel (Normal/Debug).
+Pushover und Mattermost auf Gerät verifiziert. Event-Löschung löscht jetzt auch zugehörige Mediendateien.
 
 **Referenz-Apps analysiert:** Haven 0.2.1 (Java, legacy), AlfredCamera (decompiled Protobuf-Schemas).
 
