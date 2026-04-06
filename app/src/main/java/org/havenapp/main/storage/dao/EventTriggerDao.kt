@@ -33,4 +33,12 @@ interface EventTriggerDao {
 
     @Query("UPDATE event_triggers SET mediaPath = :mediaPath WHERE id = :triggerId")
     suspend fun updateMediaPath(triggerId: Long, mediaPath: String)
+
+    /** Returns all non-null media paths for triggers belonging to [eventId]. */
+    @Query("SELECT mediaPath FROM event_triggers WHERE eventId = :eventId AND mediaPath IS NOT NULL")
+    suspend fun getMediaPathsByEvent(eventId: Long): List<String>
+
+    /** Returns all non-null media paths for triggers in [eventId] at or after [cutoffMs]. */
+    @Query("SELECT mediaPath FROM event_triggers WHERE eventId = :eventId AND timestamp >= :cutoffMs AND mediaPath IS NOT NULL")
+    suspend fun getMediaPathsSince(eventId: Long, cutoffMs: Long): List<String>
 }

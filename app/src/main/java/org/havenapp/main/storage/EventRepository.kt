@@ -43,14 +43,19 @@ class EventRepository @Inject constructor(
         eventDao.closeEvent(eventId, System.currentTimeMillis())
     }
 
-    /** Löscht alle Trigger des Events, die nach [cutoffMs] aufgezeichnet wurden. */
+    /** Löscht alle Trigger des Events, die nach [cutoffMs] aufgezeichnet wurden, und entfernt ihre Mediendateien. */
     suspend fun discardTriggersSince(eventId: Long, cutoffMs: Long) {
+        val paths = triggerDao.getMediaPathsSince(eventId, cutoffMs)
+        paths.forEach { path -> runCatching { java.io.File(path).delete() } }
         triggerDao.deleteSince(eventId, cutoffMs)
     }
 
-    /** Löscht ein Event und (via ForeignKey CASCADE) alle zugehörigen Trigger. */
+    /** Löscht ein Event und (via ForeignKey CASCADE) alle zugehörigen Trigger sowie ihre Mediendateien. */
     suspend fun deleteEvent(eventId: Long) {
+        val paths = triggerDao.getMediaPathsByEvent(eventId)
+        paths.forEach { path -> runCatching { java.io.File(path).delete() } }
         eventDao.deleteById(eventId)
+        // Room CASCADE deletes the event_triggers rows automatically
     }
 
     fun observeRecentEvents(): Flow<List<EventEntity>> = eventDao.observeRecent()
