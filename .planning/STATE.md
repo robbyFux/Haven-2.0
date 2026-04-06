@@ -119,9 +119,10 @@ None yet.
 | 260406-c5e | Fix SignalIntentChannel: notification+PendingIntent (Android 10+ compat) + E.164 dialog validation | 2026-04-06 | e9d56ca | [260406-c5e-signalintentchannel-notification-pending](./quick/260406-c5e-signalintentchannel-notification-pending/) |
 | 260406-v3d | Remove SignalIntentChannel entirely — file, settings, ViewModel, UI, strings cleaned from all 7 files | 2026-04-06 | 1d71e5a | [260406-v3d-signalintentchannel-komplett-entfernen](./quick/260406-v3d-signalintentchannel-komplett-entfernen/) |
 | 260406-vc9 | Fix event deletion to also delete associated media files | 2026-04-06 | 4c0cfaf | [260406-vc9-fix-event-l-schung-l-scht-nicht-die-zuge](./quick/260406-vc9-fix-event-l-schung-l-scht-nicht-die-zuge/) |
+| 260406-vc6 | Pushover channel: PushoverChannel + settings + UI + MonitorService heartbeat | 2026-04-06 | 380eca0 | [260406-vc6-pushover-kanal-implementieren-inkl-heart](./quick/260406-vc6-pushover-kanal-implementieren-inkl-heart/) |
 
 ## Session Continuity
 
 Last session: 2026-04-06T00:00:00Z
-Stopped at: Completed quick task 260406-v3d: SignalIntentChannel complete removal
+Stopped at: Completed quick task 260406-vc6: Pushover channel implementation
 Resume file: None
