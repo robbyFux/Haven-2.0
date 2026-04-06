@@ -182,16 +182,6 @@
     <string name="log_level_normal">Normal</string>
     <string name="log_level_debug">Debug</string>
 
-    <!-- Signal Intent channel (P2 fallback) -->
-    <string name="settings_signal_intent_title">Signal (App)</string>
-    <string name="settings_signal_intent_enabled">Signal App enabled</string>
-    <string name="settings_signal_intent_configure">Configure Signal App</string>
-    <string name="settings_signal_intent_configured">Recipient: %1$s</string>
-    <string name="settings_signal_intent_not_configured">Not configured</string>
-    <string name="settings_signal_intent_recipient">Recipient number (E.164)</string>
-    <string name="settings_signal_intent_dialog_hint">Requires Signal app installed. Opens Signal compose screen on alert. Heartbeat not supported.</string>
-    <string name="settings_signal_intent_note">Fallback: opens Signal app on device. No server needed.</string>
-
     <!-- Dialog buttons -->
     <string name="dialog_save">Save</string>
     <string name="dialog_cancel">Cancel</string>
