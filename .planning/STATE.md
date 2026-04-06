@@ -117,9 +117,10 @@ None yet.
 | 260331-uyx | Enable event deletion from Timeline (swipe-to-delete) and EventDetailScreen (delete button) | 2026-03-31 | fab24eb | [260331-uyx-in-der-timeline-lassen-sich-die-ereignis](./quick/260331-uyx-in-der-timeline-lassen-sich-die-ereignis/) |
 | 260406-070 | Add SignalIntentChannel as P2 fallback alert channel via Android Intent to local Signal app | 2026-04-06 | 5d2e0d5 | [260406-070-signalintentchannel-in-phase-4-hinzuf-ge](./quick/260406-070-signalintentchannel-in-phase-4-hinzuf-ge/) |
 | 260406-c5e | Fix SignalIntentChannel: notification+PendingIntent (Android 10+ compat) + E.164 dialog validation | 2026-04-06 | e9d56ca | [260406-c5e-signalintentchannel-notification-pending](./quick/260406-c5e-signalintentchannel-notification-pending/) |
+| 260406-v3d | Remove SignalIntentChannel entirely — file, settings, ViewModel, UI, strings cleaned from all 7 files | 2026-04-06 | 1d71e5a | [260406-v3d-signalintentchannel-komplett-entfernen](./quick/260406-v3d-signalintentchannel-komplett-entfernen/) |
 
 ## Session Continuity
 
 Last session: 2026-04-06T00:00:00Z
-Stopped at: Completed quick task 260406-c5e: SignalIntentChannel notification+PendingIntent fix
+Stopped at: Completed quick task 260406-v3d: SignalIntentChannel complete removal
 Resume file: None
