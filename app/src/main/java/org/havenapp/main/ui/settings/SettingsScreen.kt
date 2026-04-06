@@ -827,6 +827,8 @@ private fun SignalIntentConfigDialog(
     onSave: (recipient: String) -> Unit,
 ) {
     var recipient by remember { mutableStateOf(initialRecipient) }
+    val isValidE164 = recipient.matches(Regex("^\\+[1-9]\\d{6,14}\$"))
+    val showError = recipient.isNotEmpty() && !isValidE164
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -845,10 +847,20 @@ private fun SignalIntentConfigDialog(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                 )
+                if (showError) {
+                    Text(
+                        text = "Format: +491701234567 (with country code)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(recipient.trim()) }) {
+            TextButton(
+                onClick = { onSave(recipient.trim()) },
+                enabled = isValidE164,
+            ) {
                 Text(stringResource(R.string.dialog_save))
             }
         },
