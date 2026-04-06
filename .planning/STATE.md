@@ -116,9 +116,10 @@ None yet.
 | 260331-uke | Fix Save button stays greyed out after drawing detection zone (stale closure in pointerInput) | 2026-03-31 | db40801 | [260331-uke-fehler-bei-der-festlegung-der-erkennungs](./quick/260331-uke-fehler-bei-der-festlegung-der-erkennungs/) |
 | 260331-uyx | Enable event deletion from Timeline (swipe-to-delete) and EventDetailScreen (delete button) | 2026-03-31 | fab24eb | [260331-uyx-in-der-timeline-lassen-sich-die-ereignis](./quick/260331-uyx-in-der-timeline-lassen-sich-die-ereignis/) |
 | 260406-070 | Add SignalIntentChannel as P2 fallback alert channel via Android Intent to local Signal app | 2026-04-06 | 5d2e0d5 | [260406-070-signalintentchannel-in-phase-4-hinzuf-ge](./quick/260406-070-signalintentchannel-in-phase-4-hinzuf-ge/) |
+| 260406-c5e | Fix SignalIntentChannel: notification+PendingIntent (Android 10+ compat) + E.164 dialog validation | 2026-04-06 | e9d56ca | [260406-c5e-signalintentchannel-notification-pending](./quick/260406-c5e-signalintentchannel-notification-pending/) |
 
 ## Session Continuity
 
-Last session: 2026-04-05T22:14:29Z
-Stopped at: Completed quick task 260406-070: SignalIntentChannel P2 fallback
+Last session: 2026-04-06T00:00:00Z
+Stopped at: Completed quick task 260406-c5e: SignalIntentChannel notification+PendingIntent fix
 Resume file: None
