@@ -49,7 +49,6 @@ import org.havenapp.main.notify.HavenAlertChannel
 import org.havenapp.main.notify.MattermostChannel
 import org.havenapp.main.notify.NotificationRouter
 import org.havenapp.main.notify.NotificationRule
-import org.havenapp.main.notify.SignalIntentChannel
 import org.havenapp.main.notify.SignalRestChannel
 
 @AndroidEntryPoint
@@ -146,8 +145,6 @@ class MonitorService : LifecycleService() {
             val mattermostWebhookUrl = settingsRepository.mattermostWebhookUrl.first()
             val heartbeatSignalMin = settingsRepository.heartbeatSignalMinutes.first()
             val heartbeatMattermostMin = settingsRepository.heartbeatMattermostMinutes.first()
-            val signalIntentEnabled = settingsRepository.signalIntentEnabled.first()
-            val signalIntentRecipient = settingsRepository.signalIntentRecipient.first()
 
             val notifRule = NotificationRule(
                 minSeverity = settingsRepository.minSeverity.first(),
@@ -161,9 +158,6 @@ class MonitorService : LifecycleService() {
                 }
                 if (mattermostEnabled) {
                     add(MattermostChannel(httpClient, mattermostWebhookUrl))
-                }
-                if (signalIntentEnabled) {
-                    add(SignalIntentChannel(applicationContext, signalIntentRecipient))
                 }
             }
             notificationRouter.initialize(notifRule, notifChannels)

@@ -51,9 +51,6 @@ class SettingsRepository @Inject constructor(
         private val KEY_SIGNAL_BEARER_TOKEN = stringPreferencesKey("signal_bearer_token")
         private val KEY_MATTERMOST_ENABLED = booleanPreferencesKey("mattermost_enabled")
         private val KEY_MATTERMOST_WEBHOOK_URL = stringPreferencesKey("mattermost_webhook_url")
-        // SignalIntent fallback channel
-        private val KEY_SIGNAL_INTENT_ENABLED = booleanPreferencesKey("signal_intent_enabled")
-        private val KEY_SIGNAL_INTENT_RECIPIENT = stringPreferencesKey("signal_intent_recipient")
         // NotificationRule (D-05, D-06)
         private val KEY_MIN_SEVERITY = stringPreferencesKey("notification_min_severity")
         private val KEY_COOLDOWN_MS = longPreferencesKey("notification_cooldown_ms")
@@ -253,19 +250,6 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setMattermostWebhookUrl(url: String) {
         dataStore.edit { it[KEY_MATTERMOST_WEBHOOK_URL] = url }
-    }
-
-    // ── Signal Intent channel ────────────────────────────────────────────────
-
-    val signalIntentEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_SIGNAL_INTENT_ENABLED] ?: false }
-    val signalIntentRecipient: Flow<String> = dataStore.data.map { it[KEY_SIGNAL_INTENT_RECIPIENT] ?: "" }
-
-    suspend fun setSignalIntentEnabled(enabled: Boolean) {
-        dataStore.edit { it[KEY_SIGNAL_INTENT_ENABLED] = enabled }
-    }
-
-    suspend fun setSignalIntentRecipient(recipient: String) {
-        dataStore.edit { it[KEY_SIGNAL_INTENT_RECIPIENT] = recipient }
     }
 
     // ── NotificationRule ─────────────────────────────────────────────────────
