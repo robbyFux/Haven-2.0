@@ -160,6 +160,14 @@
     <string name="settings_mattermost_configured">Konfiguriert: %1$s</string>
     <string name="settings_mattermost_not_configured">Nicht konfiguriert</string>
 
+    <string name="settings_pushover_title">Pushover</string>
+    <string name="settings_pushover_configure">Pushover konfigurieren</string>
+    <string name="settings_pushover_enabled">Pushover aktiviert</string>
+    <string name="settings_pushover_user_key">User Key</string>
+    <string name="settings_pushover_app_token">App Token</string>
+    <string name="settings_pushover_configured">Konfiguriert: %1$s</string>
+    <string name="settings_pushover_not_configured">Nicht konfiguriert</string>
+
     <string name="settings_notification_rule_title">Alarmregeln</string>
     <string name="settings_min_severity">Mindestschweregrad</string>
     <string name="settings_cooldown">Abklingzeit</string>

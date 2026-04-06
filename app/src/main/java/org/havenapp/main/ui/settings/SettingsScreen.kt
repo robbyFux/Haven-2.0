@@ -79,6 +79,10 @@ fun SettingsScreen(
     val heartbeatSignalMin by viewModel.heartbeatSignalMinutes.collectAsStateWithLifecycle()
     val heartbeatMattermostMin by viewModel.heartbeatMattermostMinutes.collectAsStateWithLifecycle()
     val logLevelDebug by viewModel.logLevelDebug.collectAsStateWithLifecycle()
+    val pushoverEnabled by viewModel.pushoverEnabled.collectAsStateWithLifecycle()
+    val pushoverUserKey by viewModel.pushoverUserKey.collectAsStateWithLifecycle()
+    val pushoverAppToken by viewModel.pushoverAppToken.collectAsStateWithLifecycle()
+    val heartbeatPushoverMin by viewModel.heartbeatPushoverMinutes.collectAsStateWithLifecycle()
 
     // Dialog state for PIN setup / change
     var showPinDialog by remember { mutableStateOf(false) }
@@ -87,6 +91,7 @@ fun SettingsScreen(
     // Dialog state for notification channel config
     var showSignalDialog by remember { mutableStateOf(false) }
     var showMattermostDialog by remember { mutableStateOf(false) }
+    var showPushoverDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -391,6 +396,42 @@ fun SettingsScreen(
                     }
                 }
 
+                // Pushover channel
+                SettingsSection(title = stringResource(R.string.settings_pushover_title)) {
+                    SensorToggleRow(
+                        label = stringResource(R.string.settings_pushover_enabled),
+                        checked = pushoverEnabled,
+                        onCheckedChange = { viewModel.setPushoverEnabled(it) },
+                    )
+                    OutlinedButton(
+                        onClick = { showPushoverDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = if (pushoverUserKey.isNotBlank())
+                                stringResource(R.string.settings_pushover_configured, pushoverUserKey)
+                            else stringResource(R.string.settings_pushover_not_configured),
+                        )
+                    }
+                    // Heartbeat
+                    SettingsSection(title = stringResource(R.string.settings_heartbeat_title)) {
+                        Column(modifier = Modifier.selectableGroup()) {
+                            listOf(
+                                0 to R.string.heartbeat_off,
+                                15 to R.string.heartbeat_15min,
+                                30 to R.string.heartbeat_30min,
+                                60 to R.string.heartbeat_60min,
+                            ).forEach { (min, labelRes) ->
+                                RadioRow(
+                                    label = stringResource(labelRes),
+                                    selected = heartbeatPushoverMin == min,
+                                    onClick = { viewModel.setHeartbeatPushoverMinutes(min) },
+                                )
+                            }
+                        }
+                    }
+                }
+
                 // NotificationRule (D-05)
                 SettingsSection(title = stringResource(R.string.settings_notification_rule_title)) {
                     // minSeverity (radio group)
@@ -564,6 +605,18 @@ fun SettingsScreen(
             initialWebhookUrl = mattermostWebhookUrl,
             onDismiss = { showMattermostDialog = false },
             onSave = { url -> viewModel.setMattermostWebhookUrl(url) },
+        )
+    }
+
+    // Pushover config dialog
+    if (showPushoverDialog) {
+        PushoverConfigDialog(
+            initialUserKey = pushoverUserKey,
+            initialAppToken = pushoverAppToken,
+            onDismiss = { showPushoverDialog = false },
+            onSave = { userKey, appToken ->
+                viewModel.setPushoverConfig(userKey, appToken)
+            },
         )
     }
 
@@ -772,6 +825,49 @@ private fun MattermostConfigDialog(
         confirmButton = {
             TextButton(onClick = {
                 onSave(webhookUrl.trim())
+                onDismiss()
+            }) { Text(stringResource(R.string.dialog_save)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.dialog_cancel)) }
+        },
+    )
+}
+
+@Composable
+private fun PushoverConfigDialog(
+    initialUserKey: String,
+    initialAppToken: String,
+    onDismiss: () -> Unit,
+    onSave: (userKey: String, appToken: String) -> Unit,
+) {
+    var userKey by remember { mutableStateOf(initialUserKey) }
+    var appToken by remember { mutableStateOf(initialAppToken) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_pushover_configure)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = userKey,
+                    onValueChange = { userKey = it },
+                    label = { Text(stringResource(R.string.settings_pushover_user_key)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = appToken,
+                    onValueChange = { appToken = it },
+                    label = { Text(stringResource(R.string.settings_pushover_app_token)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                onSave(userKey.trim(), appToken.trim())
                 onDismiss()
             }) { Text(stringResource(R.string.dialog_save)) }
         },

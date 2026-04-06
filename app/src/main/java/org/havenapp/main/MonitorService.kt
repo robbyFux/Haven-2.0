@@ -49,6 +49,7 @@ import org.havenapp.main.notify.HavenAlertChannel
 import org.havenapp.main.notify.MattermostChannel
 import org.havenapp.main.notify.NotificationRouter
 import org.havenapp.main.notify.NotificationRule
+import org.havenapp.main.notify.PushoverChannel
 import org.havenapp.main.notify.SignalRestChannel
 
 @AndroidEntryPoint
@@ -145,6 +146,10 @@ class MonitorService : LifecycleService() {
             val mattermostWebhookUrl = settingsRepository.mattermostWebhookUrl.first()
             val heartbeatSignalMin = settingsRepository.heartbeatSignalMinutes.first()
             val heartbeatMattermostMin = settingsRepository.heartbeatMattermostMinutes.first()
+            val pushoverEnabled = settingsRepository.pushoverEnabled.first()
+            val pushoverUserKey = settingsRepository.pushoverUserKey.first()
+            val pushoverAppToken = settingsRepository.pushoverAppToken.first()
+            val heartbeatPushoverMin = settingsRepository.heartbeatPushoverMinutes.first()
 
             val notifRule = NotificationRule(
                 minSeverity = settingsRepository.minSeverity.first(),
@@ -158,6 +163,9 @@ class MonitorService : LifecycleService() {
                 }
                 if (mattermostEnabled) {
                     add(MattermostChannel(httpClient, mattermostWebhookUrl))
+                }
+                if (pushoverEnabled) {
+                    add(PushoverChannel(httpClient, pushoverAppToken, pushoverUserKey))
                 }
             }
             notificationRouter.initialize(notifRule, notifChannels)
@@ -253,6 +261,19 @@ class MonitorService : LifecycleService() {
                         val msg = "Haven alive - v${BuildConfig.VERSION_NAME} - ${_state.value} - ${java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())}"
                         runCatching { mattermostChannel.sendHeartbeat(msg) }
                             .onFailure { appLogger.e(TAG, "Mattermost heartbeat failed: ${it.message}") }
+                    }
+                }
+            }
+
+            val pushoverChannel = notifChannels.filterIsInstance<PushoverChannel>().firstOrNull()
+            if (pushoverChannel != null && heartbeatPushoverMin > 0) {
+                launch {
+                    while (_state.value != MonitorState.ACTIVE) delay(500)
+                    while (true) {
+                        delay(heartbeatPushoverMin * 60_000L)
+                        val msg = "Haven alive - v${BuildConfig.VERSION_NAME} - ${_state.value} - ${java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())}"
+                        runCatching { pushoverChannel.sendHeartbeat(msg) }
+                            .onFailure { appLogger.e(TAG, "Pushover heartbeat failed: ${it.message}") }
                     }
                 }
             }
