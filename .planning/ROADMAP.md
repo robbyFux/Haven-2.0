@@ -12,12 +12,14 @@ an optional app PIN. One phase delivers a fully secured, fully functional monito
 - ✅ **v0.1 Foundation** — Phase 1 (shipped)
 - ✅ **v0.2 Detection Intelligence** — Phase 2 (shipped)
 - ✅ **v0.3 Phase-2-Complete** — Phase 3 (complete)
-- 🚧 **v0.4 NotificationEngine** — Phase 4 (planned)
+- ✅ **v0.4 NotificationEngine** — Phase 4 (complete)
+- 🚧 **v0.5 Cloud-Server** — Phase 5 (planned)
 
 ## Phases
 
 - [x] **Phase 3: Phase-2-Complete** - Fix all Phase 2 bugs, add video clip recording on trigger, encrypt stored media (Android Keystore), and add optional app PIN (completed 2026-04-04)
 - [x] **Phase 4: NotificationEngine** - Signal+Mattermost alerts, configurable channels and severity thresholds, anti-flood cooldown, Settings grouping, Debug logging level (completed 2026-04-05)
+- [ ] **Phase 5: Cloud-Server** - Self-hosted Python backend (FastAPI) with multi-user auth (2FA), multi-device support, encrypted user data, admin quotas, event+video upload from Haven, optional AI analysis, and cloud-triggered notifications (Mail/Signal/Pushover)
 
 ## Phase Details
 
@@ -64,9 +66,18 @@ Plans:
 - [x] 04-04-PLAN.md — NotificationRouter + MonitorService integration + Heartbeat
 - [x] 04-05-PLAN.md — Notification Settings UI: config dialogs, rule controls, LogLevel toggle
 
+### Phase 5: Cloud-Server
+
+**Goal:** Self-hosted Python backend (FastAPI + PostgreSQL + Redis + Celery) that provides multi-user auth with 2FA, per-user multi-device (App-Key) management, encrypted user data storage (PBKDF2/Argon2 key derivation from cloud password + username), admin-defined quotas, secure event+video upload from the Haven Android app, optional AI-based analysis of events/videos (local TFLite or OpenRouter), and cloud-triggered notifications via Mail, Signal, or Pushover after analysis.
+**Requirements**: CLOUD-01, CLOUD-02, CLOUD-03, CLOUD-04, CLOUD-05, CLOUD-06, CLOUD-07, CLOUD-08
+**Depends on:** Phase 4
+**Tech Stack:** Python, FastAPI, Pydantic, SQLAlchemy, Alembic, PostgreSQL, Redis, Celery, Pytest, Uvicorn/Gunicorn
+**Plans:** 0 plans
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 3. Phase-2-Complete | 7/7 | Complete   | 2026-04-04 |
 | 4. NotificationEngine | 5/5 | Complete   | 2026-04-05 |
+| 5. Cloud-Server | 0/? | Planned | — |

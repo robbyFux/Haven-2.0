@@ -55,18 +55,29 @@ Phase-2-Bugfix + fehlende Phase-2-Features: Bugfixes für vollständige Nutzbark
 - [x] **NOTIF-04**: NotificationRule-Konfiguration in Settings: minSeverity (LOW–CRITICAL), Cooldown (Off/1/5/15/30 min), Trigger-Typ-Whitelist (Checkboxen), attachMedia Toggle; Signal/Mattermost-Konfigurationsdialoge; Settings-Gruppierung in 5 Category-Cards
 - [x] **NOTIF-05**: Heartbeat-Timer pro Kanal (Off/15/30/60 min) als Coroutine-Loop im MonitorService — automatisch gestoppt bei Monitoring-Ende
 
-### Zeitpläne (Phase 5+)
+### Cloud-Server (Phase 5)
+
+- **CLOUD-01**: Multi-User-Backend mit User-Key-Authentifizierung — jeder Nutzer erhält einen API-Key für die Haven-App
+- **CLOUD-02**: Registrierung, Anmeldung und 2FA (TOTP) — sichere Account-Verwaltung
+- **CLOUD-03**: Multi-Haven-App pro User — jede App erhält einen App-Key mit frei wählbarem Namen
+- **CLOUD-04**: Verschlüsselung der Nutzerdaten mit Cloud-Passwort und Username (key derivation: PBKDF2 / Argon2)
+- **CLOUD-05**: Admin-definierte Quota pro User (Speicher-Limit in MB/GB, Max-Events)
+- **CLOUD-06**: Übermittlung von Events und Videos von Haven an den Cloud-Server (verschlüsselt, App-Key authentifiziert)
+- **CLOUD-07**: Optionale KI-Auswertung der Events inkl. Videos (lokales TFLite-Modell oder OpenRouter-API)
+- **CLOUD-08**: Cloud-Event-Benachrichtigungen nach Analyse — Mail, Signal oder Pushover
+
+### Zeitpläne (Phase 6+)
 
 - **SCHED-01**: Armed/Disarmed-Zeitpläne
 - **SCHED-02**: Timeline-Filter und Clip-Player
 
-### Netzwerk (Phase 5+)
+### Netzwerk (Phase 6+)
 
 - **NET-01**: WebRTC Live-Stream
 - **NET-02**: QR-Code Pairing
 - **NET-03**: Geräteverwaltung (Admin/Viewer/ReadOnly)
 
-### Hardening (Phase 5+)
+### Hardening (Phase 6+)
 
 - **HARD-01**: Telefon-Manipulations-Erkennung
 - **HARD-02**: Audit-Logs
@@ -107,14 +118,23 @@ Phase-2-Bugfix + fehlende Phase-2-Features: Bugfixes für vollständige Nutzbark
 | NOTIF-03 | Phase 4 | Planned |
 | NOTIF-04 | Phase 4 | Planned |
 | NOTIF-05 | Phase 4 | Planned |
+| CLOUD-01 | Phase 5 | Planned |
+| CLOUD-02 | Phase 5 | Planned |
+| CLOUD-03 | Phase 5 | Planned |
+| CLOUD-04 | Phase 5 | Planned |
+| CLOUD-05 | Phase 5 | Planned |
+| CLOUD-06 | Phase 5 | Planned |
+| CLOUD-07 | Phase 5 | Planned |
+| CLOUD-08 | Phase 5 | Planned |
 
 **Coverage:**
 - v1 requirements: 17 total
 - Mapped to phases: 17
 - Unmapped: 0
-- v2 requirements: 5 (Phase 4) + 8 (future)
+- v2 requirements: 5 (Phase 4) + 8 (Phase 5) + 8 (future)
 - Phase 4 mapped: 5/5
+- Phase 5 mapped: 8/8
 
 ---
 *Requirements defined: 2026-03-31*
-*Last updated: 2026-04-05 — Phase 4 requirements added: NOTIF-01 through NOTIF-05*
+*Last updated: 2026-04-07 — Phase 5 requirements added: CLOUD-01 through CLOUD-08*
