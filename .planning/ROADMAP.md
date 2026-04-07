@@ -68,11 +68,20 @@ Plans:
 
 ### Phase 5: Cloud-Server
 
-**Goal:** Self-hosted Python backend (FastAPI + PostgreSQL + Redis + Celery) that provides multi-user auth with 2FA, per-user multi-device (App-Key) management, encrypted user data storage (PBKDF2/Argon2 key derivation from cloud password + username), admin-defined quotas, secure event+video upload from the Haven Android app, optional AI-based analysis of events/videos (local TFLite or OpenRouter), and cloud-triggered notifications via Mail, Signal, or Pushover after analysis.
+**Goal:** Self-hosted Python backend (FastAPI + PostgreSQL + Redis + Celery) that provides multi-user auth with 2FA, per-user multi-device (App-Key) management, encrypted user data storage (Argon2id key derivation from cloud password + username), admin-defined quotas, secure event+video upload from the Haven Android app, optional AI-based analysis of events/videos (local TFLite or OpenRouter), and cloud-triggered notifications via Mail, Signal, or Pushover after analysis.
 **Requirements**: CLOUD-01, CLOUD-02, CLOUD-03, CLOUD-04, CLOUD-05, CLOUD-06, CLOUD-07, CLOUD-08
 **Depends on:** Phase 4
 **Tech Stack:** Python, FastAPI, Pydantic, SQLAlchemy, Alembic, PostgreSQL, Redis, Celery, Pytest, Uvicorn/Gunicorn
-**Plans:** 0 plans
+**Plans:** 7 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Project scaffold: pyproject.toml, Docker, FastAPI app, DB models, Alembic, test infra
+- [ ] 05-02-PLAN.md — Auth system: registration, login, JWT, 2FA (TOTP), User-Key
+- [ ] 05-03-PLAN.md — Device management (App-Key CRUD) + Argon2id crypto service
+- [ ] 05-04-PLAN.md — Event + video upload with encryption and quota enforcement
+- [ ] 05-05-PLAN.md — Admin API: user management, quota control, system stats
+- [ ] 05-06-PLAN.md — Celery AI analysis pipeline (TFLite + OpenRouter)
+- [ ] 05-07-PLAN.md — Cloud notification dispatch (Email, Signal, Pushover)
 
 ## Progress
 
@@ -80,4 +89,4 @@ Plans:
 |-------|----------------|--------|-----------|
 | 3. Phase-2-Complete | 7/7 | Complete   | 2026-04-04 |
 | 4. NotificationEngine | 5/5 | Complete   | 2026-04-05 |
-| 5. Cloud-Server | 0/? | Planned | — |
+| 5. Cloud-Server | 0/7 | In Progress | — |
