@@ -72,7 +72,7 @@ Plans:
 **Requirements**: CLOUD-01, CLOUD-02, CLOUD-03, CLOUD-04, CLOUD-05, CLOUD-06, CLOUD-07, CLOUD-08
 **Depends on:** Phase 4
 **Tech Stack:** Python, FastAPI, Pydantic, SQLAlchemy, Alembic, PostgreSQL, Redis, Celery, Pytest, Uvicorn/Gunicorn
-**Plans:** 7 plans
+**Plans:** 8 plans
 
 Plans:
 - [ ] 05-01-PLAN.md — Project scaffold: pyproject.toml, Docker, FastAPI app, DB models, Alembic, test infra
@@ -82,6 +82,7 @@ Plans:
 - [ ] 05-05-PLAN.md — Admin API: user management, quota control, system stats
 - [ ] 05-06-PLAN.md — Celery AI analysis pipeline (TFLite + OpenRouter)
 - [ ] 05-07-PLAN.md — Cloud notification dispatch (Email, Signal, Pushover)
+- [ ] 05-08-PLAN.md — Android CloudChannel: event upload client + Settings UI
 
 ## Progress
 
@@ -89,4 +90,4 @@ Plans:
 |-------|----------------|--------|-----------|
 | 3. Phase-2-Complete | 7/7 | Complete   | 2026-04-04 |
 | 4. NotificationEngine | 5/5 | Complete   | 2026-04-05 |
-| 5. Cloud-Server | 0/7 | In Progress | — |
+| 5. Cloud-Server | 0/8 | In Progress | — |
