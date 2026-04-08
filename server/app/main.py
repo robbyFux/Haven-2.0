@@ -13,7 +13,7 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI
 
-from app.routers import auth, devices, health
+from app.routers import admin, auth, devices, health
 
 
 @asynccontextmanager
@@ -49,9 +49,9 @@ def create_app() -> FastAPI:
     # API v1 routers
     application.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
     application.include_router(devices.router, prefix="/api/v1/devices", tags=["devices"])
+    application.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
     # Placeholder imports: these routers will be created in plans 04–07
     # application.include_router(events.router, prefix="/api/v1")
-    # application.include_router(admin.router, prefix="/api/v1")
 
     return application
 
