@@ -61,6 +61,10 @@ class SettingsRepository @Inject constructor(
         private val KEY_PUSHOVER_USER_KEY = stringPreferencesKey("pushover_user_key")
         private val KEY_PUSHOVER_APP_TOKEN = stringPreferencesKey("pushover_app_token")
         private val KEY_HEARTBEAT_PUSHOVER_MIN = intPreferencesKey("heartbeat_pushover_minutes")
+        // Cloud server channel
+        private val KEY_CLOUD_ENABLED = booleanPreferencesKey("cloud_enabled")
+        private val KEY_CLOUD_SERVER_URL = stringPreferencesKey("cloud_server_url")
+        private val KEY_CLOUD_APP_KEY = stringPreferencesKey("cloud_app_key")
         // Heartbeat (D-08)
         private val KEY_HEARTBEAT_SIGNAL_MIN = intPreferencesKey("heartbeat_signal_minutes")
         private val KEY_HEARTBEAT_MATTERMOST_MIN = intPreferencesKey("heartbeat_mattermost_minutes")
@@ -333,6 +337,24 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setHeartbeatMattermostMinutes(minutes: Int) {
         dataStore.edit { it[KEY_HEARTBEAT_MATTERMOST_MIN] = minutes }
+    }
+
+    // -- Cloud server -------------------------------------------------------
+
+    val cloudEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_CLOUD_ENABLED] ?: false }
+    val cloudServerUrl: Flow<String> = dataStore.data.map { it[KEY_CLOUD_SERVER_URL] ?: "" }
+    val cloudAppKey: Flow<String> = dataStore.data.map { it[KEY_CLOUD_APP_KEY] ?: "" }
+
+    suspend fun setCloudEnabled(enabled: Boolean) {
+        dataStore.edit { it[KEY_CLOUD_ENABLED] = enabled }
+    }
+
+    suspend fun setCloudServerUrl(url: String) {
+        dataStore.edit { it[KEY_CLOUD_SERVER_URL] = url }
+    }
+
+    suspend fun setCloudAppKey(key: String) {
+        dataStore.edit { it[KEY_CLOUD_APP_KEY] = key }
     }
 
     // ── Log level ────────────────────────────────────────────────────────────
