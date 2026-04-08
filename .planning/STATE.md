@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.4
-milestone_name: NotificationEngine
+milestone: v0.5
+milestone_name: Cloud-Server
 status: executing
-stopped_at: "Completed quick task 260406-vc6: Pushover channel implementation"
-last_updated: "2026-04-06T21:26:15.410Z"
-last_activity: 2026-04-06
+stopped_at: "Completed Phase 05 — cloud-server backend (8 plans) + Android CloudChannel"
+last_updated: "2026-04-07T00:00:00.000Z"
+last_activity: 2026-04-07
 progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 12
-  completed_plans: 12
-  percent: 0
+  total_phases: 8
+  completed_phases: 8
+  total_plans: 20
+  completed_plans: 20
+  percent: 100
 ---
 
 # Project State
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Zuverlässige, privacy-respektierende Bewegungserkennung — die App muss starten, kalibrieren und Ereignisse erfassen, ohne dass etwas stillschweigend fehlschlägt.
-**Current focus:** Phase 04 — notification-engine
+**Current focus:** Phase 05 complete — cloud-server
 
 ## Current Position
 
-Phase: 04
-Plan: Not started
-Status: Ready to execute
+Phase: 05
+Plan: All complete (8/8)
+Status: Complete — verification passed (52/52 tests)
 Last activity: 2026-04-06
 
 Progress: [░░░░░░░░░░] 0%
