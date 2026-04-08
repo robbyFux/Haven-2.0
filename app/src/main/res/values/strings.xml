@@ -168,6 +168,15 @@
     <string name="settings_pushover_configured">Configured: %1$s</string>
     <string name="settings_pushover_not_configured">Not configured</string>
 
+    <!-- Cloud server -->
+    <string name="settings_cloud_title">Cloud Server</string>
+    <string name="settings_cloud_configure">Configure Cloud Server</string>
+    <string name="settings_cloud_enabled">Cloud upload enabled</string>
+    <string name="settings_cloud_server_url">Server URL</string>
+    <string name="settings_cloud_app_key">App-Key</string>
+    <string name="settings_cloud_configured">Connected: %1$s</string>
+    <string name="settings_cloud_not_configured">Not configured</string>
+
     <string name="settings_notification_rule_title">Alert rules</string>
     <string name="settings_min_severity">Minimum severity</string>
     <string name="settings_cooldown">Cooldown</string>

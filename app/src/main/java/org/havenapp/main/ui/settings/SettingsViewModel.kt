@@ -347,6 +347,29 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setHeartbeatPushoverMinutes(minutes) }
     }
 
+    // -- Cloud server --
+
+    val cloudEnabled: StateFlow<Boolean> = settingsRepository.cloudEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    val cloudServerUrl: StateFlow<String> = settingsRepository.cloudServerUrl
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
+
+    val cloudAppKey: StateFlow<String> = settingsRepository.cloudAppKey
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
+
+    fun setCloudEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setCloudEnabled(enabled) }
+    }
+
+    fun setCloudServerUrl(url: String) {
+        viewModelScope.launch { settingsRepository.setCloudServerUrl(url) }
+    }
+
+    fun setCloudAppKey(key: String) {
+        viewModelScope.launch { settingsRepository.setCloudAppKey(key) }
+    }
+
     fun setLogLevel(debug: Boolean) {
         val level = if (debug) "DEBUG" else "NORMAL"
         val logLevel = if (debug) AppLogger.LogLevel.DEBUG else AppLogger.LogLevel.NORMAL

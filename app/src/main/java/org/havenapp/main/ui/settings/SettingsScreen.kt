@@ -83,6 +83,9 @@ fun SettingsScreen(
     val pushoverUserKey by viewModel.pushoverUserKey.collectAsStateWithLifecycle()
     val pushoverAppToken by viewModel.pushoverAppToken.collectAsStateWithLifecycle()
     val heartbeatPushoverMin by viewModel.heartbeatPushoverMinutes.collectAsStateWithLifecycle()
+    val cloudEnabled by viewModel.cloudEnabled.collectAsStateWithLifecycle()
+    val cloudServerUrl by viewModel.cloudServerUrl.collectAsStateWithLifecycle()
+    val cloudAppKey by viewModel.cloudAppKey.collectAsStateWithLifecycle()
 
     // Dialog state for PIN setup / change
     var showPinDialog by remember { mutableStateOf(false) }
@@ -92,6 +95,7 @@ fun SettingsScreen(
     var showSignalDialog by remember { mutableStateOf(false) }
     var showMattermostDialog by remember { mutableStateOf(false) }
     var showPushoverDialog by remember { mutableStateOf(false) }
+    var showCloudDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -432,6 +436,27 @@ fun SettingsScreen(
                     }
                 }
 
+                // Cloud server channel
+                SettingsSection(title = stringResource(R.string.settings_cloud_title)) {
+                    SensorToggleRow(
+                        label = stringResource(R.string.settings_cloud_enabled),
+                        checked = cloudEnabled,
+                        onCheckedChange = { viewModel.setCloudEnabled(it) },
+                    )
+                    if (cloudEnabled) {
+                        OutlinedButton(
+                            onClick = { showCloudDialog = true },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(
+                                text = if (cloudServerUrl.isNotBlank())
+                                    stringResource(R.string.settings_cloud_configured, cloudServerUrl)
+                                else stringResource(R.string.settings_cloud_not_configured),
+                            )
+                        }
+                    }
+                }
+
                 // NotificationRule (D-05)
                 SettingsSection(title = stringResource(R.string.settings_notification_rule_title)) {
                     // minSeverity (radio group)
@@ -616,6 +641,19 @@ fun SettingsScreen(
             onDismiss = { showPushoverDialog = false },
             onSave = { userKey, appToken ->
                 viewModel.setPushoverConfig(userKey, appToken)
+            },
+        )
+    }
+
+    // Cloud server config dialog
+    if (showCloudDialog) {
+        CloudConfigDialog(
+            initialServerUrl = cloudServerUrl,
+            initialAppKey = cloudAppKey,
+            onDismiss = { showCloudDialog = false },
+            onSave = { url, key ->
+                viewModel.setCloudServerUrl(url)
+                viewModel.setCloudAppKey(key)
             },
         )
     }
@@ -868,6 +906,49 @@ private fun PushoverConfigDialog(
         confirmButton = {
             TextButton(onClick = {
                 onSave(userKey.trim(), appToken.trim())
+                onDismiss()
+            }) { Text(stringResource(R.string.dialog_save)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.dialog_cancel)) }
+        },
+    )
+}
+
+@Composable
+private fun CloudConfigDialog(
+    initialServerUrl: String,
+    initialAppKey: String,
+    onDismiss: () -> Unit,
+    onSave: (serverUrl: String, appKey: String) -> Unit,
+) {
+    var serverUrl by remember { mutableStateOf(initialServerUrl) }
+    var appKey by remember { mutableStateOf(initialAppKey) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_cloud_configure)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = serverUrl,
+                    onValueChange = { serverUrl = it },
+                    label = { Text(stringResource(R.string.settings_cloud_server_url)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = appKey,
+                    onValueChange = { appKey = it },
+                    label = { Text(stringResource(R.string.settings_cloud_app_key)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                onSave(serverUrl.trim(), appKey.trim())
                 onDismiss()
             }) { Text(stringResource(R.string.dialog_save)) }
         },

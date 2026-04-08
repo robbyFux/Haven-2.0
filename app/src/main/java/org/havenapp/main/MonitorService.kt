@@ -45,6 +45,7 @@ import java.util.concurrent.Executors
 import javax.inject.Inject
 import okhttp3.OkHttpClient
 import org.havenapp.main.BuildConfig
+import org.havenapp.main.notify.CloudChannel
 import org.havenapp.main.notify.HavenAlertChannel
 import org.havenapp.main.notify.MattermostChannel
 import org.havenapp.main.notify.NotificationRouter
@@ -150,6 +151,9 @@ class MonitorService : LifecycleService() {
             val pushoverUserKey = settingsRepository.pushoverUserKey.first()
             val pushoverAppToken = settingsRepository.pushoverAppToken.first()
             val heartbeatPushoverMin = settingsRepository.heartbeatPushoverMinutes.first()
+            val cloudEnabled = settingsRepository.cloudEnabled.first()
+            val cloudServerUrl = settingsRepository.cloudServerUrl.first()
+            val cloudAppKey = settingsRepository.cloudAppKey.first()
 
             val notifRule = NotificationRule(
                 minSeverity = settingsRepository.minSeverity.first(),
@@ -166,6 +170,9 @@ class MonitorService : LifecycleService() {
                 }
                 if (pushoverEnabled) {
                     add(PushoverChannel(httpClient, pushoverAppToken, pushoverUserKey))
+                }
+                if (cloudEnabled) {
+                    add(CloudChannel(httpClient, cloudServerUrl, cloudAppKey))
                 }
             }
             notificationRouter.initialize(notifRule, notifChannels)

@@ -168,6 +168,15 @@
     <string name="settings_pushover_configured">Konfiguriert: %1$s</string>
     <string name="settings_pushover_not_configured">Nicht konfiguriert</string>
 
+    <!-- Cloud-Server -->
+    <string name="settings_cloud_title">Cloud-Server</string>
+    <string name="settings_cloud_configure">Cloud-Server konfigurieren</string>
+    <string name="settings_cloud_enabled">Cloud-Upload aktiviert</string>
+    <string name="settings_cloud_server_url">Server-URL</string>
+    <string name="settings_cloud_app_key">App-Key</string>
+    <string name="settings_cloud_configured">Verbunden: %1$s</string>
+    <string name="settings_cloud_not_configured">Nicht konfiguriert</string>
+
     <string name="settings_notification_rule_title">Alarmregeln</string>
     <string name="settings_min_severity">Mindestschweregrad</string>
     <string name="settings_cooldown">Abklingzeit</string>
