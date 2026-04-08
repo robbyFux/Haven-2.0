@@ -66,6 +66,14 @@ Phase-2-Bugfix + fehlende Phase-2-Features: Bugfixes für vollständige Nutzbark
 - **CLOUD-07**: Optionale KI-Auswertung der Events inkl. Videos (lokales TFLite-Modell oder OpenRouter-API)
 - **CLOUD-08**: Cloud-Event-Benachrichtigungen nach Analyse — Mail, Signal oder Pushover
 
+### Web-UI (Phase 6)
+
+- **WEBUI-01**: Nutzer-Selbstverwaltung — Registrierung, Login, 2FA-Setup (TOTP QR-Code), Passwort ändern, Account löschen
+- **WEBUI-02**: Geräte-Verwaltung — App-Keys anzeigen, erstellen (mit Name), widerrufen
+- **WEBUI-03**: Event-Browser — Events nach Datum/Gerät/Typ filtern, Video abspielen, AI-Analyseergebnis anzeigen, Event löschen
+- **WEBUI-04**: Admin-Dashboard — Nutzerübersicht, Quota-Verwaltung pro Nutzer, Systemstatistiken (Speicher, Event-Zähler)
+- **WEBUI-05**: Benachrichtigungs-Konfiguration — Mail/Signal/Pushover-Einstellungen, Heartbeat-Interval, Schweregrad-Schwellwert
+
 ### Zeitpläne (Phase 6+)
 
 - **SCHED-01**: Armed/Disarmed-Zeitpläne
@@ -126,15 +134,21 @@ Phase-2-Bugfix + fehlende Phase-2-Features: Bugfixes für vollständige Nutzbark
 | CLOUD-06 | Phase 5 | Planned |
 | CLOUD-07 | Phase 5 | Planned |
 | CLOUD-08 | Phase 5 | Planned |
+| WEBUI-01 | Phase 6 | Planned |
+| WEBUI-02 | Phase 6 | Planned |
+| WEBUI-03 | Phase 6 | Planned |
+| WEBUI-04 | Phase 6 | Planned |
+| WEBUI-05 | Phase 6 | Planned |
 
 **Coverage:**
 - v1 requirements: 17 total
 - Mapped to phases: 17
 - Unmapped: 0
-- v2 requirements: 5 (Phase 4) + 8 (Phase 5) + 8 (future)
+- v2 requirements: 5 (Phase 4) + 8 (Phase 5) + 5 (Phase 6) + 8 (future)
 - Phase 4 mapped: 5/5
 - Phase 5 mapped: 8/8
+- Phase 6 mapped: 5/5
 
 ---
 *Requirements defined: 2026-03-31*
-*Last updated: 2026-04-07 — Phase 5 requirements added: CLOUD-01 through CLOUD-08*
+*Last updated: 2026-04-08 — Phase 6 requirements added: WEBUI-01 through WEBUI-05*
