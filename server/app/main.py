@@ -13,7 +13,7 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI
 
-from app.routers import health
+from app.routers import auth, health
 
 
 @asynccontextmanager
@@ -46,9 +46,9 @@ def create_app() -> FastAPI:
     # Health endpoint — mounted at root level (no /api/v1/ prefix)
     application.include_router(health.router)
 
-    # API v1 routers — actual implementations added in subsequent plans
-    # Placeholder imports: these routers will be created in plans 02–07
-    # application.include_router(auth.router, prefix="/api/v1")
+    # API v1 routers
+    application.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
+    # Placeholder imports: these routers will be created in plans 03–07
     # application.include_router(devices.router, prefix="/api/v1")
     # application.include_router(events.router, prefix="/api/v1")
     # application.include_router(admin.router, prefix="/api/v1")
