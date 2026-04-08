@@ -75,14 +75,14 @@ Plans:
 **Plans:** 8 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Project scaffold: pyproject.toml, Docker, FastAPI app, DB models, Alembic, test infra
-- [ ] 05-02-PLAN.md — Auth system: registration, login, JWT, 2FA (TOTP), User-Key
-- [ ] 05-03-PLAN.md — Device management (App-Key CRUD) + Argon2id crypto service
-- [ ] 05-04-PLAN.md — Event + video upload with encryption and quota enforcement
-- [ ] 05-05-PLAN.md — Admin API: user management, quota control, system stats
-- [ ] 05-06-PLAN.md — Celery AI analysis pipeline (TFLite + OpenRouter)
-- [ ] 05-07-PLAN.md — Cloud notification dispatch (Email, Signal, Pushover)
-- [ ] 05-08-PLAN.md — Android CloudChannel: event upload client + Settings UI
+- [x] 05-01-PLAN.md — Project scaffold: pyproject.toml, Docker, FastAPI app, DB models, Alembic, test infra
+- [x] 05-02-PLAN.md — Auth system: registration, login, JWT, 2FA (TOTP), User-Key
+- [x] 05-03-PLAN.md — Device management (App-Key CRUD) + Argon2id crypto service
+- [x] 05-04-PLAN.md — Event + video upload with encryption and quota enforcement
+- [x] 05-05-PLAN.md — Admin API: user management, quota control, system stats
+- [x] 05-06-PLAN.md — Celery AI analysis pipeline (TFLite + OpenRouter)
+- [x] 05-07-PLAN.md — Cloud notification dispatch (Email, Signal, Pushover)
+- [x] 05-08-PLAN.md — Android CloudChannel: event upload client + Settings UI
 
 ## Progress
 
