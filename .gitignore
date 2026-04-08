@@ -14,5 +14,12 @@ local.properties
 # Generated files
 claude_resume
 
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+server/.env
+server/test.db
+
 # Android assets (large binary — add manually)
 app/src/main/assets/*.tflite
