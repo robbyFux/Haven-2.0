@@ -13,13 +13,15 @@ an optional app PIN. One phase delivers a fully secured, fully functional monito
 - ✅ **v0.2 Detection Intelligence** — Phase 2 (shipped)
 - ✅ **v0.3 Phase-2-Complete** — Phase 3 (complete)
 - ✅ **v0.4 NotificationEngine** — Phase 4 (complete)
-- 🚧 **v0.5 Cloud-Server** — Phase 5 (planned)
+- ✅ **v0.5 Cloud-Server** — Phase 5 (complete)
+- 🚧 **v0.6 Web-UI** — Phase 6 (planned)
 
 ## Phases
 
 - [x] **Phase 3: Phase-2-Complete** - Fix all Phase 2 bugs, add video clip recording on trigger, encrypt stored media (Android Keystore), and add optional app PIN (completed 2026-04-04)
 - [x] **Phase 4: NotificationEngine** - Signal+Mattermost alerts, configurable channels and severity thresholds, anti-flood cooldown, Settings grouping, Debug logging level (completed 2026-04-05)
-- [ ] **Phase 5: Cloud-Server** - Self-hosted Python backend (FastAPI) with multi-user auth (2FA), multi-device support, encrypted user data, admin quotas, event+video upload from Haven, optional AI analysis, and cloud-triggered notifications (Mail/Signal/Pushover)
+- [x] **Phase 5: Cloud-Server** - Self-hosted Python backend (FastAPI) with multi-user auth (2FA), multi-device support, encrypted user data, admin quotas, event+video upload from Haven, optional AI analysis, and cloud-triggered notifications (Mail/Signal/Pushover) (completed 2026-04-07)
+- [ ] **Phase 6: Web-UI** - Django-based web interface for the Cloud-Server covering all Phase 5 features: user self-service (registration, login, 2FA, device management), event/video browsing, admin dashboard (user management, quotas, system stats), notification settings, AI analysis results — built with Django Templates + HTMX + Alpine.js + Tailwind CSS
 
 ## Phase Details
 
@@ -66,6 +68,22 @@ Plans:
 - [x] 04-04-PLAN.md — NotificationRouter + MonitorService integration + Heartbeat
 - [x] 04-05-PLAN.md — Notification Settings UI: config dialogs, rule controls, LogLevel toggle
 
+### Phase 6: Web-UI
+
+**Goal:** Django-based web interface for the Cloud-Server: user self-service (registration, login, 2FA/TOTP setup, device management), event + video browsing with filters, admin dashboard (user management, quota control, system stats), notification config, AI analysis result display. Built with Django Templates + HTMX + Alpine.js + Tailwind CSS. Django integrates with the existing FastAPI backend via shared PostgreSQL database.
+**Depends on:** Phase 5
+**Requirements:** WEBUI-01, WEBUI-02, WEBUI-03, WEBUI-04, WEBUI-05
+**Tech Stack:** Python, Django 5.2, Django-Templates, HTMX 2.x, Alpine.js 3.x, Tailwind CSS 3.4 (via django-tailwind-cli), WhiteNoise, custom auth backend, pytest-django
+**Plans:** 6 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Django project scaffold, unmanaged models, custom auth backend, base template, Docker, test infra
+- [ ] 06-02-PLAN.md — Auth system: registration, login, TOTP 2FA, change password, delete account
+- [ ] 06-03-PLAN.md — Device management: list, create (App-Key), revoke (HTMX inline)
+- [ ] 06-04-PLAN.md — Event browser: filtered list (HTMX), event detail, video serving, AI analysis, delete
+- [ ] 06-05-PLAN.md — Admin dashboard: user list, quota management (HTMX), system stats
+- [ ] 06-06-PLAN.md — Notification settings: email/Signal/Pushover config, global toggle
+
 ### Phase 5: Cloud-Server
 
 **Goal:** Self-hosted Python backend (FastAPI + PostgreSQL + Redis + Celery) that provides multi-user auth with 2FA, per-user multi-device (App-Key) management, encrypted user data storage (Argon2id key derivation from cloud password + username), admin-defined quotas, secure event+video upload from the Haven Android app, optional AI-based analysis of events/videos (local TFLite or OpenRouter), and cloud-triggered notifications via Mail, Signal, or Pushover after analysis.
@@ -90,4 +108,5 @@ Plans:
 |-------|----------------|--------|-----------|
 | 3. Phase-2-Complete | 7/7 | Complete   | 2026-04-04 |
 | 4. NotificationEngine | 5/5 | Complete   | 2026-04-05 |
-| 5. Cloud-Server | 0/8 | In Progress | — |
+| 5. Cloud-Server | 8/8 | Complete   | 2026-04-07 |
+| 6. Web-UI | 0/6 | Planned | — |
