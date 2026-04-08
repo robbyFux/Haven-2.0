@@ -12,6 +12,8 @@ Usage in tests:
         assert response.status_code == 200
 """
 
+import os
+
 import pytest_asyncio
 import httpx
 from httpx import ASGITransport
@@ -20,6 +22,15 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from app.database import get_db
 from app.main import create_app
 from app.models.base import Base
+
+# Run Celery tasks synchronously in-process during tests (no Redis required).
+# Must be set before celery_app is first imported.
+os.environ.setdefault("CELERY_TASK_ALWAYS_EAGER", "true")
+
+# Apply eager mode to the already-imported celery_app instance as well,
+# in case it was imported before this conftest ran.
+from app.celery_app import celery_app as _celery_app  # noqa: E402
+_celery_app.conf.update(task_always_eager=True, task_eager_propagates=True)
 
 # SQLite in-memory database for fast isolated tests.
 # aiosqlite is required (listed in [project.optional-dependencies] dev).

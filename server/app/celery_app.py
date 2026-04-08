@@ -23,3 +23,12 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
 )
+
+# In test environments (no Redis available), run tasks synchronously in-process.
+# Set CELERY_TASK_ALWAYS_EAGER=true in the environment to enable this mode.
+import os as _os
+if _os.environ.get("CELERY_TASK_ALWAYS_EAGER", "").lower() in ("1", "true", "yes"):
+    celery_app.conf.update(
+        task_always_eager=True,
+        task_eager_propagates=True,
+    )
