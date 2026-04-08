@@ -13,7 +13,7 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI
 
-from app.routers import admin, auth, devices, events, health
+from app.routers import admin, auth, devices, events, health, notifications
 
 
 @asynccontextmanager
@@ -51,6 +51,7 @@ def create_app() -> FastAPI:
     application.include_router(devices.router, prefix="/api/v1/devices", tags=["devices"])
     application.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
     application.include_router(events.router, prefix="/api/v1")
+    application.include_router(notifications.router, prefix="/api/v1/notifications", tags=["notifications"])
 
     return application
 
