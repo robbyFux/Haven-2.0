@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Setup Two-Factor Authentication{% endblock %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center">
+  <div class="w-full max-w-md">
+    <div class="bg-gray-800 rounded-lg px-8 py-8 shadow-xl">
+      <h1 class="text-2xl font-semibold text-white mb-2 text-center">Setup 2FA</h1>
+      <p class="text-gray-400 text-sm mb-6 text-center">
+        Scan this QR code with your authenticator app (Google Authenticator, Aegis, etc.),
+        then enter the 6-digit code to confirm.
+      </p>
+
+      {% if messages %}
+      <div class="space-y-2 mb-4">
+        {% for message in messages %}
+        <p class="text-sm text-red-400 bg-red-900/30 rounded p-2">{{ message }}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if qr_image %}
+      <div class="flex justify-center mb-4">
+        <img src="data:image/png;base64,{{ qr_image }}"
+             alt="TOTP QR Code"
+             class="rounded-lg border border-gray-600"
+             width="200" height="200">
+      </div>
+
+      <div class="bg-gray-700 rounded-lg px-4 py-3 mb-6 text-center">
+        <p class="text-xs text-gray-400 mb-1">Manual entry key</p>
+        <code class="text-teal-300 text-sm font-mono tracking-widest break-all">{{ secret }}</code>
+      </div>
+      {% endif %}
+
+      <form method="post" action="{% url 'accounts:totp_setup' %}" class="space-y-4">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="text-sm text-red-400">
+          {% for error in form.non_field_errors %}
+          <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div>
+          <label class="block text-sm text-gray-400 mb-1" for="{{ form.code.id_for_label }}">
+            Verification code
+          </label>
+          {{ form.code }}
+          {% if form.code.errors %}
+          <p class="text-xs text-red-400 mt-1">{{ form.code.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+
+        <button type="submit"
+          class="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+          Enable 2FA
+        </button>
+      </form>
+
+      <p class="text-center text-sm text-gray-500 mt-4">
+        <a href="{% url 'accounts:profile' %}" class="hover:text-gray-400">Cancel</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

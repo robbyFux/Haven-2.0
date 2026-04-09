@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Two-Factor Authentication{% endblock %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center">
+  <div class="w-full max-w-sm">
+    <div class="bg-gray-800 rounded-lg px-8 py-8 shadow-xl text-center">
+      <div class="text-4xl mb-4">🔐</div>
+      <h1 class="text-2xl font-semibold text-white mb-2">Two-Factor Auth</h1>
+      <p class="text-gray-400 text-sm mb-6">Enter the 6-digit code from your authenticator app.</p>
+
+      <form method="post" action="{% url 'accounts:totp_verify' %}" class="space-y-4">
+        {% csrf_token %}
+
+        {% if messages %}
+        <div class="text-sm text-red-400 bg-red-900/30 rounded-lg p-3">
+          {% for message in messages %}
+          <p>{{ message }}</p>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if form.non_field_errors %}
+        <div class="text-sm text-red-400">
+          {% for error in form.non_field_errors %}
+          <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div>
+          {{ form.code }}
+          {% if form.code.errors %}
+          <p class="text-xs text-red-400 mt-1">{{ form.code.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+
+        <button type="submit"
+          class="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+          Verify
+        </button>
+      </form>
+
+      <p class="text-center text-sm text-gray-500 mt-6">
+        <a href="{% url 'accounts:login' %}" class="hover:text-gray-400">Back to login</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

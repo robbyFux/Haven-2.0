@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Account{% endblock %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center">
+  <div class="w-full max-w-md">
+    <div class="bg-gray-800 rounded-lg px-8 py-8 shadow-xl border border-red-800">
+      <div class="text-center mb-6">
+        <div class="text-5xl mb-3">⚠️</div>
+        <h1 class="text-2xl font-semibold text-red-400 mb-2">Delete Account</h1>
+        <p class="text-gray-400 text-sm">
+          This action is <strong class="text-white">permanent and irreversible</strong>.
+          All your data, events, and devices will be deleted.
+        </p>
+      </div>
+
+      <div class="bg-red-900/30 border border-red-800 rounded-lg p-4 mb-6">
+        <p class="text-red-300 text-sm">
+          You are about to delete the account
+          <strong class="text-white">{{ user.username }}</strong>.
+          This cannot be undone.
+        </p>
+      </div>
+
+      <form method="post" action="{% url 'accounts:delete_account' %}" class="space-y-4">
+        {% csrf_token %}
+
+        {% if messages %}
+        <div class="space-y-2">
+          {% for message in messages %}
+          <p class="text-sm text-red-400 bg-red-900/30 rounded p-2">{{ message }}</p>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if form.non_field_errors %}
+        <div class="text-sm text-red-400">
+          {% for error in form.non_field_errors %}
+          <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div>
+          <label class="block text-sm text-gray-400 mb-1" for="{{ form.confirm_username.id_for_label }}">
+            Type <strong class="text-white">{{ user.username }}</strong> to confirm
+          </label>
+          {{ form.confirm_username }}
+          {% if form.confirm_username.errors %}
+          <p class="text-xs text-red-400 mt-1">{{ form.confirm_username.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+
+        <button type="submit"
+          class="w-full bg-red-700 hover:bg-red-600 text-white font-medium py-2 px-6 rounded-lg transition-colors mt-2">
+          Delete my account permanently
+        </button>
+      </form>
+
+      <p class="text-center text-sm text-gray-500 mt-6">
+        <a href="{% url 'accounts:profile' %}" class="hover:text-gray-400">Cancel — keep my account</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}
