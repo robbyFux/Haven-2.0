@@ -1,0 +1,61 @@
+{% load event_tags %}
+<div class="bg-gray-800 rounded-lg overflow-hidden">
+  <div class="px-4 py-2 text-xs text-gray-400 border-b border-gray-700">
+    {{ page.paginator.count }} event{{ page.paginator.count|pluralize }}
+    {% if page.has_other_pages %}
+    &mdash; Page {{ page.number }} of {{ page.paginator.num_pages }}
+    {% endif %}
+  </div>
+
+  {% if page.object_list %}
+  <table class="w-full text-sm divide-y divide-gray-700">
+    <thead class="bg-gray-800 text-gray-400 uppercase text-xs">
+      <tr>
+        <th class="px-4 py-3 text-left">Time</th>
+        <th class="px-4 py-3 text-left">Device</th>
+        <th class="px-4 py-3 text-left">Type</th>
+        <th class="px-4 py-3 text-left">Severity</th>
+        <th class="px-4 py-3 text-left">Sensor Value</th>
+        <th class="px-4 py-3 text-left">Media</th>
+        <th class="px-4 py-3 text-left">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-700">
+      {% for event in page %}
+        {% include "events/partials/event_row.html" with event=event %}
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="px-4 py-8 text-center text-gray-500">
+    No events found.
+  </div>
+  {% endif %}
+
+  {# Pagination #}
+  {% if page.has_other_pages %}
+  <div class="px-4 py-3 border-t border-gray-700 flex items-center justify-between text-sm">
+    <span class="text-gray-400">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+    <div class="flex gap-2">
+      {% if page.has_previous %}
+      <a href="?{% query_replace request page=page.previous_page_number %}"
+         hx-get="?{% query_replace request page=page.previous_page_number %}"
+         hx-target="#event-table"
+         hx-push-url="true"
+         class="text-teal-400 hover:text-teal-300 transition-colors">
+        &larr; Previous
+      </a>
+      {% endif %}
+      {% if page.has_next %}
+      <a href="?{% query_replace request page=page.next_page_number %}"
+         hx-get="?{% query_replace request page=page.next_page_number %}"
+         hx-target="#event-table"
+         hx-push-url="true"
+         class="text-teal-400 hover:text-teal-300 transition-colors">
+        Next &rarr;
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>

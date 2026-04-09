@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Events{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-semibold text-gray-100">Events</h1>
+    <span class="text-sm text-gray-400">{{ page.paginator.count }} event{{ page.paginator.count|pluralize }}</span>
+  </div>
+
+  {# Filter form #}
+  <div class="bg-gray-800 rounded-lg p-4">
+    <form id="filter-form"
+          hx-get="{% url 'events:list' %}"
+          hx-target="#event-table"
+          hx-trigger="change, submit"
+          hx-push-url="true"
+          class="flex flex-wrap gap-3 items-end">
+      {% csrf_token %}
+
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-gray-400">From</label>
+        <input type="datetime-local" name="timestamp__gte"
+               value="{{ request.GET.timestamp__gte }}"
+               class="bg-gray-700 text-gray-100 rounded px-2 py-1 text-sm border border-gray-600 focus:outline-none focus:border-teal-500">
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-gray-400">To</label>
+        <input type="datetime-local" name="timestamp__lte"
+               value="{{ request.GET.timestamp__lte }}"
+               class="bg-gray-700 text-gray-100 rounded px-2 py-1 text-sm border border-gray-600 focus:outline-none focus:border-teal-500">
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-gray-400">Device</label>
+        <select name="device_id"
+                class="bg-gray-700 text-gray-100 rounded px-2 py-1 text-sm border border-gray-600 focus:outline-none focus:border-teal-500">
+          <option value="">All Devices</option>
+          {% for device in devices %}
+          <option value="{{ device.id }}" {% if request.GET.device_id == device.id|stringformat:"s" %}selected{% endif %}>
+            {{ device.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-gray-400">Type</label>
+        <select name="event_type"
+                class="bg-gray-700 text-gray-100 rounded px-2 py-1 text-sm border border-gray-600 focus:outline-none focus:border-teal-500">
+          <option value="">All Types</option>
+          {% with etypes=event_types %}{% for etype in etypes %}
+          <option value="{{ etype }}" {% if request.GET.event_type|upper == etype %}selected{% endif %}>{{ etype }}</option>
+          {% endfor %}{% endwith %}
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-gray-400">Severity</label>
+        <select name="severity"
+                class="bg-gray-700 text-gray-100 rounded px-2 py-1 text-sm border border-gray-600 focus:outline-none focus:border-teal-500">
+          <option value="">All Severities</option>
+          <option value="LOW" {% if request.GET.severity == "LOW" %}selected{% endif %}>Low</option>
+          <option value="MEDIUM" {% if request.GET.severity == "MEDIUM" %}selected{% endif %}>Medium</option>
+          <option value="HIGH" {% if request.GET.severity == "HIGH" %}selected{% endif %}>High</option>
+          <option value="CRITICAL" {% if request.GET.severity == "CRITICAL" %}selected{% endif %}>Critical</option>
+        </select>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="submit"
+                class="bg-teal-600 hover:bg-teal-700 text-white rounded px-3 py-1 text-sm transition-colors">
+          Filter
+        </button>
+        <a href="{% url 'events:list' %}"
+           class="text-gray-400 hover:text-gray-200 rounded px-3 py-1 text-sm border border-gray-600 hover:border-gray-400 transition-colors">
+          Reset
+        </a>
+      </div>
+    </form>
+  </div>
+
+  {# Event table #}
+  <div id="event-table">
+    {% include "events/partials/event_table.html" %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+<tr class="hover:bg-gray-750 transition-colors">
+  <td class="px-4 py-3 font-mono text-xs text-gray-300 whitespace-nowrap">
+    {{ event.timestamp|date:"Y-m-d H:i:s" }}
+  </td>
+  <td class="px-4 py-3 text-sm text-gray-200">
+    {{ event.device.name }}
+  </td>
+  <td class="px-4 py-3 text-sm text-gray-200">
+    {% if "CAMERA" in event.event_type %}
+    <span title="{{ event.event_type }}">&#127909; {{ event.event_type }}</span>
+    {% elif event.event_type == "MICROPHONE" or event.event_type == "SOUND_DECIBEL" %}
+    <span title="{{ event.event_type }}">&#127908; {{ event.event_type }}</span>
+    {% elif event.event_type == "LIGHT" %}
+    <span title="{{ event.event_type }}">&#128161; {{ event.event_type }}</span>
+    {% elif event.event_type == "ACCELEROMETER" or event.event_type == "GYROSCOPE" %}
+    <span title="{{ event.event_type }}">&#128200; {{ event.event_type }}</span>
+    {% else %}
+    <span title="{{ event.event_type }}">&#9888; {{ event.event_type }}</span>
+    {% endif %}
+  </td>
+  <td class="px-4 py-3">
+    {% if event.severity == "LOW" %}
+    <span class="px-2 py-0.5 rounded text-xs font-medium bg-teal-900/50 text-teal-400">LOW</span>
+    {% elif event.severity == "MEDIUM" %}
+    <span class="px-2 py-0.5 rounded text-xs font-medium bg-amber-900/50 text-amber-400">MEDIUM</span>
+    {% elif event.severity == "HIGH" %}
+    <span class="px-2 py-0.5 rounded text-xs font-medium bg-orange-900/50 text-orange-400">HIGH</span>
+    {% elif event.severity == "CRITICAL" %}
+    <span class="px-2 py-0.5 rounded text-xs font-medium bg-red-900/50 text-red-400">CRITICAL</span>
+    {% else %}
+    <span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-700 text-gray-300">{{ event.severity }}</span>
+    {% endif %}
+  </td>
+  <td class="px-4 py-3 font-mono text-xs text-gray-400">
+    {% if event.sensor_value is not None %}{{ event.sensor_value|floatformat:2 }}{% else %}&mdash;{% endif %}
+  </td>
+  <td class="px-4 py-3 text-sm">
+    {% if event.media_path %}
+      {% if event.is_encrypted %}
+      <span class="text-yellow-400" title="Encrypted video">&#128274;</span>
+      {% else %}
+      <a href="{% url 'events:detail' event.id %}" class="text-teal-400 hover:text-teal-300" title="Has video">&#127909;</a>
+      {% endif %}
+    {% else %}
+    &mdash;
+    {% endif %}
+  </td>
+  <td class="px-4 py-3">
+    <a href="{% url 'events:detail' event.id %}"
+       class="text-teal-400 hover:text-teal-300 text-sm transition-colors">
+      View
+    </a>
+  </td>
+</tr>
