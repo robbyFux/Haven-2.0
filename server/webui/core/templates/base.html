@@ -1,0 +1,36 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Haven{% endblock %} - Haven Cloud</title>
+  <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+
+  {% include "partials/nav.html" %}
+
+  <main class="flex-1 max-w-7xl mx-auto px-4 py-6 w-full">
+    {% if messages %}
+    <div class="mb-4 space-y-2">
+      {% for message in messages %}
+      <div class="p-3 rounded-lg
+        {% if message.tags == 'error' %}bg-red-900/50 text-red-300
+        {% elif message.tags == 'success' %}bg-green-900/50 text-green-300
+        {% else %}bg-blue-900/50 text-blue-300{% endif %}">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="text-center text-gray-500 text-sm py-4">Haven Cloud</footer>
+</body>
+</html>

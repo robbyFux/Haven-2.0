@@ -1,0 +1,73 @@
+<nav class="bg-gray-800 border-b border-gray-700">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="flex items-center justify-between h-14">
+
+      <!-- Brand -->
+      <a href="/" class="flex items-center gap-2 text-teal-400 font-semibold text-lg">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+             aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955
+                   0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622
+                   5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        </svg>
+        Haven
+      </a>
+
+      <!-- Main nav links (authenticated) -->
+      {% if user.is_authenticated %}
+      <div class="flex items-center gap-6 text-sm">
+        <a href="/events/"
+           class="text-gray-300 hover:text-teal-400 transition-colors
+                  {% if request.path|slice:':8' == '/events/' %}text-teal-400 font-medium{% endif %}">
+          Events
+        </a>
+        <a href="/devices/"
+           class="text-gray-300 hover:text-teal-400 transition-colors
+                  {% if request.path|slice:':9' == '/devices/' %}text-teal-400 font-medium{% endif %}">
+          Devices
+        </a>
+        <a href="/notifications/"
+           class="text-gray-300 hover:text-teal-400 transition-colors
+                  {% if request.path|slice:':15' == '/notifications/' %}text-teal-400 font-medium{% endif %}">
+          Settings
+        </a>
+        {% if user.is_admin %}
+        <a href="/admin/"
+           class="text-gray-300 hover:text-teal-400 transition-colors
+                  {% if request.path|slice:':7' == '/admin/' %}text-teal-400 font-medium{% endif %}">
+          Admin
+        </a>
+        {% endif %}
+      </div>
+
+      <!-- User menu -->
+      <div class="flex items-center gap-4 text-sm">
+        <span class="text-gray-400">{{ user.username }}</span>
+        <form method="post" action="/accounts/logout/">
+          {% csrf_token %}
+          <button type="submit"
+                  class="text-gray-400 hover:text-red-400 transition-colors">
+            Logout
+          </button>
+        </form>
+      </div>
+
+      {% else %}
+      <!-- Unauthenticated links -->
+      <div class="flex items-center gap-4 text-sm">
+        <a href="/accounts/login/"
+           class="text-gray-300 hover:text-teal-400 transition-colors">
+          Login
+        </a>
+        <a href="/accounts/register/"
+           class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded
+                  transition-colors text-sm">
+          Register
+        </a>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</nav>
