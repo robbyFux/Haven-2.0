@@ -1,0 +1,121 @@
+{% if messages %}
+<div class="mb-4 space-y-2">
+  {% for message in messages %}
+  <div class="p-3 rounded-lg
+    {% if message.tags == 'error' %}bg-red-900/50 text-red-300
+    {% elif message.tags == 'success' %}bg-green-900/50 text-green-300
+    {% else %}bg-blue-900/50 text-blue-300{% endif %}">
+    {{ message }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<form method="post"
+      action="{% url 'notifications:settings' %}"
+      hx-post="{% url 'notifications:settings' %}"
+      hx-target="#notification-form"
+      hx-swap="innerHTML">
+  {% csrf_token %}
+
+  {# --- Section 1: Global Toggle --- #}
+  <div class="bg-gray-800 rounded-lg p-6 space-y-4 mb-4">
+    <h2 class="text-sm font-medium text-gray-400 uppercase tracking-wider">Global</h2>
+    <div class="flex items-center gap-3">
+      <input type="checkbox"
+             id="id_notifications_enabled"
+             name="notifications_enabled"
+             {% if form.notifications_enabled.value %}checked{% endif %}
+             class="w-5 h-5 rounded accent-teal-600 bg-gray-700 border-gray-600 cursor-pointer">
+      <label for="id_notifications_enabled" class="text-white font-medium cursor-pointer">
+        Enable notifications
+      </label>
+    </div>
+    <p class="text-gray-500 text-sm">When disabled, no notifications are sent for any channel.</p>
+    {% if form.notifications_enabled.errors %}
+    <p class="text-red-400 text-sm mt-1">{{ form.notifications_enabled.errors|join:", " }}</p>
+    {% endif %}
+  </div>
+
+  {# --- Section 2: Email --- #}
+  <div class="bg-gray-800 rounded-lg p-6 space-y-4 mb-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-sm font-medium text-gray-400 uppercase tracking-wider">Email</h2>
+      {% if form.notification_email.value %}
+      <span class="text-green-400 text-sm">&#10003; Configured</span>
+      {% endif %}
+    </div>
+    <div>
+      <label for="id_notification_email" class="block text-sm font-medium text-gray-300 mb-1">
+        Email Address
+      </label>
+      <input type="email"
+             id="id_notification_email"
+             name="notification_email"
+             value="{{ form.notification_email.value|default:'' }}"
+             placeholder="you@example.com"
+             class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500">
+      {% if form.notification_email.errors %}
+      <p class="text-red-400 text-sm mt-1">{{ form.notification_email.errors|join:", " }}</p>
+      {% endif %}
+    </div>
+    <p class="text-gray-500 text-sm">Receive email alerts when events are detected. Requires SMTP configured on the server.</p>
+  </div>
+
+  {# --- Section 3: Signal --- #}
+  <div class="bg-gray-800 rounded-lg p-6 space-y-4 mb-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-sm font-medium text-gray-400 uppercase tracking-wider">Signal</h2>
+      {% if form.notification_signal_number.value %}
+      <span class="text-green-400 text-sm">&#10003; Configured</span>
+      {% endif %}
+    </div>
+    <div>
+      <label for="id_notification_signal_number" class="block text-sm font-medium text-gray-300 mb-1">
+        Signal Number
+      </label>
+      <input type="text"
+             id="id_notification_signal_number"
+             name="notification_signal_number"
+             value="{{ form.notification_signal_number.value|default:'' }}"
+             placeholder="+49..."
+             class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500">
+      {% if form.notification_signal_number.errors %}
+      <p class="text-red-400 text-sm mt-1">{{ form.notification_signal_number.errors|join:", " }}</p>
+      {% endif %}
+    </div>
+    <p class="text-gray-500 text-sm">Receive Signal messages. Requires signal-cli REST API configured on the server.</p>
+    <p class="text-gray-600 text-xs">+49... (E.164 format)</p>
+  </div>
+
+  {# --- Section 4: Pushover --- #}
+  <div class="bg-gray-800 rounded-lg p-6 space-y-4 mb-6">
+    <div class="flex items-center justify-between">
+      <h2 class="text-sm font-medium text-gray-400 uppercase tracking-wider">Pushover</h2>
+      {% if form.pushover_user_key.value %}
+      <span class="text-green-400 text-sm">&#10003; Configured</span>
+      {% endif %}
+    </div>
+    <div>
+      <label for="id_pushover_user_key" class="block text-sm font-medium text-gray-300 mb-1">
+        Pushover User Key
+      </label>
+      <input type="text"
+             id="id_pushover_user_key"
+             name="pushover_user_key"
+             value="{{ form.pushover_user_key.value|default:'' }}"
+             placeholder="Pushover user key"
+             class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500">
+      {% if form.pushover_user_key.errors %}
+      <p class="text-red-400 text-sm mt-1">{{ form.pushover_user_key.errors|join:", " }}</p>
+      {% endif %}
+    </div>
+    <p class="text-gray-500 text-sm">Receive Pushover notifications. Get your user key from pushover.net.</p>
+  </div>
+
+  {# --- Save button --- #}
+  <button type="submit"
+          class="w-full bg-teal-600 hover:bg-teal-500 text-white font-medium py-2.5 px-6 rounded-lg transition-colors">
+    Save Settings
+  </button>
+</form>

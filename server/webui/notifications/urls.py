@@ -1,7 +1,11 @@
-"""Notification URL patterns (implemented in plan 06-06)."""
+"""Notification URL patterns."""
 
 from django.urls import path
 
+from . import views
+
 app_name = "notifications"
 
-urlpatterns: list = []
+urlpatterns = [
+    path("", views.notification_settings, name="settings"),
+]

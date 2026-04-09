@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Notification Settings{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+  <h1 class="text-2xl font-semibold text-white mb-2">Notification Settings</h1>
+  <p class="text-gray-400 mb-6">Configure how Haven Cloud sends you alerts when events are detected.</p>
+
+  <div id="notification-form">
+    {% include "notifications/partials/notification_form.html" %}
+  </div>
+</div>
+{% endblock %}
