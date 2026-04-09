@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+  <!-- Page header -->
+  <div>
+    <h1 class="text-2xl font-bold text-gray-100">Admin Dashboard</h1>
+    <p class="text-gray-400 mt-1">System overview and user management</p>
+  </div>
+
+  <!-- Stats grid -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    <!-- Total Users -->
+    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-gray-400 text-sm font-medium uppercase tracking-wide">Total Users</span>
+        <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      <p class="text-3xl font-bold text-teal-400">{{ total_users }}</p>
+      <p class="text-gray-500 text-xs mt-1">registered accounts</p>
+    </div>
+
+    <!-- Total Events -->
+    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-gray-400 text-sm font-medium uppercase tracking-wide">Total Events</span>
+        <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+      </div>
+      <p class="text-3xl font-bold text-teal-400">{{ total_events }}</p>
+      <p class="text-gray-500 text-xs mt-1">security events recorded</p>
+    </div>
+
+    <!-- Total Storage -->
+    <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-gray-400 text-sm font-medium uppercase tracking-wide">Total Storage</span>
+        <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+        </svg>
+      </div>
+      <p class="text-3xl font-bold text-teal-400">{{ total_storage }}</p>
+      <p class="text-gray-500 text-xs mt-1">used across all users</p>
+    </div>
+
+  </div>
+
+  <!-- User table -->
+  <div class="bg-gray-800 rounded-lg border border-gray-700">
+    <div class="px-6 py-4 border-b border-gray-700 flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-gray-100">Users</h2>
+      <span class="text-sm text-gray-400">{{ users|length }} users</span>
+    </div>
+
+    <div id="user-table"
+         hx-get="{% url 'admin_panel:dashboard' %}"
+         hx-trigger="load delay:0ms"
+         hx-swap="innerHTML">
+      {% include "admin_panel/partials/user_table.html" %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

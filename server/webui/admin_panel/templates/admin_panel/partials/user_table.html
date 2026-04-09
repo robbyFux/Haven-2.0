@@ -1,0 +1,25 @@
+<div class="overflow-x-auto">
+  <table class="w-full text-left text-gray-300">
+    <thead class="text-xs text-gray-400 uppercase bg-gray-750 border-b border-gray-700">
+      <tr>
+        <th class="px-4 py-3">Username</th>
+        <th class="px-4 py-3">Admin</th>
+        <th class="px-4 py-3">2FA</th>
+        <th class="px-4 py-3">Status</th>
+        <th class="px-4 py-3">Events (used/max)</th>
+        <th class="px-4 py-3">Storage (used/quota)</th>
+        <th class="px-4 py-3">Created</th>
+        <th class="px-4 py-3">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+        {% include "admin_panel/partials/user_row.html" %}
+      {% empty %}
+        <tr>
+          <td colspan="8" class="px-4 py-8 text-center text-gray-500">No users found.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

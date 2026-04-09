@@ -1,0 +1,45 @@
+<tr id="user-{{ user.id }}" class="border-b border-gray-700 hover:bg-gray-750">
+  <td class="px-4 py-3">
+    <a href="{% url 'admin_panel:user_detail' user.id %}" class="hover:text-teal-400">
+      {% if user.is_admin %}
+        <span class="font-bold text-teal-300">{{ user.username }}</span>
+      {% else %}
+        {{ user.username }}
+      {% endif %}
+    </a>
+  </td>
+  <td class="px-4 py-3">
+    {% if user.is_admin %}
+      <span class="px-2 py-0.5 rounded text-xs bg-teal-800 text-teal-200 font-medium">Admin</span>
+    {% else %}
+      <span class="text-gray-500 text-xs">No</span>
+    {% endif %}
+  </td>
+  <td class="px-4 py-3">
+    {% if user.totp_enabled %}
+      <span class="px-2 py-0.5 rounded text-xs bg-green-800 text-green-200">Enabled</span>
+    {% else %}
+      <span class="text-gray-500 text-xs">Disabled</span>
+    {% endif %}
+  </td>
+  <td class="px-4 py-3 text-sm">
+    {% if user.is_active %}
+      <span class="px-2 py-0.5 rounded text-xs bg-green-800 text-green-200">Active</span>
+    {% else %}
+      <span class="px-2 py-0.5 rounded text-xs bg-red-800 text-red-200">Inactive</span>
+    {% endif %}
+  </td>
+  <td class="px-4 py-3 text-sm font-mono">
+    {{ user.current_event_count }} / {{ user.max_events }}
+  </td>
+  <td class="px-4 py-3 text-sm font-mono">
+    {{ user.current_storage_bytes|filesizeformat }} / {{ user.storage_quota_mb }} MB
+  </td>
+  <td class="px-4 py-3 text-sm text-gray-400">
+    {{ user.created_at|date:"Y-m-d" }}
+  </td>
+  <td class="px-4 py-3">
+    <a href="{% url 'admin_panel:user_detail' user.id %}"
+       class="text-sm text-teal-400 hover:text-teal-300">Edit Quota</a>
+  </td>
+</tr>

@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}User: {{ target_user.username }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-3xl">
+
+  <!-- Back link -->
+  <div>
+    <a href="{% url 'admin_panel:dashboard' %}" class="text-teal-400 hover:text-teal-300 text-sm">
+      &larr; Back to Admin Dashboard
+    </a>
+  </div>
+
+  <!-- Page header -->
+  <div class="flex items-center gap-3">
+    <h1 class="text-2xl font-bold text-gray-100">{{ target_user.username }}</h1>
+    {% if target_user.is_admin %}
+      <span class="px-2 py-0.5 rounded text-xs bg-teal-800 text-teal-200 font-medium">Admin</span>
+    {% endif %}
+    {% if target_user.is_active %}
+      <span class="px-2 py-0.5 rounded text-xs bg-green-800 text-green-200">Active</span>
+    {% else %}
+      <span class="px-2 py-0.5 rounded text-xs bg-red-800 text-red-200">Inactive</span>
+    {% endif %}
+  </div>
+
+  <!-- User info card -->
+  <div class="bg-gray-800 rounded-lg border border-gray-700 p-6">
+    <h2 class="text-lg font-semibold text-gray-100 mb-4">Account Information</h2>
+    <dl class="grid grid-cols-2 gap-4 text-sm">
+      <div>
+        <dt class="text-gray-400">User ID</dt>
+        <dd class="text-gray-100 font-mono mt-1">{{ target_user.id }}</dd>
+      </div>
+      <div>
+        <dt class="text-gray-400">Username</dt>
+        <dd class="text-gray-100 mt-1">{{ target_user.username }}</dd>
+      </div>
+      <div>
+        <dt class="text-gray-400">2FA Status</dt>
+        <dd class="mt-1">
+          {% if target_user.totp_enabled %}
+            <span class="px-2 py-0.5 rounded text-xs bg-green-800 text-green-200">Enabled</span>
+          {% else %}
+            <span class="text-gray-500">Disabled</span>
+          {% endif %}
+        </dd>
+      </div>
+      <div>
+        <dt class="text-gray-400">Created</dt>
+        <dd class="text-gray-100 font-mono mt-1">{{ target_user.created_at|date:"Y-m-d H:i" }}</dd>
+      </div>
+      <div>
+        <dt class="text-gray-400">Events</dt>
+        <dd class="text-gray-100 font-mono mt-1">{{ event_count }}</dd>
+      </div>
+      <div>
+        <dt class="text-gray-400">Devices</dt>
+        <dd class="text-gray-100 font-mono mt-1">{{ device_count }}</dd>
+      </div>
+      <div>
+        <dt class="text-gray-400">Storage Used</dt>
+        <dd class="text-gray-100 font-mono mt-1">{{ target_user.current_storage_bytes|filesizeformat }}</dd>
+      </div>
+      <div>
+        <dt class="text-gray-400">Event Count</dt>
+        <dd class="text-gray-100 font-mono mt-1">{{ target_user.current_event_count }} / {{ target_user.max_events }}</dd>
+      </div>
+    </dl>
+  </div>
+
+  <!-- Quota edit form card -->
+  <div class="bg-gray-800 rounded-lg border border-gray-700 p-6">
+    <h2 class="text-lg font-semibold text-gray-100 mb-4">Quota Settings</h2>
+    <form method="post" action="{% url 'admin_panel:quota_edit' target_user.id %}"
+          hx-post="{% url 'admin_panel:quota_edit' target_user.id %}"
+          hx-target="#user-{{ target_user.id }}"
+          hx-swap="outerHTML">
+      {% csrf_token %}
+      <div class="space-y-4">
+        <div>
+          <label for="{{ form.storage_quota_mb.id_for_label }}"
+                 class="block text-sm font-medium text-gray-300 mb-1">
+            {{ form.storage_quota_mb.label }}
+          </label>
+          {{ form.storage_quota_mb }}
+          {% if form.storage_quota_mb.errors %}
+            <p class="text-red-400 text-xs mt-1">{{ form.storage_quota_mb.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+        <div>
+          <label for="{{ form.max_events.id_for_label }}"
+                 class="block text-sm font-medium text-gray-300 mb-1">
+            {{ form.max_events.label }}
+          </label>
+          {{ form.max_events }}
+          {% if form.max_events.errors %}
+            <p class="text-red-400 text-xs mt-1">{{ form.max_events.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+        {% if form.non_field_errors %}
+          <p class="text-red-400 text-xs">{{ form.non_field_errors|join:", " }}</p>
+        {% endif %}
+        <div>
+          <button type="submit"
+                  class="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded text-sm font-medium transition-colors">
+            Save Quota
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Actions card -->
+  <div class="bg-gray-800 rounded-lg border border-gray-700 p-6">
+    <h2 class="text-lg font-semibold text-gray-100 mb-4">Actions</h2>
+    <div class="flex items-center gap-3">
+      <form method="post" action="{% url 'admin_panel:toggle_active' target_user.id %}">
+        {% csrf_token %}
+        {% if target_user.is_active %}
+          <button type="submit"
+                  class="px-4 py-2 bg-yellow-700 hover:bg-yellow-600 text-white rounded text-sm font-medium transition-colors"
+                  onclick="return confirm('Deactivate {{ target_user.username }}?')">
+            Deactivate User
+          </button>
+        {% else %}
+          <button type="submit"
+                  class="px-4 py-2 bg-green-700 hover:bg-green-600 text-white rounded text-sm font-medium transition-colors">
+            Activate User
+          </button>
+        {% endif %}
+      </form>
+      <a href="{% url 'admin_panel:dashboard' %}"
+         class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded text-sm font-medium transition-colors">
+        Back to Dashboard
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
