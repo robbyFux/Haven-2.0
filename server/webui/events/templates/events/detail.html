@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Event {{ event.id }}{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+
+  {# Back link #}
+  <div>
+    <a href="{% url 'events:list' %}" class="text-teal-400 hover:text-teal-300 text-sm transition-colors">
+      &larr; Back to Events
+    </a>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+    {# Left column: event info + media + delete #}
+    <div class="space-y-4">
+      <div class="bg-gray-800 rounded-lg p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-gray-100">
+            {% if "CAMERA" in event.event_type %}&#127909;
+            {% elif event.event_type == "MICROPHONE" or event.event_type == "SOUND_DECIBEL" %}&#127908;
+            {% elif event.event_type == "LIGHT" %}&#128161;
+            {% else %}&#9888;
+            {% endif %}
+            {{ event.event_type }}
+          </h2>
+          {# Severity badge #}
+          {% if event.severity == "LOW" %}
+          <span class="px-3 py-1 rounded text-sm font-medium bg-teal-900/50 text-teal-400">LOW</span>
+          {% elif event.severity == "MEDIUM" %}
+          <span class="px-3 py-1 rounded text-sm font-medium bg-amber-900/50 text-amber-400">MEDIUM</span>
+          {% elif event.severity == "HIGH" %}
+          <span class="px-3 py-1 rounded text-sm font-medium bg-orange-900/50 text-orange-400">HIGH</span>
+          {% elif event.severity == "CRITICAL" %}
+          <span class="px-3 py-1 rounded text-sm font-medium bg-red-900/50 text-red-400">CRITICAL</span>
+          {% endif %}
+        </div>
+
+        <dl class="space-y-2 text-sm">
+          <div class="flex gap-2">
+            <dt class="text-gray-400 w-28">Timestamp</dt>
+            <dd class="font-mono text-gray-200">{{ event.timestamp|date:"Y-m-d H:i:s" }}</dd>
+          </div>
+          <div class="flex gap-2">
+            <dt class="text-gray-400 w-28">Device</dt>
+            <dd class="text-gray-200">{{ event.device.name }}</dd>
+          </div>
+          {% if event.sensor_value is not None %}
+          <div class="flex gap-2">
+            <dt class="text-gray-400 w-28">Sensor Value</dt>
+            <dd class="font-mono text-gray-200">{{ event.sensor_value|floatformat:4 }}</dd>
+          </div>
+          {% endif %}
+        </dl>
+
+        {# Media section #}
+        {% if event.media_path %}
+          {% if event.is_encrypted %}
+          <div class="rounded-lg bg-yellow-900/30 border border-yellow-700/40 p-4 text-sm text-yellow-300">
+            <p class="font-medium mb-1">&#128274; Encrypted Video</p>
+            <p>This video is client-encrypted. Download to decrypt locally.</p>
+          </div>
+          {% else %}
+          <div>
+            <video src="{% url 'events:video' event.id %}"
+                   controls
+                   class="w-full rounded-lg bg-black"
+                   preload="metadata">
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          {% endif %}
+        {% else %}
+        <p class="text-sm text-gray-500">No media attached to this event.</p>
+        {% endif %}
+
+        {# Delete button #}
+        <div class="pt-2 border-t border-gray-700">
+          <form method="POST" action="{% url 'events:delete' event.id %}"
+                onsubmit="return confirm('Delete this event permanently?');">
+            {% csrf_token %}
+            <button type="submit"
+                    class="bg-red-700 hover:bg-red-600 text-white rounded px-4 py-2 text-sm transition-colors">
+              Delete Event
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    {# Right column: triggers + AI analysis #}
+    <div class="space-y-4">
+
+      {# Triggers card #}
+      <div class="bg-gray-800 rounded-lg p-6">
+        <h3 class="text-base font-medium text-gray-200 mb-3">
+          Triggers
+          <span class="ml-2 text-xs text-gray-500">({{ triggers|length }})</span>
+        </h3>
+        {% if triggers %}
+        <div class="space-y-2">
+          {% for trigger in triggers %}
+          <div class="bg-gray-700/50 rounded p-3 text-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-gray-200 font-medium">{{ trigger.trigger_type }}</span>
+              <span class="font-mono text-xs text-gray-400">{{ trigger.created_at|date:"H:i:s" }}</span>
+            </div>
+            {% if trigger.sensor_value is not None %}
+            <div class="text-xs text-gray-400 font-mono mt-1">value: {{ trigger.sensor_value|floatformat:4 }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500">No triggers recorded.</p>
+        {% endif %}
+      </div>
+
+      {# AI Analysis card #}
+      <div class="bg-gray-800 rounded-lg p-6">
+        <h3 class="text-base font-medium text-gray-200 mb-3">AI Analysis</h3>
+        {% if analysis %}
+        <div class="space-y-3 text-sm">
+          <div>
+            <span class="px-2 py-0.5 rounded text-xs font-medium bg-teal-900/50 text-teal-400">
+              {{ analysis.backend }}
+            </span>
+          </div>
+
+          {% if labels %}
+          <div>
+            <p class="text-xs text-gray-400 mb-1">Detected Labels</p>
+            <div class="flex flex-wrap gap-1">
+              {% for label in labels %}
+              <span class="px-2 py-0.5 rounded text-xs bg-gray-700 text-gray-300">{{ label }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          {% if analysis.confidence is not None %}
+          <div>
+            <p class="text-xs text-gray-400 mb-1">Confidence</p>
+            <div class="flex items-center gap-2">
+              <div class="flex-1 bg-gray-700 rounded-full h-2">
+                <div class="bg-teal-500 h-2 rounded-full" style="width: {{ analysis.confidence|floatformat:0 }}%;"></div>
+              </div>
+              <span class="text-gray-300 font-mono text-xs">{{ analysis.confidence|floatformat:1 }}%</span>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if analysis.description %}
+          <div>
+            <p class="text-xs text-gray-400 mb-1">Description</p>
+            <blockquote class="border-l-2 border-teal-600 pl-3 text-gray-300 italic">
+              {{ analysis.description }}
+            </blockquote>
+          </div>
+          {% endif %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500">No AI analysis available for this event.</p>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
