@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.5
-milestone_name: Cloud-Server
-status: executing
-stopped_at: "Completed Phase 05 — cloud-server backend (8 plans) + Android CloudChannel"
-last_updated: "2026-04-07T00:00:00.000Z"
-last_activity: 2026-04-07
+milestone: v0.6
+milestone_name: Web-UI
+status: complete
+stopped_at: "Completed Phase 06 — web-ui Django frontend (6 plans) — 95/95 tests pass"
+last_updated: "2026-04-09T00:00:00.000Z"
+last_activity: 2026-04-09
 progress:
-  total_phases: 8
-  completed_phases: 8
-  total_plans: 20
-  completed_plans: 20
+  total_phases: 6
+  completed_phases: 6
+  total_plans: 6
+  completed_plans: 6
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Zuverlässige, privacy-respektierende Bewegungserkennung — die App muss starten, kalibrieren und Ereignisse erfassen, ohne dass etwas stillschweigend fehlschlägt.
-**Current focus:** Phase 05 complete — cloud-server
+**Current focus:** Phase 06 complete — web-ui
 
 ## Current Position
 
-Phase: 05
-Plan: All complete (8/8)
-Status: Complete — verification passed (52/52 tests)
+Phase: 06
+Plan: All complete (6/6)
+Status: Complete — verification passed (95/95 tests)
 Last activity: 2026-04-06
 
 Progress: [░░░░░░░░░░] 0%
