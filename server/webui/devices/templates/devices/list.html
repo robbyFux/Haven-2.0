@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Devices{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Page header -->
+  <div>
+    <h1 class="text-2xl font-semibold text-gray-100">Devices</h1>
+    <p class="text-sm text-gray-400 mt-1">
+      Manage your Haven Android app connections. Each device gets a unique App-Key.
+    </p>
+  </div>
+
+  <!-- App-Key display (shown once after creation) -->
+  {% for message in messages %}
+    {% if "hav_" in message.message %}
+      <div class="p-4 rounded-lg bg-green-900/30 border border-green-700">
+        <p class="text-sm font-medium text-green-300 mb-2">Device created successfully!</p>
+        <p class="text-xs text-green-400 mb-2">
+          Copy your App-Key now — it will <strong>not</strong> be shown again:
+        </p>
+        <code class="block font-mono text-sm text-green-200 bg-gray-900 px-3 py-2 rounded break-all">
+          {{ message.message|slice:"62:" }}
+        </code>
+      </div>
+    {% else %}
+      <div class="p-3 rounded-lg
+        {% if message.tags == 'error' %}bg-red-900/50 text-red-300
+        {% elif message.tags == 'success' %}bg-green-900/50 text-green-300
+        {% else %}bg-blue-900/50 text-blue-300{% endif %}">
+        {{ message }}
+      </div>
+    {% endif %}
+  {% endfor %}
+
+  <!-- Create device form -->
+  <div class="bg-gray-800 rounded-xl border border-gray-700 p-5">
+    <h2 class="text-base font-medium text-gray-200 mb-4">Add New Device</h2>
+    <form method="post" action="{% url 'devices:device_create' %}" class="flex gap-3 items-start">
+      {% csrf_token %}
+      <div class="flex-1">
+        {{ form.name }}
+        {% if form.name.errors %}
+          <p class="text-xs text-red-400 mt-1">{{ form.name.errors.0 }}</p>
+        {% endif %}
+      </div>
+      <button
+        type="submit"
+        class="px-4 py-2 rounded-md bg-teal-600 hover:bg-teal-500 text-white text-sm font-medium transition-colors whitespace-nowrap"
+      >
+        Add Device
+      </button>
+    </form>
+  </div>
+
+  <!-- Device table -->
+  <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+    {% include "devices/partials/device_table.html" %}
+  </div>
+
+</div>
+{% endblock %}

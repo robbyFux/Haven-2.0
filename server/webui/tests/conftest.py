@@ -25,8 +25,15 @@ def django_db_setup(django_test_environment, django_db_blocker):
     if a previous test run left it behind (e.g. file-backed SQLite).
     """
     with django_db_blocker.unblock():
+        from django.core.management import call_command
         from django.db import connection
 
+        # Run Django migrations first so managed tables (django_session,
+        # auth_*, contenttypes, etc.) are created in the in-memory SQLite DB.
+        call_command("migrate", "--run-syncdb", verbosity=0)
+
+        # Now manually create unmanaged model tables (managed=False means
+        # Django's migrate skips them — we have to create them ourselves).
         with connection.schema_editor() as editor:
             from accounts.models import HavenUser
             from devices.models import Device

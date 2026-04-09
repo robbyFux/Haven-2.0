@@ -178,3 +178,13 @@ if "pytest" in sys.modules:
             "NAME": ":memory:",
         }
     }
+    # Use plain StaticFilesStorage in tests — CompressedManifestStaticFilesStorage
+    # requires a pre-built staticfiles manifest which does not exist during testing.
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
