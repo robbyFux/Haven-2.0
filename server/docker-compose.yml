@@ -61,12 +61,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.webui
-    command: python webui/manage.py runserver 0.0.0.0:8080
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8080"
     ports:
       - "8080:8080"
     volumes:
       - ./media:/app/media
-      - .:/app
+      - ./webui:/app/webui
     env_file:
       - .env
     depends_on:
