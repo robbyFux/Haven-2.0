@@ -9,15 +9,15 @@ the next event upload without a server restart.
 Public API
 ----------
 get_ai_backend()          — async, uses an AsyncSession (for FastAPI/router use)
-get_ai_backend_sync()     — sync wrapper using asyncio.run() (for Celery tasks)
+get_ai_backend_sync()     — sync, uses psycopg2 directly (for Celery tasks)
 
 Both fall back to settings.AI_BACKEND (env var) when the DB row is absent
 (first-run before the admin has saved settings, or if the table hasn't been
 created yet by Django migrations).
 """
 
-import asyncio
 import logging
+import re
 
 from sqlalchemy import text
 
@@ -29,6 +29,16 @@ logger = logging.getLogger(__name__)
 # Django table/column names — must match admin_panel/models.py
 _TABLE = "admin_panel_aisettings"
 _QUERY = text(f"SELECT ai_backend FROM {_TABLE} WHERE id = 1")  # noqa: S608
+
+
+def _sync_dsn() -> str:
+    """
+    Convert the async DATABASE_URL (postgresql+asyncpg://...) to a plain
+    psycopg2 DSN (postgresql://...) for synchronous use in Celery workers.
+    """
+    url = settings.DATABASE_URL
+    # Strip driver suffix: postgresql+asyncpg:// → postgresql://
+    return re.sub(r"\+[^:]+://", "://", url, count=1)
 
 
 async def get_ai_backend(session=None) -> str:
@@ -102,20 +112,73 @@ async def get_openrouter_settings(session=None) -> tuple[str, str]:
 
 def get_ai_backend_sync() -> str:
     """
-    Synchronous wrapper around get_ai_backend() for use in Celery tasks.
+    Read the active AI backend from the DB using a synchronous psycopg2
+    connection — safe to call from Celery prefork workers where asyncpg's
+    connection pool is bound to the parent process's event loop.
 
-    Celery workers are synchronous by default; this spins a temporary event
-    loop to resolve the async query.
+    Falls back to settings.AI_BACKEND on any error.
 
     @return: one of "none", "tflite", "openrouter"
     """
-    return asyncio.run(get_ai_backend())
+    try:
+        import psycopg2  # noqa: PLC0415
+
+        dsn = _sync_dsn()
+        with psycopg2.connect(dsn) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"SELECT ai_backend FROM {_TABLE} WHERE id = 1"  # noqa: S608
+                )
+                row = cur.fetchone()
+        if row is not None:
+            value = str(row[0])
+            logger.info("get_ai_backend_sync: found ai_backend=%r in %s", value, _TABLE)
+            return value
+        logger.warning(
+            "get_ai_backend_sync: no row found in %s, falling back to env=%r",
+            _TABLE,
+            settings.AI_BACKEND,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "ai_settings.get_ai_backend_sync: could not read %s, falling back to env (%s): %s",
+            _TABLE,
+            settings.AI_BACKEND,
+            exc,
+        )
+    return settings.AI_BACKEND
 
 
 def get_openrouter_settings_sync() -> tuple[str, str]:
     """
-    Synchronous wrapper around get_openrouter_settings() for use in Celery tasks.
+    Read OpenRouter credentials from the DB using a synchronous psycopg2
+    connection — safe to call from Celery prefork workers.
+
+    Falls back to (settings.OPENROUTER_API_KEY, settings.OPENROUTER_MODEL) on
+    any error or missing row.
 
     @return: (api_key, model_name)
     """
-    return asyncio.run(get_openrouter_settings())
+    try:
+        import psycopg2  # noqa: PLC0415
+
+        dsn = _sync_dsn()
+        with psycopg2.connect(dsn) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"SELECT openrouter_api_key, openrouter_model FROM {_TABLE} WHERE id = 1"  # noqa: S608
+                )
+                row = cur.fetchone()
+        if row is not None:
+            return str(row[0]), str(row[1])
+        logger.warning(
+            "get_openrouter_settings_sync: no row found in %s, falling back to env",
+            _TABLE,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "ai_settings.get_openrouter_settings_sync: could not read %s, falling back to env: %s",
+            _TABLE,
+            exc,
+        )
+    return settings.OPENROUTER_API_KEY, settings.OPENROUTER_MODEL
