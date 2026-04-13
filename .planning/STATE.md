@@ -101,7 +101,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-1 todo pending — see `.planning/todos/pending/`
+4 todos pending — see `.planning/todos/pending/`
 
 ### Blockers/Concerns
 
