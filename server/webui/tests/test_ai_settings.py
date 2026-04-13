@@ -181,3 +181,69 @@ def test_ai_settings_htmx_post_invalid(create_user):
         HTTP_HX_REQUEST="true",
     )
     assert response.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# TFLite model missing warning
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_ai_settings_tflite_model_missing_warning(create_user, tmp_path, monkeypatch):
+    """GET with backend=tflite and no model file shows the missing-model warning."""
+    from admin_panel.models import AISettings
+
+    # Set backend to tflite
+    s = AISettings.get()
+    s.ai_backend = "tflite"
+    s.save()
+
+    # Point TFLITE_MODEL_PATH at a nonexistent file
+    missing_path = str(tmp_path / "no_model.tflite")
+    monkeypatch.setenv("TFLITE_MODEL_PATH", missing_path)
+
+    client = make_admin_client(create_user)
+    response = client.get("/admin/ai-settings/")
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert "TFLite-Modell nicht gefunden" in content
+
+
+@pytest.mark.django_db
+def test_ai_settings_tflite_model_present_no_warning(create_user, tmp_path, monkeypatch):
+    """GET with backend=tflite and model file present does NOT show the warning."""
+    from admin_panel.models import AISettings
+
+    s = AISettings.get()
+    s.ai_backend = "tflite"
+    s.save()
+
+    # Create a real (empty) file at the model path
+    model_file = tmp_path / "efficientdet_lite0.tflite"
+    model_file.write_bytes(b"")
+    monkeypatch.setenv("TFLITE_MODEL_PATH", str(model_file))
+
+    client = make_admin_client(create_user)
+    response = client.get("/admin/ai-settings/")
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert "TFLite-Modell nicht gefunden" not in content
+
+
+@pytest.mark.django_db
+def test_ai_settings_none_backend_no_warning(create_user, tmp_path, monkeypatch):
+    """GET with backend=none never shows the missing-model warning."""
+    from admin_panel.models import AISettings
+
+    s = AISettings.get()
+    s.ai_backend = "none"
+    s.save()
+
+    missing_path = str(tmp_path / "no_model.tflite")
+    monkeypatch.setenv("TFLITE_MODEL_PATH", missing_path)
+
+    client = make_admin_client(create_user)
+    response = client.get("/admin/ai-settings/")
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert "TFLite-Modell nicht gefunden" not in content

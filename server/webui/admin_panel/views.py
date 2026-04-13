@@ -5,6 +5,8 @@ All views are protected by @admin_required (login + is_admin=True).
 Supports HTMX partial rendering for user table and user row updates.
 """
 
+import os
+
 from django.contrib import messages
 from django.db.models import Sum
 from django.http import HttpResponse
@@ -195,4 +197,14 @@ def ai_settings(request):
             "openrouter_model": current.openrouter_model,
         }
     )
-    return render(request, "admin_panel/ai_settings.html", {"form": form})
+    model_missing = (
+        current.ai_backend == "tflite"
+        and not os.path.isfile(
+            os.environ.get("TFLITE_MODEL_PATH", "./efficientdet_lite0.tflite")
+        )
+    )
+    return render(
+        request,
+        "admin_panel/ai_settings.html",
+        {"form": form, "model_missing": model_missing},
+    )
