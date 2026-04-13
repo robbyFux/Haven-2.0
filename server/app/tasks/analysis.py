@@ -14,15 +14,12 @@ AI_BACKEND values:
   "openrouter" — send frame to OpenRouter vision API via analyze_frame_openrouter()
 """
 
-import asyncio
 import json
 import logging
 import os
 
 from app.celery_app import celery_app
 from app.config import settings
-from app.database import AsyncSessionLocal
-from app.models.event import AnalysisResult
 from app.services.ai_settings import get_ai_backend_sync, get_openrouter_settings_sync
 
 logger = logging.getLogger(__name__)
@@ -223,10 +220,10 @@ def _save_analysis_result(
     raw_result: dict,
 ) -> None:
     """
-    Persist an AnalysisResult row to the database using asyncio.run().
+    Persist an AnalysisResult row to the database using psycopg2 directly.
 
-    Celery workers run synchronously by default, so we spin a new event loop
-    for the async SQLAlchemy session.
+    Uses a synchronous psycopg2 connection to avoid asyncpg event-loop
+    conflicts in Celery prefork workers (same pattern as get_ai_backend_sync).
 
     @param event_id: FK to events.id
     @param backend: "tflite" or "openrouter"
@@ -235,31 +232,44 @@ def _save_analysis_result(
     @param description: free-text description (OpenRouter), or None
     @param raw_result: full raw result dict for debugging
     """
+    import re
 
-    async def _persist() -> None:
-        from sqlalchemy import select
+    import psycopg2  # noqa: PLC0415
 
-        async with AsyncSessionLocal() as session:
-            # Check if result already exists (idempotent on retry)
-            existing = await session.execute(
-                select(AnalysisResult).where(AnalysisResult.event_id == event_id)
-            )
-            if existing.scalar_one_or_none() is not None:
-                logger.info(
-                    "_save_analysis_result: AnalysisResult already exists for event %d, skipping",
-                    event_id,
+    def _sync_dsn() -> str:
+        url = settings.DATABASE_URL
+        return re.sub(r"\+[^:]+://", "://", url, count=1)
+
+    labels_json = json.dumps(labels)
+    raw_json = json.dumps(raw_result)
+
+    try:
+        with psycopg2.connect(_sync_dsn()) as conn:
+            with conn.cursor() as cur:
+                # Idempotent: skip if already exists (handles Celery retries)
+                cur.execute(
+                    "SELECT id FROM analysis_results WHERE event_id = %s",
+                    (event_id,),
                 )
-                return
+                if cur.fetchone() is not None:
+                    logger.info(
+                        "_save_analysis_result: AnalysisResult already exists for event %d, skipping",
+                        event_id,
+                    )
+                    return
 
-            result = AnalysisResult(
-                event_id=event_id,
-                backend=backend,
-                labels=json.dumps(labels),
-                confidence=confidence,
-                description=description,
-                raw_result=json.dumps(raw_result),
-            )
-            session.add(result)
-            await session.commit()
-
-    asyncio.run(_persist())
+                cur.execute(
+                    """
+                    INSERT INTO analysis_results
+                        (event_id, backend, labels, confidence, description, raw_result,
+                         created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, NOW(), NOW())
+                    """,
+                    (event_id, backend, labels_json, confidence, description, raw_json),
+                )
+            conn.commit()
+    except Exception as exc:  # noqa: BLE001
+        logger.exception(
+            "_save_analysis_result: DB write failed for event %d: %s", event_id, exc
+        )
+        raise
