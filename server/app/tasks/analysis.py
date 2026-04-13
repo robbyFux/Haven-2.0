@@ -23,6 +23,7 @@ from app.celery_app import celery_app
 from app.config import settings
 from app.database import AsyncSessionLocal
 from app.models.event import AnalysisResult
+from app.services.ai_settings import get_ai_backend_sync, get_openrouter_settings_sync
 
 logger = logging.getLogger(__name__)
 
@@ -45,10 +46,17 @@ def analyze_event_task(
     @param encryption_key_hex: hex-encoded 32-byte AES key if file is encrypted, else None
     @return: dict with "status" key: "skipped", "no_media", or "analyzed"
     """
-    if settings.AI_BACKEND == "none":
+    # Read AI backend from DB (admin_panel_aisettings) so WebUI changes take
+    # effect without a Celery worker restart.
+    ai_backend = get_ai_backend_sync()
+
+    if ai_backend == "none":
         return {"status": "skipped"}
 
     if media_path is None:
+        # No media to analyse — skip inference but still dispatch notification.
+        from app.tasks.notifications import send_notification_task  # noqa: PLC0415
+        send_notification_task.delay(event_id)
         return {"status": "no_media"}
 
     # --- Load media bytes from filesystem (synchronous) ---
@@ -77,7 +85,7 @@ def analyze_event_task(
     description: str | None = None
     raw: dict = {}
 
-    if settings.AI_BACKEND == "tflite":
+    if ai_backend == "tflite":
         from app.ml.detector import get_detector
 
         detector = get_detector()
@@ -94,14 +102,17 @@ def analyze_event_task(
             logger.error("analyze_event_task: TFLite inference failed for event %d: %s", event_id, exc)
             return {"status": "error", "detail": f"Inference failed: {exc}"}
 
-    elif settings.AI_BACKEND == "openrouter":
+    elif ai_backend == "openrouter":
         from app.ml.openrouter import analyze_frame_openrouter
+
+        # Read OpenRouter credentials from DB so WebUI changes are picked up.
+        openrouter_api_key, openrouter_model = get_openrouter_settings_sync()
 
         try:
             result = analyze_frame_openrouter(
                 file_data,
-                settings.OPENROUTER_MODEL,
-                settings.OPENROUTER_API_KEY,
+                openrouter_model,
+                openrouter_api_key,
             )
             labels = result.get("labels", [])
             description = result.get("description")
@@ -113,7 +124,7 @@ def analyze_event_task(
     # --- Persist AnalysisResult ---
     _save_analysis_result(
         event_id=event_id,
-        backend=settings.AI_BACKEND,
+        backend=ai_backend,
         labels=labels,
         confidence=confidence,
         description=description,

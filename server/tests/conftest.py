@@ -5,6 +5,10 @@ Provides:
   - `async_client`: httpx.AsyncClient backed by an in-memory SQLite database.
     The get_db dependency is overridden to use the test session, ensuring
     tests never touch the real PostgreSQL database.
+  - `mock_celery_tasks`: session-scoped autouse fixture that stubs out
+    analyze_event_task and send_notification_task so they never run inside
+    the async test event loop (avoids asyncio.run() conflicts with
+    task_always_eager mode).
 
 Usage in tests:
     async def test_health(async_client: httpx.AsyncClient) -> None:
@@ -13,7 +17,9 @@ Usage in tests:
 """
 
 import os
+from unittest.mock import MagicMock, patch
 
+import pytest
 import pytest_asyncio
 import httpx
 from httpx import ASGITransport
@@ -35,6 +41,32 @@ _celery_app.conf.update(task_always_eager=True, task_eager_propagates=True)
 # SQLite in-memory database for fast isolated tests.
 # aiosqlite is required (listed in [project.optional-dependencies] dev).
 TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+
+
+@pytest.fixture(autouse=True, scope="session")
+def mock_celery_tasks():
+    """
+    Stub out Celery tasks for all integration tests.
+
+    analyze_event_task and send_notification_task both call asyncio.run()
+    internally (to drive async DB/network operations from synchronous Celery
+    workers). When task_always_eager=True is set, they run inline inside the
+    async pytest event loop, causing "asyncio.run() cannot be called from a
+    running event loop" errors.
+
+    These tasks have dedicated unit tests (test_analysis.py,
+    test_notifications.py) that exercise them with their own mocks. Integration
+    tests only care that the HTTP endpoint returns the correct status code and
+    that the task is *enqueued* — not that it runs.
+    """
+    noop = MagicMock(return_value={"status": "skipped"})
+    noop.delay = MagicMock(return_value=None)
+
+    with (
+        patch("app.routers.events.analyze_event_task", noop),
+        patch("app.routers.events.send_notification_task", noop),
+    ):
+        yield
 
 
 @pytest_asyncio.fixture(loop_scope="session")

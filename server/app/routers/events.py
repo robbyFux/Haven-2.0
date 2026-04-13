@@ -33,6 +33,7 @@ from app.models.event import AnalysisResult, Event, EventTrigger
 from app.models.user import User
 from app.schemas.event import EventCreateSchema, EventListResponse, EventResponse
 from app.services import storage as storage_service
+from app.services.ai_settings import get_ai_backend
 from app.services.crypto import derive_key, encrypt_file
 from app.tasks.analysis import analyze_event_task
 from app.tasks.notifications import send_notification_task
@@ -202,8 +203,10 @@ async def upload_event(
     )
     event = result.scalar_one()
 
-    # Enqueue Celery task
-    if settings.AI_BACKEND != "none":
+    # Enqueue Celery task — read AI backend from DB (admin_panel_aisettings) so
+    # that WebUI config changes take effect without a server restart.
+    ai_backend = await get_ai_backend(session=db)
+    if ai_backend != "none":
         encryption_key_hex = encryption_key.hex() if encryption_key is not None else None
         analyze_event_task.delay(event.id, media_path, encryption_key_hex)
     else:

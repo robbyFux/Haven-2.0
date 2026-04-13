@@ -12,6 +12,9 @@ Test coverage:
   - OpenRouter backend: mock analyze_frame_openrouter, verify AnalysisResult created
   - Encrypted media: verify decrypt_file is called before inference
   - Missing file returns error status without crashing
+
+AI backend is now read from the DB via get_ai_backend_sync(); all tests patch
+that function rather than settings.AI_BACKEND.
 """
 
 import asyncio
@@ -55,9 +58,8 @@ def _make_mock_session_ctx(saved: dict | None = None):
 
 
 def test_analyze_event_skipped_when_none():
-    """When AI_BACKEND=none the task returns skipped without any DB writes."""
-    with patch("app.tasks.analysis.settings") as mock_settings:
-        mock_settings.AI_BACKEND = "none"
+    """When get_ai_backend_sync() returns 'none' the task returns skipped without any DB writes."""
+    with patch("app.tasks.analysis.get_ai_backend_sync", return_value="none"):
         result = analyze_event_task(event_id=1, media_path="some/path.jpg", encryption_key_hex=None)
 
     assert result == {"status": "skipped"}
@@ -65,8 +67,10 @@ def test_analyze_event_skipped_when_none():
 
 def test_analyze_event_no_media():
     """When media_path is None the task returns no_media without any DB writes."""
-    with patch("app.tasks.analysis.settings") as mock_settings:
-        mock_settings.AI_BACKEND = "tflite"
+    with (
+        patch("app.tasks.analysis.get_ai_backend_sync", return_value="tflite"),
+        patch("app.tasks.notifications.send_notification_task"),
+    ):
         result = analyze_event_task(event_id=2, media_path=None, encryption_key_hex=None)
 
     assert result == {"status": "no_media"}
@@ -86,12 +90,12 @@ def test_analyze_event_tflite(tmp_path):
 
     # get_detector is imported lazily inside the task: patch its source module
     with (
+        patch("app.tasks.analysis.get_ai_backend_sync", return_value="tflite"),
         patch("app.tasks.analysis.settings") as mock_settings,
         patch("app.ml.detector.get_detector", return_value=mock_detector),
         patch("app.tasks.analysis.AsyncSessionLocal", return_value=mock_ctx),
         patch("app.tasks.notifications.send_notification_task"),
     ):
-        mock_settings.AI_BACKEND = "tflite"
         mock_settings.MEDIA_ROOT = str(tmp_path)
 
         result = analyze_event_task(event_id=101, media_path="video.jpg", encryption_key_hex=None)
@@ -115,15 +119,14 @@ def test_analyze_event_openrouter(tmp_path):
 
     # analyze_frame_openrouter is imported lazily: patch its source module
     with (
+        patch("app.tasks.analysis.get_ai_backend_sync", return_value="openrouter"),
+        patch("app.tasks.analysis.get_openrouter_settings_sync", return_value=("test-key", "google/gemini-flash-1.5")),
         patch("app.tasks.analysis.settings") as mock_settings,
         patch("app.ml.openrouter.analyze_frame_openrouter", return_value=mock_openrouter_result),
         patch("app.tasks.analysis.AsyncSessionLocal", return_value=mock_ctx),
         patch("app.tasks.notifications.send_notification_task"),
     ):
-        mock_settings.AI_BACKEND = "openrouter"
         mock_settings.MEDIA_ROOT = str(tmp_path)
-        mock_settings.OPENROUTER_MODEL = "google/gemini-flash-1.5"
-        mock_settings.OPENROUTER_API_KEY = "test-key"
 
         result = analyze_event_task(event_id=202, media_path="frame.jpg", encryption_key_hex=None)
 
@@ -156,13 +159,13 @@ def test_analyze_event_decrypts_media(tmp_path):
     mock_ctx, saved = _make_mock_session_ctx()
 
     with (
+        patch("app.tasks.analysis.get_ai_backend_sync", return_value="tflite"),
         patch("app.tasks.analysis.settings") as mock_settings,
         patch("app.services.crypto.decrypt_file", side_effect=spy_decrypt),
         patch("app.ml.detector.get_detector", return_value=mock_detector),
         patch("app.tasks.analysis.AsyncSessionLocal", return_value=mock_ctx),
         patch("app.tasks.notifications.send_notification_task"),
     ):
-        mock_settings.AI_BACKEND = "tflite"
         mock_settings.MEDIA_ROOT = str(tmp_path)
 
         result = analyze_event_task(
@@ -178,8 +181,10 @@ def test_analyze_event_decrypts_media(tmp_path):
 
 def test_analyze_event_missing_file(tmp_path):
     """A missing media file returns error status without raising an exception."""
-    with patch("app.tasks.analysis.settings") as mock_settings:
-        mock_settings.AI_BACKEND = "tflite"
+    with (
+        patch("app.tasks.analysis.get_ai_backend_sync", return_value="tflite"),
+        patch("app.tasks.analysis.settings") as mock_settings,
+    ):
         mock_settings.MEDIA_ROOT = str(tmp_path)
 
         result = analyze_event_task(
@@ -190,3 +195,74 @@ def test_analyze_event_missing_file(tmp_path):
 
     assert result["status"] == "error"
     assert "detail" in result
+
+
+# --------------------------------------------------------------------------- #
+# Tests for ai_settings service                                                #
+# --------------------------------------------------------------------------- #
+
+
+def test_get_ai_backend_sync_reads_from_db():
+    """get_ai_backend_sync() returns the DB value when the row exists."""
+    from app.services.ai_settings import get_ai_backend_sync
+
+    mock_row = MagicMock()
+    mock_row.__getitem__ = MagicMock(return_value="tflite")
+
+    mock_session = MagicMock()
+    mock_result = MagicMock()
+    mock_result.fetchone.return_value = mock_row
+    mock_session.execute = AsyncMock(return_value=mock_result)
+
+    mock_ctx = MagicMock()
+    mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_ctx.__aexit__ = AsyncMock(return_value=False)
+
+    with patch("app.services.ai_settings.AsyncSessionLocal", return_value=mock_ctx):
+        result = get_ai_backend_sync()
+
+    assert result == "tflite"
+
+
+def test_get_ai_backend_sync_falls_back_to_env_on_missing_row():
+    """get_ai_backend_sync() falls back to settings.AI_BACKEND when DB row is absent."""
+    from app.services.ai_settings import get_ai_backend_sync
+
+    mock_session = MagicMock()
+    mock_result = MagicMock()
+    mock_result.fetchone.return_value = None
+    mock_session.execute = AsyncMock(return_value=mock_result)
+
+    mock_ctx = MagicMock()
+    mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_ctx.__aexit__ = AsyncMock(return_value=False)
+
+    with (
+        patch("app.services.ai_settings.AsyncSessionLocal", return_value=mock_ctx),
+        patch("app.services.ai_settings.settings") as mock_settings,
+    ):
+        mock_settings.AI_BACKEND = "none"
+        result = get_ai_backend_sync()
+
+    assert result == "none"
+
+
+def test_get_ai_backend_sync_falls_back_to_env_on_db_error():
+    """get_ai_backend_sync() falls back to settings.AI_BACKEND on any DB exception."""
+    from app.services.ai_settings import get_ai_backend_sync
+
+    mock_session = MagicMock()
+    mock_session.execute = AsyncMock(side_effect=Exception("connection refused"))
+
+    mock_ctx = MagicMock()
+    mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_ctx.__aexit__ = AsyncMock(return_value=False)
+
+    with (
+        patch("app.services.ai_settings.AsyncSessionLocal", return_value=mock_ctx),
+        patch("app.services.ai_settings.settings") as mock_settings,
+    ):
+        mock_settings.AI_BACKEND = "none"
+        result = get_ai_backend_sync()
+
+    assert result == "none"
