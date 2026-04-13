@@ -173,6 +173,7 @@ class MonitorService : LifecycleService() {
             val cloudEnabled = settingsRepository.cloudEnabled.first()
             val cloudServerUrl = settingsRepository.cloudServerUrl.first()
             val cloudAppKey = settingsRepository.cloudAppKey.first()
+            val heartbeatCloudMin = settingsRepository.heartbeatCloudMinutes.first()
 
             val notifRule = NotificationRule(
                 minSeverity = settingsRepository.minSeverity.first(),
@@ -306,6 +307,19 @@ class MonitorService : LifecycleService() {
                         val msg = "Haven alive - v${BuildConfig.VERSION_NAME} - ${_state.value} - ${java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())}"
                         runCatching { pushoverChannel.sendHeartbeat(msg) }
                             .onFailure { appLogger.e(TAG, "Pushover heartbeat failed: ${it.message}") }
+                    }
+                }
+            }
+
+            val cloudChannel = notifChannels.filterIsInstance<CloudChannel>().firstOrNull()
+            if (cloudChannel != null && heartbeatCloudMin > 0) {
+                launch {
+                    while (_state.value != MonitorState.ACTIVE) delay(500)
+                    while (true) {
+                        delay(heartbeatCloudMin * 60_000L)
+                        val msg = "Haven alive - v${BuildConfig.VERSION_NAME} - ${_state.value} - ${java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())}"
+                        runCatching { cloudChannel.sendHeartbeat(msg) }
+                            .onFailure { appLogger.e(TAG, "Cloud heartbeat failed: ${it.message}") }
                     }
                 }
             }

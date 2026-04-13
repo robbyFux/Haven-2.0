@@ -6,8 +6,10 @@ Endpoints:
   GET    /               — List all devices owned by the current user
   GET    /{device_id}    — Get a single device by ID
   DELETE /{device_id}    — Revoke a device (soft-delete: is_active=False)
+  POST   /heartbeat      — Record device liveness (App-Key auth, returns 204)
 
-All endpoints require a valid Bearer JWT (get_current_user dependency).
+All endpoints require a valid Bearer JWT (get_current_user dependency),
+except /heartbeat which uses X-App-Key header authentication.
 App-Key format: hav_<64 hex chars> (68 chars total).
 """
 
@@ -18,7 +20,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import DbSession, get_db
-from app.dependencies.auth import get_current_user
+from app.dependencies.auth import get_current_user, verify_app_key
 from app.models.device import Device
 from app.models.user import User
 from app.schemas.device import DeviceCreateRequest, DeviceListResponse, DeviceResponse
@@ -112,3 +114,18 @@ async def revoke_device(
     await db.commit()
 
     return {"status": "revoked"}
+
+
+@router.post("/heartbeat", status_code=status.HTTP_204_NO_CONTENT)
+async def device_heartbeat(
+    device: Device = Depends(verify_app_key),
+) -> None:
+    """
+    Record device liveness.
+
+    Authenticated via X-App-Key header. The verify_app_key dependency
+    already updates last_seen_at on the device row and commits the change,
+    so no additional database write is needed here.
+
+    Returns 204 No Content on success.
+    """

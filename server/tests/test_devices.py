@@ -120,6 +120,33 @@ async def test_create_device_unauthenticated(async_client: httpx.AsyncClient) ->
     assert resp.status_code == 401
 
 
+async def test_device_heartbeat(async_client: httpx.AsyncClient) -> None:
+    """POST /api/v1/devices/heartbeat returns 204 with a valid App-Key."""
+    token = await register_and_login(async_client, "hb")
+    create_resp = await async_client.post(
+        "/api/v1/devices/",
+        json={"name": "Heartbeat Device"},
+        headers=auth_headers(token),
+    )
+    assert create_resp.status_code == 201, create_resp.text
+    app_key = create_resp.json()["app_key"]
+
+    resp = await async_client.post(
+        "/api/v1/devices/heartbeat",
+        headers={"X-App-Key": app_key},
+    )
+    assert resp.status_code == 204, resp.text
+
+
+async def test_device_heartbeat_invalid_key(async_client: httpx.AsyncClient) -> None:
+    """POST /api/v1/devices/heartbeat with unknown App-Key returns 401."""
+    resp = await async_client.post(
+        "/api/v1/devices/heartbeat",
+        headers={"X-App-Key": "hav_" + "0" * 64},
+    )
+    assert resp.status_code == 401
+
+
 async def test_device_isolation(async_client: httpx.AsyncClient) -> None:
     """User A's devices are not visible or accessible to user B."""
     token_a = await register_and_login(async_client, "isolation_a")
