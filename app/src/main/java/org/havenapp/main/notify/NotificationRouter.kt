@@ -72,6 +72,19 @@ class NotificationRouter @Inject constructor(
         }
     }
 
+    /**
+     * Upload a video clip to channels that support deferred video delivery (e.g. CloudChannel).
+     * Called after the raw clip is available and before local encryption.
+     * Delegates to channels that implement [CloudChannel] by calling send() with the video bytes.
+     */
+    suspend fun uploadVideo(event: TriggerEvent, videoBytes: ByteArray) {
+        channels.filterIsInstance<CloudChannel>().forEach { ch ->
+            runCatching { ch.send(event, videoBytes) }
+                .onFailure { appLogger.e(TAG, "CloudChannel uploadVideo failed: ${it.message}") }
+                .onSuccess { appLogger.d(TAG, "CloudChannel video uploaded successfully") }
+        }
+    }
+
     /** Reset state when monitoring stops. */
     fun reset() {
         channels = emptyList()
