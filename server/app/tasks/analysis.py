@@ -46,24 +46,37 @@ def analyze_event_task(
     @param encryption_key_hex: hex-encoded 32-byte AES key if file is encrypted, else None
     @return: dict with "status" key: "skipped", "no_media", or "analyzed"
     """
+    logger.info("analyze_event_task: started for event_id=%d media_path=%r", event_id, media_path)
+
     # Read AI backend from DB (admin_panel_aisettings) so WebUI changes take
     # effect without a Celery worker restart.
     ai_backend = get_ai_backend_sync()
+    logger.info("analyze_event_task: get_ai_backend_sync() returned %r for event_id=%d", ai_backend, event_id)
 
     if ai_backend == "none":
+        logger.info("analyze_event_task: ai_backend=none — skipping for event_id=%d", event_id)
         return {"status": "skipped"}
 
     if media_path is None:
         # No media to analyse — skip inference but still dispatch notification.
+        logger.info("analyze_event_task: media_path is None — no media to analyse for event_id=%d", event_id)
         from app.tasks.notifications import send_notification_task  # noqa: PLC0415
         send_notification_task.delay(event_id)
         return {"status": "no_media"}
 
     # --- Load media bytes from filesystem (synchronous) ---
     full_path = os.path.join(settings.MEDIA_ROOT, media_path)
+    file_exists = os.path.isfile(full_path)
+    logger.info(
+        "analyze_event_task: video path=%r exists=%s for event_id=%d",
+        full_path,
+        file_exists,
+        event_id,
+    )
     try:
         with open(full_path, "rb") as fh:
             file_data = fh.read()
+        logger.debug("analyze_event_task: read %d bytes from %r for event_id=%d", len(file_data), full_path, event_id)
     except OSError as exc:
         logger.error("analyze_event_task: cannot read media file %s: %s", full_path, exc)
         return {"status": "error", "detail": str(exc)}
@@ -73,8 +86,8 @@ def analyze_event_task(
         from app.services.crypto import decrypt_file
 
         try:
-            key = bytes.fromhex(encryption_key_hex)
-            file_data = decrypt_file(file_data, key)
+            file_data = decrypt_file(file_data, bytes.fromhex(encryption_key_hex))
+            logger.debug("analyze_event_task: decryption successful for event_id=%d, %d bytes", event_id, len(file_data))
         except Exception as exc:  # noqa: BLE001
             logger.error("analyze_event_task: decryption failed for event %d: %s", event_id, exc)
             return {"status": "error", "detail": f"Decryption failed: {exc}"}
@@ -86,27 +99,34 @@ def analyze_event_task(
     raw: dict = {}
 
     if ai_backend == "tflite":
+        logger.info("analyze_event_task: branch=tflite for event_id=%d", event_id)
         from app.ml.detector import get_detector
 
+        logger.debug("analyze_event_task: calling get_detector(ai_backend='tflite') for event_id=%d", event_id)
         detector = get_detector(ai_backend=ai_backend)
+        logger.info("analyze_event_task: get_detector() returned %r for event_id=%d", detector, event_id)
         if detector is None:
             logger.warning("analyze_event_task: TFLite detector not available for event %d", event_id)
             return {"status": "error", "detail": "TFLite detector not available"}
 
         try:
+            logger.debug("analyze_event_task: calling detector.detect() for event_id=%d, input_size=%d bytes", event_id, len(file_data))
             detections = detector.detect(file_data)
+            logger.info("analyze_event_task: detector.detect() raw output for event_id=%d: %r", event_id, detections)
             labels = [d["label"] for d in detections]
             confidence = max((d["confidence"] for d in detections), default=None)
             raw = {"detections": detections}
         except Exception as exc:  # noqa: BLE001
-            logger.error("analyze_event_task: TFLite inference failed for event %d: %s", event_id, exc)
+            logger.exception("analyze_event_task: TFLite inference failed for event %d", event_id)
             return {"status": "error", "detail": f"Inference failed: {exc}"}
 
     elif ai_backend == "openrouter":
+        logger.info("analyze_event_task: branch=openrouter for event_id=%d", event_id)
         from app.ml.openrouter import analyze_frame_openrouter
 
         # Read OpenRouter credentials from DB so WebUI changes are picked up.
         openrouter_api_key, openrouter_model = get_openrouter_settings_sync()
+        logger.debug("analyze_event_task: openrouter model=%r api_key_set=%s for event_id=%d", openrouter_model, bool(openrouter_api_key), event_id)
 
         try:
             result = analyze_frame_openrouter(
@@ -114,14 +134,23 @@ def analyze_event_task(
                 openrouter_model,
                 openrouter_api_key,
             )
+            logger.info("analyze_event_task: openrouter raw result for event_id=%d: %r", event_id, result)
             labels = result.get("labels", [])
             description = result.get("description")
             raw = result
         except Exception as exc:  # noqa: BLE001
-            logger.error("analyze_event_task: OpenRouter call failed for event %d: %s", event_id, exc)
+            logger.exception("analyze_event_task: OpenRouter call failed for event %d", event_id)
             return {"status": "error", "detail": f"OpenRouter failed: {exc}"}
 
+    else:
+        logger.warning("analyze_event_task: unknown ai_backend=%r for event_id=%d — skipping inference", ai_backend, event_id)
+        return {"status": "skipped", "detail": f"unknown backend: {ai_backend}"}
+
     # --- Persist AnalysisResult ---
+    logger.info(
+        "analyze_event_task: saving AnalysisResult for event_id=%d backend=%r labels=%r confidence=%s",
+        event_id, ai_backend, labels, confidence,
+    )
     _save_analysis_result(
         event_id=event_id,
         backend=ai_backend,
@@ -130,6 +159,7 @@ def analyze_event_task(
         description=description,
         raw_result=raw,
     )
+    logger.info("analyze_event_task: AnalysisResult saved for event_id=%d", event_id)
 
     # --- Chain to notification task ---
     # Lazy import to avoid forward-reference ImportError:

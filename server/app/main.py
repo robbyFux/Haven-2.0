@@ -8,10 +8,42 @@ Usage:
     uvicorn app.main:app --host 0.0.0.0 --port 8000
 """
 
+import logging
+import logging.config
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
+
+# Configure structured DEBUG logging for the server.app namespace so all
+# pipeline log statements are visible in `docker compose logs app`.
+logging.config.dictConfig({
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {
+            "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+            "stream": "ext://sys.stdout",
+        },
+    },
+    "loggers": {
+        "app": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+})
 
 from app.routers import admin, auth, devices, events, health, notifications
 

@@ -18,8 +18,11 @@ Upload flow:
 """
 
 import json
+import logging
 
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, UploadFile, status
+
+logger = logging.getLogger(__name__)
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -205,11 +208,28 @@ async def upload_event(
 
     # Enqueue Celery task — read AI backend from DB (admin_panel_aisettings) so
     # that WebUI config changes take effect without a server restart.
+    logger.info(
+        "upload_event: received event_id=%d has_video=%s file_size=%s",
+        event.id,
+        video is not None,
+        media_size_bytes,
+    )
     ai_backend = await get_ai_backend(session=db)
+    logger.info("upload_event: get_ai_backend() returned %r for event_id=%d", ai_backend, event.id)
     if ai_backend != "none":
         encryption_key_hex = encryption_key.hex() if encryption_key is not None else None
+        logger.info(
+            "upload_event: dispatching analyze_event_task for event_id=%d media_path=%r encrypted=%s",
+            event.id,
+            media_path,
+            encryption_key_hex is not None,
+        )
         analyze_event_task.delay(event.id, media_path, encryption_key_hex)
     else:
+        logger.info(
+            "upload_event: ai_backend=none — skipping analysis, dispatching send_notification_task for event_id=%d",
+            event.id,
+        )
         send_notification_task.delay(event.id)
 
     return _build_event_response(event)

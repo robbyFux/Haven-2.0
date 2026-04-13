@@ -18,9 +18,13 @@ Usage:
 from __future__ import annotations
 
 import io
+import logging
+import os
 from typing import Optional
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 # Module-level lazy singleton — populated on first get_detector() call
 _detector: Optional["HavenDetector"] = None
@@ -41,16 +45,23 @@ def get_detector(ai_backend: str | None = None) -> Optional["HavenDetector"]:
     """
     global _detector
     effective_backend = ai_backend if ai_backend is not None else settings.AI_BACKEND
+    logger.info("get_detector: ai_backend=%r effective_backend=%r", ai_backend, effective_backend)
     if effective_backend != "tflite":
+        logger.info("get_detector: backend is not tflite — returning None")
         return None
+    model_path = str(settings.TFLITE_MODEL_PATH)
+    model_exists = os.path.isfile(model_path)
+    logger.info("get_detector: model_path=%r exists=%s", model_path, model_exists)
     if _detector is None:
+        logger.info("get_detector: initializing HavenDetector (first call)")
         try:
             _detector = HavenDetector()
+            logger.info("get_detector: HavenDetector initialized successfully: %r", _detector)
         except Exception as exc:
-            # Log but do not crash the worker process
-            import logging
-            logging.getLogger(__name__).error("HavenDetector init failed: %s", exc)
+            logger.exception("get_detector: HavenDetector init failed: %s", exc)
             return None
+    else:
+        logger.debug("get_detector: returning cached HavenDetector instance")
     return _detector
 
 
@@ -115,15 +126,20 @@ class HavenDetector:
         import numpy as np
         from PIL import Image
 
+        logger.debug("HavenDetector.detect: input_size=%d bytes", len(image_bytes))
+
         # Decode image and resize to model input size
         img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        original_size = img.size
         img = img.resize((_INPUT_SIZE, _INPUT_SIZE))
         input_array = np.array(img, dtype=np.uint8)
         input_array = np.expand_dims(input_array, axis=0)  # shape: (1, 320, 320, 3)
+        logger.debug("HavenDetector.detect: image decoded original_size=%s resized_to=%dx%d", original_size, _INPUT_SIZE, _INPUT_SIZE)
 
         # Run inference
         self._interpreter.set_tensor(self._input_details[0]["index"], input_array)
         self._interpreter.invoke()
+        logger.debug("HavenDetector.detect: inference invoked")
 
         # Parse EfficientDet Lite 0 output tensors:
         #   output[0]: boxes    (1, N, 4) — [y1, x1, y2, x2] normalised
@@ -134,6 +150,7 @@ class HavenDetector:
         classes = self._interpreter.get_tensor(self._output_details[1]["index"])[0]
         scores = self._interpreter.get_tensor(self._output_details[2]["index"])[0]
         count = int(self._interpreter.get_tensor(self._output_details[3]["index"])[0])
+        logger.debug("HavenDetector.detect: raw detection count=%d (before threshold filtering)", count)
 
         results: list[dict] = []
         for i in range(count):
@@ -145,4 +162,9 @@ class HavenDetector:
             bbox = [float(v) for v in boxes[i]]  # [y1, x1, y2, x2]
             results.append({"label": label, "confidence": confidence, "bbox": bbox})
 
+        logger.info(
+            "HavenDetector.detect: results after threshold=%.2f: %r",
+            _CONFIDENCE_THRESHOLD,
+            [{"label": r["label"], "confidence": round(r["confidence"], 3)} for r in results],
+        )
         return results

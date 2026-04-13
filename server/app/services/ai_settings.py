@@ -51,8 +51,13 @@ async def get_ai_backend(session=None) -> str:
             async with AsyncSessionLocal() as s:
                 row = (await s.execute(_QUERY)).fetchone()
 
+        logger.debug("get_ai_backend: DB query result row=%r", row)
         if row is not None:
-            return str(row[0])
+            value = str(row[0])
+            logger.info("get_ai_backend: found ai_backend=%r in %s", value, _TABLE)
+            return value
+        else:
+            logger.warning("get_ai_backend: no row found in %s (table empty or not yet created), falling back to env=%r", _TABLE, settings.AI_BACKEND)
     except Exception as exc:  # noqa: BLE001
         logger.warning(
             "ai_settings.get_ai_backend: could not read %s, falling back to env (%s): %s",
