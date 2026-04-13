@@ -69,8 +69,11 @@ services:
     volumes:
       - ./media:/app/media
       - ./webui:/app/webui
+      - ./efficientdet_lite0.tflite:/app/efficientdet_lite0.tflite:ro
     env_file:
       - .env
+    environment:
+      - TFLITE_MODEL_PATH=/app/efficientdet_lite0.tflite
     depends_on:
       db:
         condition: service_healthy
