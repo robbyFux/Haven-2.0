@@ -26,15 +26,22 @@ from app.config import settings
 _detector: Optional["HavenDetector"] = None
 
 
-def get_detector() -> Optional["HavenDetector"]:
+def get_detector(ai_backend: str | None = None) -> Optional["HavenDetector"]:
     """
     Return the lazy singleton HavenDetector, creating it on first call.
 
-    Returns None if AI_BACKEND is not 'tflite' or if model loading fails.
-    Subsequent calls return the cached instance without re-loading.
+    Returns None if the effective AI backend is not 'tflite', or if model
+    loading fails.  Subsequent calls return the cached instance without
+    re-loading.
+
+    @param ai_backend: the AI backend string read from the DB at call-time
+                       (e.g. from get_ai_backend_sync()).  When None the
+                       function falls back to settings.AI_BACKEND so that
+                       behaviour is unchanged for callers that do not pass it.
     """
     global _detector
-    if settings.AI_BACKEND != "tflite":
+    effective_backend = ai_backend if ai_backend is not None else settings.AI_BACKEND
+    if effective_backend != "tflite":
         return None
     if _detector is None:
         try:

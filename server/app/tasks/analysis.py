@@ -88,7 +88,7 @@ def analyze_event_task(
     if ai_backend == "tflite":
         from app.ml.detector import get_detector
 
-        detector = get_detector()
+        detector = get_detector(ai_backend=ai_backend)
         if detector is None:
             logger.warning("analyze_event_task: TFLite detector not available for event %d", event_id)
             return {"status": "error", "detail": "TFLite detector not available"}
