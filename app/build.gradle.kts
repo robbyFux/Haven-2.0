@@ -61,8 +61,9 @@ android {
     }
 }
 
-// TFLite Modell-Setup:
+// Object detection model setup (MediaPipe Tasks Vision):
 // Das EfficientDet Lite 0 Modell muss manuell nach src/main/assets/ kopiert werden.
+// Das gleiche efficientdet_lite0.tflite Modell funktioniert mit MediaPipe Tasks Vision.
 // Download (~4 MB):
 //   curl -L -o app/src/main/assets/efficientdet_lite0.tflite \
 //     "https://storage.googleapis.com/download.tensorflow.org/models/tflite/task_library/object_detection/android/lite-model_efficientdet_lite0_detection_metadata_1.tflite"
@@ -105,8 +106,8 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
 
-    // TFLite
-    implementation(libs.tflite.task.vision)
+    // MediaPipe Tasks Vision (on-device object detection, Android 16 / 16 KB compliant)
+    implementation(libs.mediapipe.tasks.vision)
 
     // CameraX
     implementation(libs.camerax.core)
