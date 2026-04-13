@@ -85,63 +85,171 @@ fun ExpertSettingsScreen(
         ) {
             Spacer(Modifier.height(0.dp))
 
-            // Accelerometer card
-            SensorSliderCard(
-                title = stringResource(R.string.expert_accelerometer),
-                mediumLabel = "%.2f".format(accelSlider),
-                unit = "\u00d7",
-                sliderValue = accelSlider,
-                valueRange = 0.5f..8.0f,
-                onValueChange = { accelSlider = it },
-                onValueChangeFinished = { viewModel.setAccelMedium(accelSlider) },
-                derivedLow = "%.2f".format((accelSlider + 2.0f).coerceAtLeast(0.5f)),
-                derivedHigh = "%.2f".format((accelSlider - 1.0f).coerceAtLeast(0.5f)),
-                onReset = { viewModel.setAccelMedium(null) },
-            )
+            // ── Accelerometer ────────────────────────────────────────────────
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(stringResource(R.string.expert_accelerometer), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = "Medium: ${"%.2f".format(accelSlider)}\u00d7",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                    Slider(
+                        value = accelSlider,
+                        onValueChange = { accelSlider = it },
+                        onValueChangeFinished = { viewModel.setAccelMedium(accelSlider) },
+                        valueRange = 0.5f..8.0f,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Text(
+                            text = "Low: ${"%.2f".format((accelSlider + 2.0f).coerceAtLeast(0.5f))}\u00d7",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                        )
+                        Text(
+                            text = "High: ${"%.2f".format((accelSlider - 1.0f).coerceAtLeast(0.5f))}\u00d7",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                        )
+                    }
+                    TextButton(onClick = { viewModel.setAccelMedium(null) }) {
+                        Text(stringResource(R.string.expert_reset_one))
+                    }
+                }
+            }
 
-            // Microphone card
-            SensorSliderCard(
-                title = stringResource(R.string.expert_microphone),
-                mediumLabel = "%.0f".format(micSlider),
-                unit = " dB",
-                sliderValue = micSlider,
-                valueRange = 30f..80f,
-                onValueChange = { micSlider = it },
-                onValueChangeFinished = { viewModel.setMicMedium(micSlider) },
-                derivedLow = "%.0f".format((micSlider + 10f).coerceAtLeast(20f)),
-                derivedHigh = "%.0f".format((micSlider - 10f).coerceAtLeast(20f)),
-                onReset = { viewModel.setMicMedium(null) },
-            )
+            // ── Microphone ───────────────────────────────────────────────────
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(stringResource(R.string.expert_microphone), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = "Medium: ${"%.0f".format(micSlider)} dB",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                    Slider(
+                        value = micSlider,
+                        onValueChange = { micSlider = it },
+                        onValueChangeFinished = { viewModel.setMicMedium(micSlider) },
+                        valueRange = 30f..80f,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Text(
+                            text = "Low: ${"%.0f".format((micSlider + 10f).coerceAtLeast(20f))} dB",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                        )
+                        Text(
+                            text = "High: ${"%.0f".format((micSlider - 10f).coerceAtLeast(20f))} dB",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                        )
+                    }
+                    TextButton(onClick = { viewModel.setMicMedium(null) }) {
+                        Text(stringResource(R.string.expert_reset_one))
+                    }
+                }
+            }
 
-            // Light sensor card
-            SensorSliderCard(
-                title = stringResource(R.string.expert_light),
-                mediumLabel = "%.0f".format(lightSlider),
-                unit = " lux",
-                sliderValue = lightSlider,
-                valueRange = 5f..150f,
-                onValueChange = { lightSlider = it },
-                onValueChangeFinished = { viewModel.setLightMedium(lightSlider) },
-                derivedLow = "%.0f".format((lightSlider + 40f).coerceAtLeast(5f)),
-                derivedHigh = "%.0f".format((lightSlider - 20f).coerceAtLeast(5f)),
-                onReset = { viewModel.setLightMedium(null) },
-            )
+            // ── Light sensor ─────────────────────────────────────────────────
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(stringResource(R.string.expert_light), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = "Medium: ${"%.0f".format(lightSlider)} lux",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                    Slider(
+                        value = lightSlider,
+                        onValueChange = { lightSlider = it },
+                        onValueChangeFinished = { viewModel.setLightMedium(lightSlider) },
+                        valueRange = 5f..150f,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Text(
+                            text = "Low: ${"%.0f".format((lightSlider + 40f).coerceAtLeast(5f))} lux",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                        )
+                        Text(
+                            text = "High: ${"%.0f".format((lightSlider - 20f).coerceAtLeast(5f))} lux",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                        )
+                    }
+                    TextButton(onClick = { viewModel.setLightMedium(null) }) {
+                        Text(stringResource(R.string.expert_reset_one))
+                    }
+                }
+            }
 
-            // Camera motion card
-            SensorSliderCard(
-                title = stringResource(R.string.expert_camera_motion),
-                mediumLabel = "%.2f".format(cameraSlider),
-                unit = "",
-                sliderValue = cameraSlider,
-                valueRange = 0.01f..0.30f,
-                onValueChange = { cameraSlider = it },
-                onValueChangeFinished = { viewModel.setCameraMedium(cameraSlider) },
-                derivedLow = "%.2f".format((cameraSlider + 0.10f).coerceAtLeast(0.01f)),
-                derivedHigh = "%.2f".format((cameraSlider - 0.05f).coerceAtLeast(0.01f)),
-                onReset = { viewModel.setCameraMedium(null) },
-            )
+            // ── Camera motion ────────────────────────────────────────────────
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(stringResource(R.string.expert_camera_motion), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = "Medium: ${"%.2f".format(cameraSlider)}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                    Slider(
+                        value = cameraSlider,
+                        onValueChange = { cameraSlider = it },
+                        onValueChangeFinished = { viewModel.setCameraMedium(cameraSlider) },
+                        valueRange = 0.01f..0.30f,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Text(
+                            text = "Low: ${"%.2f".format((cameraSlider + 0.10f).coerceAtLeast(0.01f))}",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                        )
+                        Text(
+                            text = "High: ${"%.2f".format((cameraSlider - 0.05f).coerceAtLeast(0.01f))}",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                        )
+                    }
+                    TextButton(onClick = { viewModel.setCameraMedium(null) }) {
+                        Text(stringResource(R.string.expert_reset_one))
+                    }
+                }
+            }
 
-            // Global reset button
+            // ── Global reset ─────────────────────────────────────────────────
             OutlinedButton(
                 onClick = { viewModel.resetAll() },
                 modifier = Modifier.fillMaxWidth(),
@@ -150,65 +258,6 @@ fun ExpertSettingsScreen(
             }
 
             Spacer(Modifier.height(16.dp))
-        }
-    }
-}
-
-@Composable
-private fun SensorSliderCard(
-    title: String,
-    mediumLabel: String,
-    unit: String,
-    sliderValue: Float,
-    valueRange: ClosedFloatingPointRange<Float>,
-    onValueChange: (Float) -> Unit,
-    onValueChangeFinished: () -> Unit,
-    derivedLow: String,
-    derivedHigh: String,
-    onReset: () -> Unit,
-) {
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                text = "Medium: $mediumLabel$unit",
-                style = MaterialTheme.typography.bodyMedium,
-                fontFamily = FontFamily.Monospace,
-            )
-            Slider(
-                value = sliderValue,
-                onValueChange = onValueChange,
-                onValueChangeFinished = onValueChangeFinished,
-                valueRange = valueRange,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                Text(
-                    text = "Low: $derivedLow$unit",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontFamily = FontFamily.Monospace,
-                )
-                Text(
-                    text = "High: $derivedHigh$unit",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontFamily = FontFamily.Monospace,
-                )
-            }
-            TextButton(onClick = onReset) {
-                Text(stringResource(R.string.expert_reset_one))
-            }
         }
     }
 }
