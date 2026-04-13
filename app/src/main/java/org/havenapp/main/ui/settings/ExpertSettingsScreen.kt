@@ -45,6 +45,9 @@ fun ExpertSettingsScreen(
     viewModel: ExpertSettingsViewModel = hiltViewModel(),
 ) {
     val expert by viewModel.expertThresholds.collectAsStateWithLifecycle()
+    val labelLow = stringResource(R.string.sensitivity_low)
+    val labelMedium = stringResource(R.string.sensitivity_medium)
+    val labelHigh = stringResource(R.string.sensitivity_high)
 
     // Per-sensor slider state: re-initialises from flow emission when an external reset occurs.
     var accelSlider by remember(expert.accelMediumMultiplier) {
@@ -97,7 +100,7 @@ fun ExpertSettingsScreen(
                 ) {
                     Text(stringResource(R.string.expert_accelerometer), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        text = "Medium: ${"%.2f".format(accelSlider)}\u00d7",
+                        text = "$labelMedium: ${"%.2f".format(accelSlider)}\u00d7",
                         style = MaterialTheme.typography.bodyMedium,
                         fontFamily = FontFamily.Monospace,
                     )
@@ -110,12 +113,12 @@ fun ExpertSettingsScreen(
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         Text(
-                            text = "Low: ${"%.2f".format((accelSlider + 2.0f).coerceAtLeast(0.5f))}\u00d7",
+                            text = "$labelLow: ${"%.2f".format((accelSlider + 2.0f).coerceAtLeast(0.5f))}\u00d7",
                             style = MaterialTheme.typography.bodySmall,
                             fontFamily = FontFamily.Monospace,
                         )
                         Text(
-                            text = "High: ${"%.2f".format((accelSlider - 1.0f).coerceAtLeast(0.5f))}\u00d7",
+                            text = "$labelHigh: ${"%.2f".format((accelSlider - 1.0f).coerceAtLeast(0.5f))}\u00d7",
                             style = MaterialTheme.typography.bodySmall,
                             fontFamily = FontFamily.Monospace,
                         )
@@ -138,7 +141,7 @@ fun ExpertSettingsScreen(
                 ) {
                     Text(stringResource(R.string.expert_microphone), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        text = "Medium: ${"%.0f".format(micSlider)} dB",
+                        text = "$labelMedium: ${"%.0f".format(micSlider)} dB",
                         style = MaterialTheme.typography.bodyMedium,
                         fontFamily = FontFamily.Monospace,
                     )
@@ -151,12 +154,12 @@ fun ExpertSettingsScreen(
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         Text(
-                            text = "Low: ${"%.0f".format((micSlider + 10f).coerceAtLeast(20f))} dB",
+                            text = "$labelLow: ${"%.0f".format((micSlider + 10f).coerceAtLeast(20f))} dB",
                             style = MaterialTheme.typography.bodySmall,
                             fontFamily = FontFamily.Monospace,
                         )
                         Text(
-                            text = "High: ${"%.0f".format((micSlider - 10f).coerceAtLeast(20f))} dB",
+                            text = "$labelHigh: ${"%.0f".format((micSlider - 10f).coerceAtLeast(20f))} dB",
                             style = MaterialTheme.typography.bodySmall,
                             fontFamily = FontFamily.Monospace,
                         )
@@ -179,7 +182,7 @@ fun ExpertSettingsScreen(
                 ) {
                     Text(stringResource(R.string.expert_light), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        text = "Medium: ${"%.0f".format(lightSlider)} lux",
+                        text = "$labelMedium: ${"%.0f".format(lightSlider)} lux",
                         style = MaterialTheme.typography.bodyMedium,
                         fontFamily = FontFamily.Monospace,
                     )
@@ -192,12 +195,12 @@ fun ExpertSettingsScreen(
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         Text(
-                            text = "Low: ${"%.0f".format((lightSlider + 40f).coerceAtLeast(5f))} lux",
+                            text = "$labelLow: ${"%.0f".format((lightSlider + 40f).coerceAtLeast(5f))} lux",
                             style = MaterialTheme.typography.bodySmall,
                             fontFamily = FontFamily.Monospace,
                         )
                         Text(
-                            text = "High: ${"%.0f".format((lightSlider - 20f).coerceAtLeast(5f))} lux",
+                            text = "$labelHigh: ${"%.0f".format((lightSlider - 20f).coerceAtLeast(5f))} lux",
                             style = MaterialTheme.typography.bodySmall,
                             fontFamily = FontFamily.Monospace,
                         )
@@ -220,7 +223,7 @@ fun ExpertSettingsScreen(
                 ) {
                     Text(stringResource(R.string.expert_camera_motion), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        text = "Medium: ${"%.2f".format(cameraSlider)}",
+                        text = "$labelMedium: ${"%.2f".format(cameraSlider)}",
                         style = MaterialTheme.typography.bodyMedium,
                         fontFamily = FontFamily.Monospace,
                     )
@@ -233,12 +236,12 @@ fun ExpertSettingsScreen(
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         Text(
-                            text = "Low: ${"%.2f".format((cameraSlider + 0.10f).coerceAtLeast(0.01f))}",
+                            text = "$labelLow: ${"%.2f".format((cameraSlider + 0.10f).coerceAtLeast(0.01f))}",
                             style = MaterialTheme.typography.bodySmall,
                             fontFamily = FontFamily.Monospace,
                         )
                         Text(
-                            text = "High: ${"%.2f".format((cameraSlider - 0.05f).coerceAtLeast(0.01f))}",
+                            text = "$labelHigh: ${"%.2f".format((cameraSlider - 0.05f).coerceAtLeast(0.01f))}",
                             style = MaterialTheme.typography.bodySmall,
                             fontFamily = FontFamily.Monospace,
                         )

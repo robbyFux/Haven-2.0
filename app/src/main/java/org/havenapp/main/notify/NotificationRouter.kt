@@ -63,25 +63,38 @@ class NotificationRouter @Inject constructor(
         // Determine attachment: only for camera-type triggers when attachMedia enabled (D-13)
         val attachment = if (rule.attachMedia && event.type.isCameraType()) lastFrame else null
 
-        appLogger.d(TAG, "Routing ${event.type} (${event.severity}) to ${channels.size} channels")
+        // Deferred channels (e.g. CloudChannel) wait for the video clip via uploadVideo() — skip here.
+        val channelsToNotify = channels.filter { !it.deferresToVideo }
+        if (channelsToNotify.isEmpty()) return
+        appLogger.d(TAG, "Routing ${event.type} (${event.severity}) to ${channelsToNotify.size} channels")
 
-        channels.forEach { ch ->
-            runCatching { ch.send(event, attachment) }
+        channelsToNotify.forEach { ch ->
+            ch.send(event, attachment)
                 .onFailure { appLogger.e(TAG, "Channel ${ch.id} failed: ${it.message}") }
                 .onSuccess { appLogger.d(TAG, "Channel ${ch.id} sent successfully") }
         }
     }
 
     /**
-     * Upload a video clip to channels that support deferred video delivery (e.g. CloudChannel).
-     * Called after the raw clip is available and before local encryption.
-     * Delegates to channels that implement [CloudChannel] by calling send() with the video bytes.
+     * Upload a recorded video clip to all active channels as a CAMERA_VIDEO event.
+     *
+     * Called after a clip finishes recording and before local encryption, so channels
+     * receive the raw (unencrypted) bytes. Bypasses the cooldown and trigger-type
+     * whitelist — video upload is always attempted if the channel is enabled and
+     * attachMedia is set.
+     *
+     * @param event     The original trigger event that started the clip (used for metadata).
+     * @param videoBytes Raw MP4 bytes of the completed clip.
      */
     suspend fun uploadVideo(event: TriggerEvent, videoBytes: ByteArray) {
-        channels.filterIsInstance<CloudChannel>().forEach { ch ->
-            runCatching { ch.send(event, videoBytes) }
-                .onFailure { appLogger.e(TAG, "CloudChannel uploadVideo failed: ${it.message}") }
-                .onSuccess { appLogger.d(TAG, "CloudChannel video uploaded successfully") }
+        if (!rule.attachMedia) return
+        val deferredChannels = channels.filter { it.deferresToVideo }
+        if (deferredChannels.isEmpty()) return
+        appLogger.d(TAG, "Uploading video clip (${videoBytes.size} bytes) to ${deferredChannels.size} channels")
+        deferredChannels.forEach { ch ->
+            ch.send(event, videoBytes, "video/mp4")
+                .onFailure { appLogger.e(TAG, "Channel ${ch.id} video upload failed: ${it.message}") }
+                .onSuccess { appLogger.d(TAG, "Channel ${ch.id} video uploaded") }
         }
     }
 
