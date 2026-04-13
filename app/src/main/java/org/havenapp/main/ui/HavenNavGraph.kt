@@ -32,6 +32,7 @@ import org.havenapp.main.security.PinHashManager
 import org.havenapp.main.ui.diagnostics.DiagnosticsScreen
 import org.havenapp.main.ui.lock.PinLockScreen
 import org.havenapp.main.ui.monitor.MonitorScreen
+import org.havenapp.main.ui.settings.ExpertSettingsScreen
 import org.havenapp.main.ui.settings.SettingsScreen
 import org.havenapp.main.ui.settings.SettingsViewModel
 import org.havenapp.main.ui.settings.ZoneEditorScreen
@@ -44,6 +45,7 @@ object Routes {
     const val SETTINGS = "settings"
     const val DIAGNOSTICS = "diagnostics"
     const val ZONE_EDITOR = "zone_editor"
+    const val EXPERT_SETTINGS = "expert_settings"
     const val EVENT_DETAIL = "event/{eventId}"
 
     fun eventDetail(eventId: Long) = "event/$eventId"
@@ -142,10 +144,14 @@ fun HavenNavGraph(navController: NavHostController) {
                 SettingsScreen(
                     onOpenDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) },
                     onOpenZoneEditor = { navController.navigate(Routes.ZONE_EDITOR) },
+                    onOpenExpertSettings = { navController.navigate(Routes.EXPERT_SETTINGS) },
                 )
             }
             composable(Routes.ZONE_EDITOR) {
                 ZoneEditorScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Routes.EXPERT_SETTINGS) {
+                ExpertSettingsScreen(onBack = { navController.popBackStack() })
             }
             composable(Routes.DIAGNOSTICS) {
                 DiagnosticsScreen(onBack = { navController.popBackStack() })

@@ -44,6 +44,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material3.Checkbox
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.clickable
 import org.havenapp.main.BuildConfig
 import org.havenapp.main.R
 import org.havenapp.main.detection.DetectionMode
@@ -57,6 +61,7 @@ import org.havenapp.main.sensor.Sensitivity
 fun SettingsScreen(
     onOpenDiagnostics: () -> Unit,
     onOpenZoneEditor: () -> Unit,
+    onOpenExpertSettings: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -177,6 +182,33 @@ fun SettingsScreen(
                     Spacer(Modifier.height(8.dp))
                     OutlinedButton(onClick = onOpenZoneEditor) {
                         Text(stringResource(R.string.settings_zone_edit))
+                    }
+                }
+
+                SettingsSection(title = stringResource(R.string.expert_entry_label)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = onOpenExpertSettings)
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Tune,
+                            contentDescription = stringResource(R.string.expert_entry_label),
+                        )
+                        Column {
+                            Text(
+                                text = stringResource(R.string.expert_entry_label),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            Text(
+                                text = stringResource(R.string.expert_entry_subtitle),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
 
