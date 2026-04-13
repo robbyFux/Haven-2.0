@@ -20,6 +20,9 @@ that function rather than settings.AI_BACKEND.
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
+import app.ml.detector  # ensure module is imported so patch("app.ml.detector.*") resolves
 from app.services.crypto import encrypt_file
 from app.tasks.analysis import analyze_event_task
 
@@ -177,6 +180,72 @@ def test_analyze_event_decrypts_media(tmp_path):
     assert decrypted_spy.get("called") is True
     assert decrypted_spy["key"] == key
     assert result["status"] == "analyzed"
+
+
+def test_analyze_event_tflite_video(tmp_path):
+    """TFLite backend with a .mp4 file: frames are extracted and detections aggregated."""
+    fake_mp4 = b"\x00\x00\x00\x18ftypisom"  # plausible MP4 magic bytes (not a real video)
+    (tmp_path / "clip.mp4").write_bytes(fake_mp4)
+
+    # Two opaque frame sentinels — detector is mocked so actual content is irrelevant
+    frame1 = MagicMock(name="frame1")
+    frame2 = MagicMock(name="frame2")
+
+    # Frame 1 → person; frame 2 → car (lower confidence than person)
+    detection_frame1 = [{"label": "person", "confidence": 0.91, "bbox": [0.1, 0.1, 0.9, 0.9]}]
+    detection_frame2 = [
+        {"label": "car", "confidence": 0.75, "bbox": [0.2, 0.2, 0.8, 0.8]},
+        {"label": "person", "confidence": 0.55, "bbox": [0.3, 0.3, 0.7, 0.7]},
+    ]
+
+    mock_detector = MagicMock()
+    mock_detector.detect.side_effect = [detection_frame1, detection_frame2]
+
+    mock_ctx, saved = _make_mock_session_ctx()
+
+    with (
+        patch("app.tasks.analysis.get_ai_backend_sync", return_value="tflite"),
+        patch("app.tasks.analysis.settings") as mock_settings,
+        patch("app.ml.detector.get_detector", return_value=mock_detector),
+        patch("app.ml.detector.extract_frames_from_video", return_value=[frame1, frame2]),
+        patch("app.tasks.analysis.AsyncSessionLocal", return_value=mock_ctx),
+        patch("app.tasks.notifications.send_notification_task"),
+    ):
+        mock_settings.MEDIA_ROOT = str(tmp_path)
+
+        result = analyze_event_task(event_id=501, media_path="clip.mp4", encryption_key_hex=None)
+
+    assert result["status"] == "analyzed"
+    # Both labels must be present
+    assert "person" in result["labels"]
+    assert "car" in result["labels"]
+    # detect() called once per frame
+    assert mock_detector.detect.call_count == 2
+    # Highest-confidence person (0.91 from frame1) wins over 0.55 from frame2
+    assert saved["result"].confidence == pytest.approx(0.91)
+
+
+def test_analyze_event_tflite_video_no_frames(tmp_path):
+    """When extract_frames_from_video returns empty list the task returns an error."""
+    fake_mp4 = b"\x00\x00\x00\x18ftypisom"
+    (tmp_path / "empty.mp4").write_bytes(fake_mp4)
+
+    mock_detector = MagicMock()
+
+    with (
+        patch("app.tasks.analysis.get_ai_backend_sync", return_value="tflite"),
+        patch("app.tasks.analysis.settings") as mock_settings,
+        patch("app.ml.detector.get_detector", return_value=mock_detector),
+        patch("app.ml.detector.extract_frames_from_video", return_value=[]),
+        patch("app.tasks.notifications.send_notification_task"),
+    ):
+        mock_settings.MEDIA_ROOT = str(tmp_path)
+
+        result = analyze_event_task(event_id=502, media_path="empty.mp4", encryption_key_hex=None)
+
+    assert result["status"] == "error"
+    assert "frames" in result["detail"].lower()
+    mock_detector.detect.assert_not_called()
 
 
 def test_analyze_event_missing_file(tmp_path):

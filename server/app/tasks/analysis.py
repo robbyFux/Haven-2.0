@@ -100,7 +100,7 @@ def analyze_event_task(
 
     if ai_backend == "tflite":
         logger.info("analyze_event_task: branch=tflite for event_id=%d", event_id)
-        from app.ml.detector import get_detector
+        from app.ml.detector import extract_frames_from_video, get_detector
 
         logger.debug("analyze_event_task: calling get_detector(ai_backend='tflite') for event_id=%d", event_id)
         detector = get_detector(ai_backend=ai_backend)
@@ -110,9 +110,52 @@ def analyze_event_task(
             return {"status": "error", "detail": "TFLite detector not available"}
 
         try:
-            logger.debug("analyze_event_task: calling detector.detect() for event_id=%d, input_size=%d bytes", event_id, len(file_data))
-            detections = detector.detect(file_data)
-            logger.info("analyze_event_task: detector.detect() raw output for event_id=%d: %r", event_id, detections)
+            # Determine whether this is a video file by extension.
+            # Video bytes cannot be passed directly to PIL — extract frames first.
+            _VIDEO_EXTENSIONS = {".mp4", ".mkv", ".avi", ".mov", ".3gp", ".webm"}
+            file_ext = os.path.splitext(media_path or "")[1].lower()
+            is_video = file_ext in _VIDEO_EXTENSIONS
+
+            if is_video:
+                logger.info(
+                    "analyze_event_task: detected video file (ext=%r) — extracting frames for event_id=%d",
+                    file_ext, event_id,
+                )
+                frames = extract_frames_from_video(file_data)
+                if not frames:
+                    logger.warning("analyze_event_task: no frames extracted from video for event_id=%d", event_id)
+                    return {"status": "error", "detail": "No frames could be extracted from video"}
+
+                # Run detection on each frame, then aggregate
+                all_detections: list[dict] = []
+                for frame_idx, frame in enumerate(frames):
+                    frame_dets = detector.detect(frame)
+                    logger.debug(
+                        "analyze_event_task: frame %d/%d — %d detections for event_id=%d",
+                        frame_idx + 1, len(frames), len(frame_dets), event_id,
+                    )
+                    all_detections.extend(frame_dets)
+
+                # Deduplicate: keep highest confidence per label
+                best: dict[str, dict] = {}
+                for det in all_detections:
+                    lbl = det["label"]
+                    if lbl not in best or det["confidence"] > best[lbl]["confidence"]:
+                        best[lbl] = det
+                detections = list(best.values())
+                logger.info(
+                    "analyze_event_task: aggregated %d unique labels from %d frames for event_id=%d: %r",
+                    len(detections), len(frames), event_id,
+                    [{"label": d["label"], "confidence": round(d["confidence"], 3)} for d in detections],
+                )
+            else:
+                logger.debug(
+                    "analyze_event_task: calling detector.detect() for event_id=%d, input_size=%d bytes",
+                    event_id, len(file_data),
+                )
+                detections = detector.detect(file_data)
+                logger.info("analyze_event_task: detector.detect() raw output for event_id=%d: %r", event_id, detections)
+
             labels = [d["label"] for d in detections]
             confidence = max((d["confidence"] for d in detections), default=None)
             raw = {"detections": detections}

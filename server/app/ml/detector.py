@@ -13,6 +13,10 @@ Usage:
     if detector:
         results = detector.detect(jpeg_bytes)
         # [{"label": "person", "confidence": 0.87, "bbox": [y1, x1, y2, x2]}, ...]
+
+    # For video files use the helper:
+    frames = extract_frames_from_video(video_bytes, n_frames=5)
+    all_detections = [d for frame in frames for d in detector.detect(frame)]
 """
 
 from __future__ import annotations
@@ -20,14 +24,21 @@ from __future__ import annotations
 import io
 import logging
 import os
-from typing import Optional
+import tempfile
+from typing import TYPE_CHECKING, Optional
 
 from app.config import settings
+
+if TYPE_CHECKING:
+    import numpy as np
 
 logger = logging.getLogger(__name__)
 
 # Module-level lazy singleton — populated on first get_detector() call
 _detector: Optional["HavenDetector"] = None
+
+# Number of evenly-spaced frames extracted from a video for analysis
+_VIDEO_FRAME_COUNT = 5
 
 
 def get_detector(ai_backend: str | None = None) -> Optional["HavenDetector"]:
@@ -63,6 +74,65 @@ def get_detector(ai_backend: str | None = None) -> Optional["HavenDetector"]:
     else:
         logger.debug("get_detector: returning cached HavenDetector instance")
     return _detector
+
+
+def extract_frames_from_video(video_bytes: bytes, n_frames: int = _VIDEO_FRAME_COUNT) -> list[np.ndarray]:
+    """
+    Extract N evenly-spaced frames from a video file using OpenCV.
+
+    Writes the video bytes to a temporary file (cv2.VideoCapture requires a
+    file path, not an in-memory buffer), reads the requested frames, then
+    removes the temp file.
+
+    @param video_bytes: raw bytes of the video file (MP4, AVI, etc.)
+    @param n_frames: number of frames to extract, spread across the full duration
+    @return: list of (H, W, 3) uint8 numpy arrays in BGR colour order (cv2 native).
+             Returns an empty list if the video cannot be opened or has no frames.
+    """
+    import cv2
+    import numpy as np
+
+    frames: list[np.ndarray] = []
+
+    # cv2.VideoCapture does not support in-memory buffers reliably across platforms,
+    # so write to a named temp file and delete it afterwards.
+    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
+        tmp.write(video_bytes)
+        tmp_path = tmp.name
+
+    try:
+        cap = cv2.VideoCapture(tmp_path)
+        if not cap.isOpened():
+            logger.warning("extract_frames_from_video: cannot open video (%d bytes)", len(video_bytes))
+            return frames
+
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        if total_frames <= 0:
+            logger.warning("extract_frames_from_video: video has no readable frame count")
+            cap.release()
+            return frames
+
+        # Clamp n_frames to total_frames so we never seek past the end
+        actual_n = min(n_frames, total_frames)
+        # Compute evenly-spaced frame indices across [0, total_frames)
+        step = total_frames / actual_n
+        indices = [int(i * step) for i in range(actual_n)]
+
+        for idx in indices:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
+            ret, frame = cap.read()
+            if ret and frame is not None:
+                frames.append(frame)
+
+        cap.release()
+        logger.info(
+            "extract_frames_from_video: extracted %d/%d frames from %d-byte video",
+            len(frames), actual_n, len(video_bytes),
+        )
+    finally:
+        os.unlink(tmp_path)
+
+    return frames
 
 
 # COCO label subset relevant for security monitoring
@@ -112,24 +182,33 @@ class HavenDetector:
         self._input_details = self._interpreter.get_input_details()
         self._output_details = self._interpreter.get_output_details()
 
-    def detect(self, image_bytes: bytes) -> list[dict]:
+    def detect(self, image_input: "bytes | bytearray | np.ndarray") -> list[dict]:
         """
-        Run object detection on raw image bytes (JPEG, PNG, or any PIL-supported format).
+        Run object detection on a single image.
 
-        @param image_bytes: raw bytes of the image file
+        Accepts either raw image bytes (JPEG/PNG/any PIL-supported format) or a
+        numpy array in BGR format with shape (H, W, 3) as returned by
+        cv2.VideoCapture.read().  BGR arrays are converted to RGB automatically.
+
+        @param image_input: raw image bytes or a (H, W, 3) uint8 numpy array (BGR)
         @return: list of detection dicts, each with keys:
                  - "label": str (COCO class name, e.g. "person")
-                 - "confidence": float (0.0–1.0)
-                 - "bbox": [y1, x1, y2, x2] (normalised 0.0–1.0)
+                 - "confidence": float (0.0-1.0)
+                 - "bbox": [y1, x1, y2, x2] (normalised 0.0-1.0)
                  Only detections above _CONFIDENCE_THRESHOLD are returned.
         """
         import numpy as np
         from PIL import Image
 
-        logger.debug("HavenDetector.detect: input_size=%d bytes", len(image_bytes))
+        if isinstance(image_input, (bytes, bytearray)):
+            logger.debug("HavenDetector.detect: input_size=%d bytes", len(image_input))
+            img = Image.open(io.BytesIO(image_input)).convert("RGB")
+        else:
+            # numpy array (H, W, 3) in BGR — cv2 convention; flip to RGB for PIL
+            frame_rgb = image_input[:, :, ::-1].copy() if image_input.ndim == 3 and image_input.shape[2] == 3 else image_input
+            img = Image.fromarray(frame_rgb.astype(np.uint8)).convert("RGB")
+            logger.debug("HavenDetector.detect: input numpy array shape=%s", image_input.shape)
 
-        # Decode image and resize to model input size
-        img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         original_size = img.size
         img = img.resize((_INPUT_SIZE, _INPUT_SIZE))
         input_array = np.array(img, dtype=np.uint8)
@@ -144,7 +223,7 @@ class HavenDetector:
         # Parse EfficientDet Lite 0 output tensors:
         #   output[0]: boxes    (1, N, 4) — [y1, x1, y2, x2] normalised
         #   output[1]: classes  (1, N)    — 0-based class index
-        #   output[2]: scores   (1, N)    — confidence 0–1
+        #   output[2]: scores   (1, N)    — confidence 0-1
         #   output[3]: count    (1,)      — number of valid detections
         boxes = self._interpreter.get_tensor(self._output_details[0]["index"])[0]
         classes = self._interpreter.get_tensor(self._output_details[1]["index"])[0]
