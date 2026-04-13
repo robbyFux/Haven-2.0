@@ -199,6 +199,17 @@
     <string name="log_level_normal">Normal</string>
     <string name="log_level_debug">Debug</string>
 
+    <!-- Expert Settings (SENSOR-11) -->
+    <string name="expert_settings_title">Expert Settings</string>
+    <string name="expert_accelerometer">Accelerometer</string>
+    <string name="expert_microphone">Microphone</string>
+    <string name="expert_light">Light sensor</string>
+    <string name="expert_camera_motion">Camera motion</string>
+    <string name="expert_reset_one">Reset this sensor</string>
+    <string name="expert_reset_all">Reset all to defaults</string>
+    <string name="expert_entry_label">Expert</string>
+    <string name="expert_entry_subtitle">Per-sensor threshold calibration</string>
+
     <!-- Dialog buttons -->
     <string name="dialog_save">Save</string>
     <string name="dialog_cancel">Cancel</string>

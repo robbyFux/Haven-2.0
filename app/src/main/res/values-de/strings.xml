@@ -198,6 +198,17 @@
     <string name="log_level_normal">Normal</string>
     <string name="log_level_debug">Debug</string>
 
+    <!-- Expert Settings (SENSOR-11) -->
+    <string name="expert_settings_title">Experten-Einstellungen</string>
+    <string name="expert_accelerometer">Beschleunigungssensor</string>
+    <string name="expert_microphone">Mikrofon</string>
+    <string name="expert_light">Lichtsensor</string>
+    <string name="expert_camera_motion">Kamera-Bewegung</string>
+    <string name="expert_reset_one">Nur diesen Sensor zurücksetzen</string>
+    <string name="expert_reset_all">Alle auf Standard zurücksetzen</string>
+    <string name="expert_entry_label">Experte</string>
+    <string name="expert_entry_subtitle">Sensor-Schwellwerte einzeln kalibrieren</string>
+
     <string name="dialog_save">Speichern</string>
     <string name="dialog_cancel">Abbrechen</string>
     <string name="dialog_test">Testen</string>
