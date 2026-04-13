@@ -35,15 +35,24 @@
         {% if user.is_admin %}
         <a href="/admin/"
            class="text-gray-300 hover:text-teal-400 transition-colors
-                  {% if request.path|slice:':7' == '/admin/' %}text-teal-400 font-medium{% endif %}">
+                  {% if request.path == '/admin/' %}text-teal-400 font-medium{% endif %}">
           Admin
+        </a>
+        <a href="/admin/ai-settings/"
+           class="text-gray-300 hover:text-teal-400 transition-colors
+                  {% if request.path == '/admin/ai-settings/' %}text-teal-400 font-medium{% endif %}">
+          KI-Analyse
         </a>
         {% endif %}
       </div>
 
       <!-- User menu -->
       <div class="flex items-center gap-4 text-sm">
-        <span class="text-gray-400">{{ user.username }}</span>
+        <a href="/accounts/profile/"
+           class="text-gray-400 hover:text-teal-400 transition-colors
+                  {% if request.path|slice:':10' == '/accounts/' %}text-teal-400 font-medium{% endif %}">
+          {{ user.username }}
+        </a>
         <form method="post" action="/accounts/logout/">
           {% csrf_token %}
           <button type="submit"
