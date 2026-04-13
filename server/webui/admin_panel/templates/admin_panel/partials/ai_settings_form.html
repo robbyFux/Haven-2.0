@@ -1,0 +1,74 @@
+{% if messages %}
+<div class="mb-4 space-y-2">
+  {% for message in messages %}
+  <div class="p-3 rounded-lg
+    {% if message.tags == 'error' %}bg-red-900/50 text-red-300
+    {% elif message.tags == 'success' %}bg-green-900/50 text-green-300
+    {% else %}bg-blue-900/50 text-blue-300{% endif %}">
+    {{ message }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<form method="post"
+      action="{% url 'admin_panel:ai_settings' %}"
+      hx-post="{% url 'admin_panel:ai_settings' %}"
+      hx-target="#ai-settings-form"
+      hx-swap="innerHTML">
+  {% csrf_token %}
+
+  {# --- AI Backend --- #}
+  <div class="space-y-4 mb-6">
+    <div>
+      <label for="{{ form.ai_backend.id_for_label }}"
+             class="block text-sm font-medium text-gray-300 mb-1">
+        {{ form.ai_backend.label }}
+      </label>
+      {{ form.ai_backend }}
+      {% if form.ai_backend.errors %}
+      <p class="text-red-400 text-sm mt-1">{{ form.ai_backend.errors|join:", " }}</p>
+      {% endif %}
+      <p class="text-gray-500 text-sm mt-1">
+        Select <strong class="text-gray-400">None</strong> to disable analysis.
+        <strong class="text-gray-400">TFLite</strong> runs locally on the server (requires the model file).
+        <strong class="text-gray-400">OpenRouter</strong> sends a frame to the OpenRouter vision API.
+      </p>
+    </div>
+  </div>
+
+  {# --- OpenRouter fields --- #}
+  <div class="space-y-4 mb-6" id="openrouter-fields">
+    <div>
+      <label for="{{ form.openrouter_api_key.id_for_label }}"
+             class="block text-sm font-medium text-gray-300 mb-1">
+        {{ form.openrouter_api_key.label }}
+      </label>
+      {{ form.openrouter_api_key }}
+      {% if form.openrouter_api_key.errors %}
+      <p class="text-red-400 text-sm mt-1">{{ form.openrouter_api_key.errors|join:", " }}</p>
+      {% endif %}
+      <p class="text-gray-500 text-sm mt-1">Required when backend is OpenRouter. Get a key at <span class="text-gray-400">openrouter.ai</span>.</p>
+    </div>
+    <div>
+      <label for="{{ form.openrouter_model.id_for_label }}"
+             class="block text-sm font-medium text-gray-300 mb-1">
+        {{ form.openrouter_model.label }}
+      </label>
+      {{ form.openrouter_model }}
+      {% if form.openrouter_model.errors %}
+      <p class="text-red-400 text-sm mt-1">{{ form.openrouter_model.errors|join:", " }}</p>
+      {% endif %}
+      <p class="text-gray-500 text-sm mt-1">Default: <code class="text-gray-400">google/gemini-flash-1.5</code></p>
+    </div>
+  </div>
+
+  {% if form.non_field_errors %}
+  <p class="text-red-400 text-sm mb-4">{{ form.non_field_errors|join:", " }}</p>
+  {% endif %}
+
+  <button type="submit"
+          class="bg-teal-600 hover:bg-teal-500 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+    Save AI Settings
+  </button>
+</form>

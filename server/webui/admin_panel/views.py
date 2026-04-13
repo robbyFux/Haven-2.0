@@ -11,7 +11,8 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from accounts.models import HavenUser
-from admin_panel.forms import QuotaEditForm
+from admin_panel.forms import AISettingsForm, QuotaEditForm
+from admin_panel.models import AISettings
 from core.decorators import admin_required
 from devices.models import Device
 from events.models import Event
@@ -157,3 +158,41 @@ def toggle_active(request, user_id: int):
             {"user": target_user},
         )
     return redirect("admin_panel:user_detail", user_id=user_id)
+
+
+@admin_required
+def ai_settings(request):
+    """
+    GET/POST view for configuring the AI analysis backend.
+
+    GET: populates form with current AISettings singleton values.
+    POST: validates and saves changes. HTMX: returns partial on success/error.
+    Non-HTMX: redirects to this view on success, re-renders on error.
+    """
+    current = AISettings.get()
+
+    if request.method == "POST":
+        form = AISettingsForm(request.POST)
+        if form.is_valid():
+            current.ai_backend = form.cleaned_data["ai_backend"]
+            current.openrouter_api_key = form.cleaned_data["openrouter_api_key"] or ""
+            current.openrouter_model = form.cleaned_data["openrouter_model"] or ""
+            current.save()
+            messages.success(request, "AI settings saved.")
+
+            if request.htmx:
+                return render(request, "admin_panel/partials/ai_settings_form.html", {"form": form})
+            return redirect("admin_panel:ai_settings")
+
+        if request.htmx:
+            return HttpResponse(form.errors.as_text(), status=422)
+        return render(request, "admin_panel/ai_settings.html", {"form": form})
+
+    form = AISettingsForm(
+        initial={
+            "ai_backend": current.ai_backend,
+            "openrouter_api_key": current.openrouter_api_key,
+            "openrouter_model": current.openrouter_model,
+        }
+    )
+    return render(request, "admin_panel/ai_settings.html", {"form": form})

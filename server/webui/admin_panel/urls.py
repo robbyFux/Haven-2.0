@@ -15,4 +15,5 @@ urlpatterns = [
     path("users/<int:user_id>/", views.user_detail, name="user_detail"),
     path("users/<int:user_id>/quota/", views.quota_edit, name="quota_edit"),
     path("users/<int:user_id>/toggle-active/", views.toggle_active, name="toggle_active"),
+    path("ai-settings/", views.ai_settings, name="ai_settings"),
 ]
