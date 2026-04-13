@@ -26,6 +26,7 @@ dependencies = [
     "httpx==0.28.1",
     "python-multipart",
     "ai-edge-litert==2.1.3",
+    "psycopg2-binary==2.9.11",
 ]
 
 [project.optional-dependencies]
@@ -35,7 +36,6 @@ web = [
     "django-htmx==1.27.0",
     "django-filter==25.2",
     "whitenoise==6.12.0",
-    "psycopg2-binary==2.9.11",
 ]
 dev = [
     "pytest",
