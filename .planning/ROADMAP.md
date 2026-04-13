@@ -14,14 +14,16 @@ an optional app PIN. One phase delivers a fully secured, fully functional monito
 - ✅ **v0.3 Phase-2-Complete** — Phase 3 (complete)
 - ✅ **v0.4 NotificationEngine** — Phase 4 (complete)
 - ✅ **v0.5 Cloud-Server** — Phase 5 (complete)
-- 🚧 **v0.6 Web-UI** — Phase 6 (planned)
+- ✅ **v0.6 Web-UI** — Phase 6 (complete)
+- ✅ **v0.7 Android 16 Compat & Sensor Expert** — Phase 7 (complete)
 
 ## Phases
 
 - [x] **Phase 3: Phase-2-Complete** - Fix all Phase 2 bugs, add video clip recording on trigger, encrypt stored media (Android Keystore), and add optional app PIN (completed 2026-04-04)
 - [x] **Phase 4: NotificationEngine** - Signal+Mattermost alerts, configurable channels and severity thresholds, anti-flood cooldown, Settings grouping, Debug logging level (completed 2026-04-05)
 - [x] **Phase 5: Cloud-Server** - Self-hosted Python backend (FastAPI) with multi-user auth (2FA), multi-device support, encrypted user data, admin quotas, event+video upload from Haven, optional AI analysis, and cloud-triggered notifications (Mail/Signal/Pushover) (completed 2026-04-07)
-- [ ] **Phase 6: Web-UI** - Django-based web interface for the Cloud-Server covering all Phase 5 features: user self-service (registration, login, 2FA, device management), event/video browsing, admin dashboard (user management, quotas, system stats), notification settings, AI analysis results — built with Django Templates + HTMX + Alpine.js + Tailwind CSS
+- [x] **Phase 6: Web-UI** - Django-based web interface for the Cloud-Server covering all Phase 5 features: user self-service (registration, login, 2FA, device management), event/video browsing, admin dashboard (user management, quotas, system stats), notification settings, AI analysis results — built with Django Templates + HTMX + Alpine.js + Tailwind CSS (completed 2026-04-09)
+- [x] **Phase 7: Android 16 Compatibility & Sensor Expert Settings** - Migrate tensorflow-lite-task-vision to MediaPipe Tasks Vision for 16 KB page-size compliance (Android 16); fix motion sensor sensitivity; add Expert Settings screen with per-sensor threshold sliders (Medium as calibration base, Low/High derived as offsets) (completed 2026-04-13)
 
 ## Phase Details
 
@@ -77,12 +79,12 @@ Plans:
 **Plans:** 6 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Django project scaffold, unmanaged models, custom auth backend, base template, Docker, test infra
-- [ ] 06-02-PLAN.md — Auth system: registration, login, TOTP 2FA, change password, delete account
-- [ ] 06-03-PLAN.md — Device management: list, create (App-Key), revoke (HTMX inline)
-- [ ] 06-04-PLAN.md — Event browser: filtered list (HTMX), event detail, video serving, AI analysis, delete
-- [ ] 06-05-PLAN.md — Admin dashboard: user list, quota management (HTMX), system stats
-- [ ] 06-06-PLAN.md — Notification settings: email/Signal/Pushover config, global toggle
+- [x] 06-01-PLAN.md — Django project scaffold, unmanaged models, custom auth backend, base template, Docker, test infra
+- [x] 06-02-PLAN.md — Auth system: registration, login, TOTP 2FA, change password, delete account
+- [x] 06-03-PLAN.md — Device management: list, create (App-Key), revoke (HTMX inline)
+- [x] 06-04-PLAN.md — Event browser: filtered list (HTMX), event detail, video serving, AI analysis, delete
+- [x] 06-05-PLAN.md — Admin dashboard: user list, quota management (HTMX), system stats
+- [x] 06-06-PLAN.md — Notification settings: email/Signal/Pushover config, global toggle
 
 ### Phase 5: Cloud-Server
 
@@ -102,6 +104,26 @@ Plans:
 - [x] 05-07-PLAN.md — Cloud notification dispatch (Email, Signal, Pushover)
 - [x] 05-08-PLAN.md — Android CloudChannel: event upload client + Settings UI
 
+### Phase 7: Android 16 Compatibility & Sensor Expert Settings
+
+**Goal:** Two independent improvements: (1) Replace `tensorflow-lite-task-vision:0.4.4` with MediaPipe Tasks Vision to eliminate the Android 16 "app not 16 KB compatible" warning (Task Vision ships 4 KB-aligned `.so` files; MediaPipe ships 16 KB-aligned). (2) Fix motion sensor under-sensitivity and expose an Expert Settings screen where the user can calibrate per-sensor Medium thresholds via sliders; Low and High values are automatically derived as fixed offsets from Medium, keeping the three-tier model intact.
+**Depends on:** Phase 3 (sensor stack), Phase 4 (Settings architecture)
+**Requirements:** COMPAT-01, SENSOR-10, SENSOR-11
+**Success Criteria**:
+  1. App installs and runs on Android 16 without "not 16 KB compatible" system warning
+  2. TFLite object detection (PERSON/PET/VEHICLE) works correctly after migration
+  3. Motion sensor triggers reliably at the default Medium sensitivity with normal room movement
+  4. Settings → Expert contains sliders for Accelerometer, Microphone, Light, and Camera thresholds
+  5. Adjusting the Medium slider updates Low/High values in real time (visible feedback)
+  6. Custom thresholds persist across app restarts via DataStore
+  7. Resetting to defaults restores the Sensitivity enum values from CLAUDE.md
+**Plans:** 3 plans
+
+Plans:
+- [x] 07-01-PLAN.md — MediaPipe Tasks Vision migration: swap Gradle dep + rewrite HavenObjectDetector API (COMPAT-01)
+- [x] 07-02-PLAN.md — Sensitivity defaults fix + ExpertThresholds data class + SettingsRepository keys + monitor wiring (SENSOR-10, SENSOR-11 foundation)
+- [x] 07-03-PLAN.md — ExpertSettingsScreen + ViewModel + EXPERT_SETTINGS route + Settings entry row (SENSOR-11 UI)
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -109,4 +131,5 @@ Plans:
 | 3. Phase-2-Complete | 7/7 | Complete   | 2026-04-04 |
 | 4. NotificationEngine | 5/5 | Complete   | 2026-04-05 |
 | 5. Cloud-Server | 8/8 | Complete   | 2026-04-07 |
-| 6. Web-UI | 0/6 | Planned | — |
+| 6. Web-UI | 6/6 | Complete | 2026-04-09 |
+| 7. Android 16 Compat & Sensor Expert | 3/3 | Complete | 2026-04-13 |

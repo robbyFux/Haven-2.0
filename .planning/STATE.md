@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.6
-milestone_name: Web-UI
+milestone: v0.7
+milestone_name: Android 16 Compat & Sensor Expert
 status: complete
-stopped_at: "Completed Phase 06 — web-ui Django frontend (6 plans) — 95/95 tests pass"
-last_updated: "2026-04-09T00:00:00.000Z"
-last_activity: 2026-04-09
+stopped_at: "Completed Phase 07: Android 16 Compat & Sensor Expert Settings"
+last_updated: "2026-04-13T11:10:58.215Z"
+last_activity: 2026-04-13 -- Phase 07 complete (all phases 3–7 done)
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 6
-  completed_plans: 6
+  total_phases: 5
+  completed_phases: 5
+  total_plans: 29
+  completed_plans: 29
   percent: 100
 ---
 
@@ -21,16 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Zuverlässige, privacy-respektierende Bewegungserkennung — die App muss starten, kalibrieren und Ereignisse erfassen, ohne dass etwas stillschweigend fehlschlägt.
-**Current focus:** Phase 06 complete — web-ui
+**Current focus:** Phase 07 — android16-compat-sensor-expert
 
 ## Current Position
 
-Phase: 06
-Plan: All complete (6/6)
-Status: Complete — verification passed (95/95 tests)
-Last activity: 2026-04-06
+Phase: 07 (android16-compat-sensor-expert) — COMPLETE
+Status: All phases complete (3–7). Milestone v0.7 achieved.
+Last activity: 2026-04-13 -- Phase 07 complete
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -102,7 +101,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+1 todo pending — see `.planning/todos/pending/`
 
 ### Blockers/Concerns
 
@@ -123,6 +122,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T00:00:00Z
-Stopped at: Completed quick task 260406-vc6: Pushover channel implementation
+Last session: 2026-04-13T11:10:58Z
+Stopped at: Completed Phase 07 — all phases 3–7 done, milestone v0.7 achieved
 Resume file: None
