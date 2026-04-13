@@ -3,23 +3,29 @@ package org.havenapp.main.detection
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
+import com.google.mediapipe.framework.image.BitmapImageBuilder
+import com.google.mediapipe.tasks.core.BaseOptions
+import com.google.mediapipe.tasks.vision.core.RunningMode
+import com.google.mediapipe.tasks.vision.objectdetector.ObjectDetector
 import dagger.hilt.android.qualifiers.ApplicationContext
-import org.havenapp.main.events.TriggerType
-import org.tensorflow.lite.support.image.TensorImage
-import org.tensorflow.lite.task.vision.detector.ObjectDetector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.havenapp.main.events.TriggerType
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Wrapper um die TFLite Task Library ObjectDetector API.
+ * Wrapper um die MediaPipe Tasks Vision ObjectDetector API.
  *
  * Modell: EfficientDet Lite 0 (COCO, 80 Klassen, ~4 MB).
  * Das Modell wird beim ersten Aufruf von [initialize] geladen.
  * Ist die Datei nicht vorhanden, degradiert der Detector graceful:
  * [detect] gibt eine leere Liste zurück und [initError] enthält die Ursache.
+ *
+ * Migration von TFLite Task Vision 0.4.4 → MediaPipe Tasks Vision 0.10.29 (COMPAT-01):
+ * Die öffentliche Schnittstelle ([initialize], [detect], [isAvailable], [availabilityFlow],
+ * [initError]) bleibt unverändert — nur die interne Implementierung wechselt.
  *
  * COCO-Klassen → Haven TriggerType:
  *   "person"                                → CAMERA_PERSON
@@ -57,7 +63,7 @@ class HavenObjectDetector @Inject constructor(
     var initError: String? = null
         private set
 
-    /** Lädt das TFLite-Modell. Gibt true zurück wenn erfolgreich. */
+    /** Lädt das MediaPipe ObjectDetector-Modell. Gibt true zurück wenn erfolgreich. */
     fun initialize(): Boolean {
         if (initAttempted) return detector != null
         initAttempted = true
@@ -75,20 +81,25 @@ class HavenObjectDetector @Inject constructor(
             return false
         }
 
-        // Schritt 2: Modell laden
+        // Schritt 2: MediaPipe ObjectDetector laden (RunningMode.IMAGE für synchrone Inferenz)
         runCatching {
+            val baseOptions = BaseOptions.builder()
+                .setModelAssetPath(MODEL_FILENAME)
+                .build()
             val options = ObjectDetector.ObjectDetectorOptions.builder()
+                .setBaseOptions(baseOptions)
+                .setRunningMode(RunningMode.IMAGE)
                 .setMaxResults(MAX_RESULTS)
                 .setScoreThreshold(SCORE_THRESHOLD)
                 .build()
-            detector = ObjectDetector.createFromFileAndOptions(context, MODEL_FILENAME, options)
+            detector = ObjectDetector.createFromOptions(context, options)
             _isAvailable.value = true
-            Log.i(TAG, "TFLite model loaded successfully")
-            appLogger.i(TAG, "TFLite model loaded: $MODEL_FILENAME (threshold=$SCORE_THRESHOLD, maxResults=$MAX_RESULTS)")
+            Log.i(TAG, "MediaPipe ObjectDetector loaded successfully")
+            appLogger.i(TAG, "MediaPipe model loaded: $MODEL_FILENAME (threshold=$SCORE_THRESHOLD, maxResults=$MAX_RESULTS)")
         }.onFailure {
             initError = "${it::class.simpleName}: ${it.message}"
-            Log.w(TAG, "TFLite model load failed (file exists): $initError")
-            appLogger.e(TAG, "TFLite init failed: $initError")
+            Log.w(TAG, "MediaPipe model load failed (file exists): $initError")
+            appLogger.e(TAG, "MediaPipe init failed: $initError")
         }
         return detector != null
     }
@@ -101,16 +112,15 @@ class HavenObjectDetector @Inject constructor(
     fun detect(bitmap: Bitmap, mode: DetectionMode): List<TriggerType> {
         val d = detector ?: return emptyList()
         return runCatching {
-            val tensorImage = TensorImage.fromBitmap(bitmap)
-            d.detect(tensorImage)
-                .flatMap { detection ->
-                    detection.categories.mapNotNull { cat ->
-                        mapLabel(cat.label.lowercase().trim(), mode)
-                    }
+            val mpImage = BitmapImageBuilder(bitmap).build()
+            val result = d.detect(mpImage)
+            result.detections().flatMap { detection ->
+                detection.categories().mapNotNull { cat ->
+                    mapLabel(cat.categoryName().lowercase().trim(), mode)
                 }
-                .distinct()
+            }.distinct()
         }.getOrElse {
-            val msg = "TFLite inference failed: ${it::class.simpleName}: ${it.message}"
+            val msg = "MediaPipe inference failed: ${it::class.simpleName}: ${it.message}"
             Log.e(TAG, msg, it)
             appLogger.e(TAG, msg)
             emptyList()
