@@ -19,7 +19,8 @@ class GyroscopeMonitor @Inject constructor(
     private val sensorManager: SensorManager,
 ) : SensorMonitor {
 
-    override fun observe(sensitivity: Sensitivity, warmupMs: Long): Flow<TriggerEvent> {
+    // expert parameter accepted but ignored — legacy dead code, not wired in MonitorService (see CLAUDE.md)
+    override fun observe(sensitivity: Sensitivity, warmupMs: Long, expert: ExpertThresholds): Flow<TriggerEvent> {
         if (sensitivity == Sensitivity.OFF) return kotlinx.coroutines.flow.emptyFlow()
 
         return callbackFlow {

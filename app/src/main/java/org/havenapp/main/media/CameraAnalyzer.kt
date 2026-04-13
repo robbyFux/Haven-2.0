@@ -17,7 +17,9 @@ import org.havenapp.main.detection.PerceptualHashDetector
 import org.havenapp.main.events.Severity
 import org.havenapp.main.events.TriggerEvent
 import org.havenapp.main.events.TriggerType
+import org.havenapp.main.sensor.ExpertThresholds
 import org.havenapp.main.sensor.Sensitivity
+import org.havenapp.main.sensor.effectiveCameraFraction
 import java.io.ByteArrayOutputStream
 
 /**
@@ -37,6 +39,7 @@ import java.io.ByteArrayOutputStream
  */
 class CameraAnalyzer(
     private val sensitivity: Sensitivity,
+    private val expert: ExpertThresholds = ExpertThresholds.DEFAULT,
     private val detectionMode: DetectionMode = DetectionMode.MOTION_ONLY,
     private val objectDetector: HavenObjectDetector? = null,
     private val zone: DetectionZone? = null,
@@ -48,7 +51,7 @@ class CameraAnalyzer(
     private val _events = Channel<TriggerEvent>(Channel.BUFFERED)
     val events: Flow<TriggerEvent> = _events.receiveAsFlow()
 
-    private val motionThreshold: Float = sensitivity.cameraMotionThreshold
+    private val motionThreshold: Float = sensitivity.effectiveCameraFraction(expert)
     private val hashThreshold = 4
 
     /** TFLite-Drosselung: max 1 Inferenz pro [TFLITE_MIN_INTERVAL_MS] ms, um OOM zu verhindern. */

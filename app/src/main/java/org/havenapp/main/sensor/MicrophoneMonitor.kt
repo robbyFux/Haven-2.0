@@ -27,7 +27,7 @@ class MicrophoneMonitor @Inject constructor() : SensorMonitor {
     private val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
         .coerceAtLeast(4096)
 
-    override fun observe(sensitivity: Sensitivity, warmupMs: Long): Flow<TriggerEvent> {
+    override fun observe(sensitivity: Sensitivity, warmupMs: Long, expert: ExpertThresholds): Flow<TriggerEvent> {
         if (sensitivity == Sensitivity.OFF) return kotlinx.coroutines.flow.emptyFlow()
 
         return callbackFlow<TriggerEvent> {
@@ -43,7 +43,7 @@ class MicrophoneMonitor @Inject constructor() : SensorMonitor {
 
             val job = launch(Dispatchers.IO) {
                 val buffer = ShortArray(bufferSize)
-                val thresholdDb = sensitivity.microphoneThresholdDb
+                val thresholdDb = sensitivity.effectiveMicDb(expert)
                 val cooldownMs = 1_000L
                 var lastEmitTime = 0L
 

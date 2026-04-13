@@ -53,6 +53,7 @@ class LightMonitor @Inject constructor(
     fun observe(
         sensitivity: Sensitivity,
         warmupMs: Long,
+        expert: ExpertThresholds = ExpertThresholds.DEFAULT,
         suppressionWindowMs: Long = 10_000L,
     ): Flow<TriggerEvent> {
         if (sensitivity == Sensitivity.OFF) return kotlinx.coroutines.flow.emptyFlow()
@@ -98,7 +99,7 @@ class LightMonitor @Inject constructor(
                     if (elapsed < warmupMs) return
                     if (_emaBaseline.value == null) _emaBaseline.value = emaFast
 
-                    val threshold = sensitivity.lightDeltaLux
+                    val threshold = sensitivity.effectiveLightLux(expert)
                     if (deviation >= threshold) {
                         val now = System.currentTimeMillis()
                         if (now - lastEmitTime >= cooldownMs) {

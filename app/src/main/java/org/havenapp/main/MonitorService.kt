@@ -20,6 +20,7 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +35,7 @@ import org.havenapp.main.media.CameraAnalyzer
 import org.havenapp.main.media.ClipRecorder
 import org.havenapp.main.security.MediaEncryptionManager
 import org.havenapp.main.sensor.CameraPosition
+import org.havenapp.main.sensor.ExpertThresholds
 import org.havenapp.main.sensor.FusedMotionMonitor
 import org.havenapp.main.sensor.LightMonitor
 import org.havenapp.main.sensor.MicrophoneMonitor
@@ -100,7 +102,23 @@ class MonitorService : LifecycleService() {
     private var wakeLock: PowerManager.WakeLock? = null
     private var currentEventId: Long? = null
     private var cameraAnalyzer: CameraAnalyzer? = null
-    private var clipRecorder: ClipRecorder? = null
+
+    /**
+     * Resolved by startCamera()'s cameraProviderFuture callback — either with a fully
+     * attached ClipRecorder (isAvailable=true) or a setUnavailable() sentinel.
+     * Using CompletableDeferred lets sensorFlow.collect await camera init without
+     * blocking the main thread, eliminating the race where the first trigger fires
+     * before the camera provider future resolves.
+     *
+     * Reset to a fresh CompletableDeferred each time startMonitoring() runs.
+     * Remains incomplete (and awaiting it returns null via withTimeoutOrNull) when
+     * cameraEnabled=false, so the collect block never hangs in that case.
+     */
+    private var clipRecorderDeferred = CompletableDeferred<ClipRecorder>()
+
+    /** Holds the resolved ClipRecorder once startCamera()'s callback fires. Used by stopMonitoring() to stop any active recording without requiring @ExperimentalCoroutinesApi. */
+    private var resolvedClipRecorder: ClipRecorder? = null
+
     private val cameraExecutor = Executors.newSingleThreadExecutor()
     private var monitoringJob: Job? = null
     private var clipDurationSecs: Int = 30
@@ -124,6 +142,7 @@ class MonitorService : LifecycleService() {
 
         monitoringJob = lifecycleScope.launch {
             val sensitivity = settingsRepository.sensitivity.first()
+            val expert = settingsRepository.expertThresholds.first()
             val cameraPosition = settingsRepository.cameraPosition.first()
             val countdownSecs = settingsRepository.countdownSeconds.first()
             val calibrationMs = settingsRepository.calibrationSeconds.first() * 1_000L
@@ -215,21 +234,27 @@ class MonitorService : LifecycleService() {
                 }
             }
 
-            appLogger.i(TAG, "Monitoring started: sensitivity=$sensitivity cameraMotionThreshold=${sensitivity.cameraMotionThreshold}, mode=$detectionMode, camera=$cameraEnabled, motion=$motionEnabled, light=$lightEnabled, mic=$micEnabled")
+            appLogger.i(TAG, "Monitoring started: sensitivity=$sensitivity cameraMotionThreshold=${sensitivity.cameraMotionThreshold}, mode=$detectionMode, camera=$cameraEnabled, motion=$motionEnabled, light=$lightEnabled, mic=$micEnabled expertOverride=${expert != ExpertThresholds.DEFAULT}")
+
+            // Reset deferred so a fresh await is available for this session.
+            clipRecorderDeferred = CompletableDeferred()
 
             val analyzer: CameraAnalyzer? = if (cameraEnabled) {
-                CameraAnalyzer(sensitivity, detectionMode, objectDetector, detectionZone)
+                CameraAnalyzer(sensitivity, expert, detectionMode, objectDetector, detectionZone)
                     .also { cameraAnalyzer = it; startCamera(it, cameraPosition) }
-            } else null
+            } else {
+                android.util.Log.d("HAVEN_VIDEO", "cameraEnabled=false — startCamera() skipped, clipRecorder will remain null all session")
+                null
+            }
 
             // Log TFLite status after CameraAnalyzer.init{} ran initialize() (if ML mode active)
             appLogger.i(TAG, "TFLite: requiresML=${detectionMode.requiresML}, available=${objectDetector.isAvailable}" +
                 objectDetector.initError?.let { ", initError=$it" }.orEmpty())
 
             val sensorFlows = buildList {
-                if (motionEnabled) add(fusedMotionMonitor.observe(sensitivity, calibrationMs))
-                if (lightEnabled) add(lightMonitor.observe(sensitivity, calibrationMs, lightSuppressMotionSeconds * 1000L))
-                if (micEnabled) add(microphoneMonitor.observe(sensitivity, calibrationMs))
+                if (motionEnabled) add(fusedMotionMonitor.observe(sensitivity, calibrationMs, expert))
+                if (lightEnabled) add(lightMonitor.observe(sensitivity, calibrationMs, expert, lightSuppressMotionSeconds * 1000L))
+                if (micEnabled) add(microphoneMonitor.observe(sensitivity, calibrationMs, expert))
                 if (analyzer != null) add(analyzer.events)
             }
             val sensorFlow = merge(*sensorFlows.toTypedArray())
@@ -289,6 +314,18 @@ class MonitorService : LifecycleService() {
             // Sensor-Flow läuft ab Kalibrierungsstart; currentEventId ist null
             // solange kalibriert wird → Events werden erst danach persistiert.
             sensorFlow.collect { trigger ->
+                // Resolve the ClipRecorder for this trigger. If cameraEnabled=false the
+                // deferred is never completed and withTimeoutOrNull returns null immediately
+                // (timeout=0 → non-blocking poll). If cameraEnabled=true and camera init is
+                // still in progress we wait up to 3 s for the provider callback to fire.
+                val resolvedClipRecorder = if (clipRecorderDeferred.isCompleted) {
+                    clipRecorderDeferred.await()
+                } else if (cameraEnabled) {
+                    kotlinx.coroutines.withTimeoutOrNull(3_000L) { clipRecorderDeferred.await() }
+                } else {
+                    null
+                }
+                android.util.Log.d("HAVEN_VIDEO", "sensorFlow trigger: type=${trigger.type} severity=${trigger.severity} currentEventId=$currentEventId clipRecorder=$resolvedClipRecorder clipRecorder.isAvailable=${resolvedClipRecorder?.isAvailable} clipRecorder.isRecording=${resolvedClipRecorder?.isRecording}")
                 currentEventId?.let { eventId ->
                     RecentTriggerState.record(trigger.type)
 
@@ -298,9 +335,13 @@ class MonitorService : LifecycleService() {
                     // recording would flood the Timeline. Skip recording + clip start if
                     // ClipRecorder is actively recording. The CAMERA_VIDEO trigger written
                     // at clip-end is the single DB record for that recording window.
-                    if (clipRecorder?.isRecording == true) return@collect
+                    if (resolvedClipRecorder?.isRecording == true) {
+                        android.util.Log.d("HAVEN_VIDEO", "Trigger suppressed — clip already recording")
+                        return@collect
+                    }
 
                     val triggerId = eventRepository.recordTrigger(eventId, trigger)
+                    android.util.Log.d("HAVEN_VIDEO", "Trigger recorded to DB: triggerId=$triggerId type=${trigger.type}")
 
                     // Route to notification channels (Phase 4)
                     launch {
@@ -309,17 +350,35 @@ class MonitorService : LifecycleService() {
                     }
 
                     // Start clip on first trigger (REC-01); ClipRecorder guards against parallel clips (REC-03)
-                    clipRecorder?.startClip(
+                    if (resolvedClipRecorder == null) {
+                        android.util.Log.e("HAVEN_VIDEO", "clipRecorder is null — cameraEnabled=$cameraEnabled; no video for trigger $triggerId")
+                    } else {
+                        android.util.Log.d("HAVEN_VIDEO", "Calling clipRecorder.startClip() for triggerId=$triggerId filesDir=${filesDir.absolutePath} duration=${clipDurationSecs}s")
+                    }
+                    resolvedClipRecorder?.startClip(
                         context = this@MonitorService,
                         filesDir = filesDir,
                         durationSeconds = clipDurationSecs,
                     ) { rawClipPath ->
+                        android.util.Log.d("HAVEN_VIDEO", "onClipReady callback fired — rawClipPath=$rawClipPath triggerId=$triggerId")
                         // Optionally encrypt the raw video file (SEC-01), then link path to trigger (REC-02).
                         // When mediaEncryptionEnabled is false the plain .mp4 path is stored directly.
                         lifecycleScope.launch {
+                            // Upload raw video to cloud channels before local encryption (NET-01).
+                            // After encryptInPlace the original bytes are gone.
+                            val rawFile = File(rawClipPath)
+                            if (rawFile.exists()) {
+                                android.util.Log.d("HAVEN_VIDEO", "Raw clip file exists: size=${rawFile.length()} bytes")
+                                runCatching { rawFile.readBytes() }
+                                    .onSuccess { bytes -> notificationRouter.uploadVideo(trigger, bytes) }
+                                    .onFailure { appLogger.e(TAG, "Failed to read clip for upload: ${it.message}") }
+                            } else {
+                                android.util.Log.e("HAVEN_VIDEO", "Raw clip file does NOT exist at $rawClipPath — onClipReady was called but file is missing")
+                            }
+
                             val finalPath = if (mediaEncryptionEnabled) {
                                 runCatching {
-                                    MediaEncryptionManager.encryptInPlace(File(rawClipPath))
+                                    MediaEncryptionManager.encryptInPlace(rawFile)
                                 }.getOrElse { err ->
                                     appLogger.e(TAG, "Failed to encrypt clip: ${err.message}")
                                     rawClipPath  // fallback: store unencrypted path
@@ -327,6 +386,7 @@ class MonitorService : LifecycleService() {
                             } else {
                                 rawClipPath
                             }
+                            android.util.Log.d("HAVEN_VIDEO", "Updating DB trigger $triggerId with finalPath=$finalPath")
                             eventRepository.updateTriggerMediaPath(triggerId, finalPath)
                         }
                     }
@@ -350,8 +410,10 @@ class MonitorService : LifecycleService() {
             currentEventId = null
         }
 
-        clipRecorder?.stopIfRecording()
-        clipRecorder = null
+        resolvedClipRecorder?.stopIfRecording()
+        resolvedClipRecorder = null
+        // Cancel any in-flight await so coroutines blocked on it unblock immediately.
+        clipRecorderDeferred.cancel()
         RecentTriggerState.reset()
         cameraAnalyzer?.reset()
         cameraAnalyzer = null
@@ -374,14 +436,26 @@ class MonitorService : LifecycleService() {
             CameraPosition.BACK -> CameraSelector.DEFAULT_BACK_CAMERA
             CameraPosition.FRONT -> CameraSelector.DEFAULT_FRONT_CAMERA
         }
+        android.util.Log.d("HAVEN_VIDEO", "startCamera() called — position=$position cameraSelector=$cameraSelector")
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         cameraProviderFuture.addListener({
-            val cameraProvider = cameraProviderFuture.get()
+            android.util.Log.d("HAVEN_VIDEO", "cameraProviderFuture listener fired — attempting to get provider")
+            val cameraProvider = runCatching { cameraProviderFuture.get() }.getOrElse { err ->
+                android.util.Log.e("HAVEN_VIDEO", "ProcessCameraProvider.get() THREW: ${err.message}", err)
+                appLogger.e(TAG, "ProcessCameraProvider.get() failed: ${err.message}")
+                val unavailable = ClipRecorder().also { it.setUnavailable() }
+                resolvedClipRecorder = unavailable
+                clipRecorderDeferred.complete(unavailable)
+                return@addListener
+            }
+            android.util.Log.d("HAVEN_VIDEO", "cameraProvider obtained: $cameraProvider")
+
             val imageAnalysis = ImageAnalysis.Builder()
                 .setTargetResolution(Size(640, 480))
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
                 .also { it.setAnalyzer(cameraExecutor, analyzer) }
+            android.util.Log.d("HAVEN_VIDEO", "ImageAnalysis use-case built")
 
             val recorder = Recorder.Builder()
                 .setQualitySelector(
@@ -392,27 +466,40 @@ class MonitorService : LifecycleService() {
                 )
                 .build()
             val videoCaptureUseCase = VideoCapture.withOutput(recorder)
+            android.util.Log.d("HAVEN_VIDEO", "VideoCapture use-case built: $videoCaptureUseCase")
 
             // Attempt to bind both ImageAnalysis and VideoCapture together.
             // Falls back to ImageAnalysis-only on LEGACY hardware where VideoCapture
             // cannot be combined with other use cases.
+            android.util.Log.d("HAVEN_VIDEO", "Attempting bindToLifecycle(imageAnalysis + videoCapture)…")
             runCatching {
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis, videoCaptureUseCase)
             }.onSuccess {
+                android.util.Log.d("HAVEN_VIDEO", "bindToLifecycle SUCCESS — imageAnalysis + videoCapture bound")
                 appLogger.i(TAG, "Camera bound: imageAnalysis + videoCapture (${cameraSelector})")
-                clipRecorder = ClipRecorder().also { it.attach(videoCaptureUseCase) }
+                val recorder = ClipRecorder().also { it.attach(videoCaptureUseCase) }
+                resolvedClipRecorder = recorder
+                clipRecorderDeferred.complete(recorder)
+                android.util.Log.d("HAVEN_VIDEO", "ClipRecorder created and attached — isAvailable=${recorder.isAvailable}")
             }.onFailure { err ->
+                android.util.Log.e("HAVEN_VIDEO", "bindToLifecycle FAILED for imageAnalysis+videoCapture: ${err::class.simpleName} — ${err.message}", err)
                 appLogger.w(TAG, "VideoCapture binding failed (LEGACY hardware?), disabling clip recording: ${err.message}")
+                android.util.Log.d("HAVEN_VIDEO", "Attempting LEGACY fallback: bindToLifecycle(imageAnalysis only)…")
                 runCatching {
                     cameraProvider.unbindAll()
                     cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis)
                 }.onSuccess {
+                    android.util.Log.d("HAVEN_VIDEO", "LEGACY fallback bindToLifecycle SUCCESS — imageAnalysis only")
                     appLogger.i(TAG, "Camera bound: imageAnalysis-only (LEGACY fallback)")
                 }.onFailure { err2 ->
+                    android.util.Log.e("HAVEN_VIDEO", "LEGACY fallback bindToLifecycle ALSO FAILED: ${err2::class.simpleName} — ${err2.message}", err2)
                     appLogger.e(TAG, "Camera binding FAILED entirely — no frames will arrive: ${err2.message}")
                 }
-                clipRecorder = ClipRecorder().also { it.setUnavailable() }
+                val unavailable = ClipRecorder().also { it.setUnavailable() }
+                resolvedClipRecorder = unavailable
+                clipRecorderDeferred.complete(unavailable)
+                android.util.Log.d("HAVEN_VIDEO", "ClipRecorder set to unavailable — video recording disabled for this session")
             }
         }, mainExecutor)
     }

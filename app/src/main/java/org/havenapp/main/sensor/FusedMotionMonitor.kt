@@ -41,7 +41,7 @@ class FusedMotionMonitor @Inject constructor(
     private val _noiseFloor = MutableStateFlow<Float?>(null)
     val noiseFloor: StateFlow<Float?> = _noiseFloor
 
-    override fun observe(sensitivity: Sensitivity, warmupMs: Long): Flow<TriggerEvent> {
+    override fun observe(sensitivity: Sensitivity, warmupMs: Long, expert: ExpertThresholds): Flow<TriggerEvent> {
         if (sensitivity == Sensitivity.OFF) return emptyFlow()
 
         _noiseFloor.value = null
@@ -87,7 +87,7 @@ class FusedMotionMonitor @Inject constructor(
                         return
                     }
 
-                    val threshold = noiseFloor * sensitivity.accelerometerMultiplier
+                    val threshold = noiseFloor * sensitivity.effectiveAccelMultiplier(expert)
                     if (fused > threshold) {
                         val severity = when {
                             fused > threshold * 3f -> Severity.HIGH
