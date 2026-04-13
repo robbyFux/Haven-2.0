@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -15,6 +16,8 @@ import org.havenapp.main.detection.DetectionZone
 import org.havenapp.main.events.Severity
 import org.havenapp.main.events.TriggerType
 import org.havenapp.main.sensor.CameraPosition
+import org.havenapp.main.sensor.ExpertThresholdKind
+import org.havenapp.main.sensor.ExpertThresholds
 import org.havenapp.main.sensor.Sensitivity
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -42,6 +45,12 @@ class SettingsRepository @Inject constructor(
         private val KEY_PIN_SALT = stringPreferencesKey("pin_salt")
         private val KEY_AUTO_LOCK_DELAY_SECONDS = intPreferencesKey("auto_lock_delay_seconds")
         private val KEY_LIGHT_SUPPRESS_MOTION_SECONDS = intPreferencesKey("light_suppress_motion_seconds")
+
+        // Expert threshold overrides (SENSOR-11). Null (key absent) = use Sensitivity enum default.
+        private val KEY_EXPERT_ACCEL_MEDIUM  = floatPreferencesKey("expert_accel_medium_multiplier")
+        private val KEY_EXPERT_MIC_MEDIUM    = floatPreferencesKey("expert_mic_medium_db")
+        private val KEY_EXPERT_LIGHT_MEDIUM  = floatPreferencesKey("expert_light_medium_lux")
+        private val KEY_EXPERT_CAMERA_MEDIUM = floatPreferencesKey("expert_camera_medium_fraction")
 
         // Notification channels (D-02, D-03)
         private val KEY_SIGNAL_ENABLED = booleanPreferencesKey("signal_enabled")
@@ -220,6 +229,49 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setLightSuppressMotionSeconds(seconds: Int) {
         dataStore.edit { it[KEY_LIGHT_SUPPRESS_MOTION_SECONDS] = seconds }
+    }
+
+    // ── Expert threshold overrides (SENSOR-11) ───────────────────────────────
+
+    /**
+     * Per-sensor custom Medium thresholds. A null field means "use the
+     * Sensitivity enum default for that sensor". All four fields null means
+     * no customization → all sensors use enum defaults.
+     */
+    val expertThresholds: Flow<ExpertThresholds> = dataStore.data.map { prefs ->
+        ExpertThresholds(
+            accelMediumMultiplier = prefs[KEY_EXPERT_ACCEL_MEDIUM],
+            micMediumDb           = prefs[KEY_EXPERT_MIC_MEDIUM],
+            lightMediumLux        = prefs[KEY_EXPERT_LIGHT_MEDIUM],
+            cameraMediumFraction  = prefs[KEY_EXPERT_CAMERA_MEDIUM],
+        )
+    }
+
+    /**
+     * Set or clear a single expert threshold. Passing `value = null` removes
+     * the key so the sensor falls back to the Sensitivity enum default.
+     * Never write 0f intentionally — that would disable the sensor.
+     */
+    suspend fun setExpertThreshold(kind: ExpertThresholdKind, value: Float?) {
+        val key = when (kind) {
+            ExpertThresholdKind.ACCEL  -> KEY_EXPERT_ACCEL_MEDIUM
+            ExpertThresholdKind.MIC    -> KEY_EXPERT_MIC_MEDIUM
+            ExpertThresholdKind.LIGHT  -> KEY_EXPERT_LIGHT_MEDIUM
+            ExpertThresholdKind.CAMERA -> KEY_EXPERT_CAMERA_MEDIUM
+        }
+        dataStore.edit { prefs ->
+            if (value == null) prefs.remove(key) else prefs[key] = value
+        }
+    }
+
+    /** Remove all four expert threshold keys atomically. */
+    suspend fun resetExpertThresholds() {
+        dataStore.edit { prefs ->
+            prefs.remove(KEY_EXPERT_ACCEL_MEDIUM)
+            prefs.remove(KEY_EXPERT_MIC_MEDIUM)
+            prefs.remove(KEY_EXPERT_LIGHT_MEDIUM)
+            prefs.remove(KEY_EXPERT_CAMERA_MEDIUM)
+        }
     }
 
     // ── Signal channel ───────────────────────────────────────────────────────
