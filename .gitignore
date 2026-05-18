@@ -23,3 +23,18 @@ server/test.db
 
 # Android assets (large binary — add manually)
 app/src/main/assets/*.tflite
+
+# Reference material (too large for git)
+referenzen/
+
+# Runtime / generated data
+server/media/
+server/test_notifications.db
+server/test.db
+
+# Claude Code agent state (machine-specific)
+.claire/
+.claude/worktrees/
+
+# Planning temp files
+.planning/tmp/

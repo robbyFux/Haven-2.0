@@ -92,8 +92,22 @@
   <div class="bg-gray-800 rounded-lg p-6 space-y-4 mb-6">
     <div class="flex items-center justify-between">
       <h2 class="text-sm font-medium text-gray-400 uppercase tracking-wider">Pushover</h2>
-      {% if form.pushover_user_key.value %}
+      {% if form.pushover_user_key.value and form.pushover_app_token.value %}
       <span class="text-green-400 text-sm">&#10003; Configured</span>
+      {% endif %}
+    </div>
+    <div>
+      <label for="id_pushover_app_token" class="block text-sm font-medium text-gray-300 mb-1">
+        Pushover App Token
+      </label>
+      <input type="text"
+             id="id_pushover_app_token"
+             name="pushover_app_token"
+             value="{{ form.pushover_app_token.value|default:'' }}"
+             placeholder="App token from pushover.net/apps"
+             class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500">
+      {% if form.pushover_app_token.errors %}
+      <p class="text-red-400 text-sm mt-1">{{ form.pushover_app_token.errors|join:", " }}</p>
       {% endif %}
     </div>
     <div>
@@ -104,13 +118,13 @@
              id="id_pushover_user_key"
              name="pushover_user_key"
              value="{{ form.pushover_user_key.value|default:'' }}"
-             placeholder="Pushover user key"
+             placeholder="Your user key from pushover.net"
              class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500">
       {% if form.pushover_user_key.errors %}
       <p class="text-red-400 text-sm mt-1">{{ form.pushover_user_key.errors|join:", " }}</p>
       {% endif %}
     </div>
-    <p class="text-gray-500 text-sm">Receive Pushover notifications. Get your user key from pushover.net.</p>
+    <p class="text-gray-500 text-sm">Receive Pushover notifications. Create a free app at <span class="text-gray-400">pushover.net/apps</span> to get your App Token.</p>
   </div>
 
   {# --- Save button --- #}

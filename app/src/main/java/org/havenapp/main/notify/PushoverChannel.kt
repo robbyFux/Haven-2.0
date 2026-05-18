@@ -58,7 +58,7 @@ class PushoverChannel(
      *
      * @return [Result.success] on HTTP 2xx; [Result.failure] with the HTTP error message otherwise.
      */
-    override suspend fun send(event: TriggerEvent, attachment: ByteArray?): Result<Unit> =
+    override suspend fun send(event: TriggerEvent, attachment: ByteArray?, attachmentMime: String?): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
                 val priority = priorityFor(event.severity)

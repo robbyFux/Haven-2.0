@@ -87,11 +87,17 @@ class HavenUser(AbstractBaseUser):
     notification_email = models.CharField(max_length=255, null=True, blank=True)
     notification_signal_number = models.CharField(max_length=20, null=True, blank=True)
     pushover_user_key = models.CharField(max_length=50, null=True, blank=True)
+    pushover_app_token = models.CharField(max_length=50, null=True, blank=True)
     notifications_enabled = models.BooleanField(default=True)
 
     # --- timestamps ---
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField(null=True, blank=True)
+
+    # Disable AbstractBaseUser's last_login field — the FastAPI-managed 'users'
+    # table has no such column. Setting to None prevents Django from trying to
+    # write it on login (update_last_login signal becomes a no-op).
+    last_login = None
 
     # --- AbstractBaseUser config ---
     USERNAME_FIELD = "username"

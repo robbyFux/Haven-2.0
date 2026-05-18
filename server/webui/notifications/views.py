@@ -34,12 +34,14 @@ def notification_settings(request):
                 form.cleaned_data["notification_signal_number"] or None
             )
             user.pushover_user_key = form.cleaned_data["pushover_user_key"] or None
+            user.pushover_app_token = form.cleaned_data["pushover_app_token"] or None
             user.save(
                 update_fields=[
                     "notifications_enabled",
                     "notification_email",
                     "notification_signal_number",
                     "pushover_user_key",
+                    "pushover_app_token",
                 ]
             )
             messages.success(request, "Notification settings saved.")
@@ -67,6 +69,7 @@ def notification_settings(request):
                 "notification_email": user.notification_email or "",
                 "notification_signal_number": user.notification_signal_number or "",
                 "pushover_user_key": user.pushover_user_key or "",
+                "pushover_app_token": user.pushover_app_token or "",
             }
         )
 

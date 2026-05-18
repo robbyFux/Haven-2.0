@@ -55,7 +55,7 @@ Kombiniert sensorische Tiefe (Beschleunigungssensor, Gyroskop, Mikrofon, Licht, 
 
 - Android Studio (aktuell)
 - JDK 17
-- Android SDK — compileSdk 35
+- Android SDK — compileSdk 36
 - Android 8.0+ (API 26+) auf dem Zielgerät
 
 ### Bauen & Installieren
@@ -165,13 +165,13 @@ app/src/main/java/org/havenapp/main/
 | Media3 ExoPlayer | 1.6.0 |
 | OkHttp | 4.12.0 |
 | minSdk | 26 (Android 8.0) |
-| targetSdk / compileSdk | 35 |
+| targetSdk / compileSdk | 36 |
 
 ---
 
 ## Server (optional)
 
-Unter `server/` liegt ein self-hosted Backend (Python/FastAPI + Django WebUI + PostgreSQL) für Cloud-Benachrichtigungen und Event-Archivierung. Quickstart: `server/QUICKSTART.md` bzw. `Cloud Server QUICKSTART.md`.
+Unter `server/` liegt ein self-hosted Backend (Python/FastAPI + Django WebUI + PostgreSQL) für Cloud-Benachrichtigungen und Event-Archivierung. Quickstart: `Cloud Server QUICKSTART.md`.
 
 ---
 

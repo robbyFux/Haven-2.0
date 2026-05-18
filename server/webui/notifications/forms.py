@@ -40,6 +40,12 @@ class NotificationSettingsForm(forms.Form):
         label="Pushover User Key",
         widget=forms.TextInput(attrs={"placeholder": "Pushover user key"}),
     )
+    pushover_app_token = forms.CharField(
+        max_length=50,
+        required=False,
+        label="Pushover App Token",
+        widget=forms.TextInput(attrs={"placeholder": "Pushover app token"}),
+    )
 
     def clean_notification_email(self) -> str:
         """Validate email format if non-empty."""

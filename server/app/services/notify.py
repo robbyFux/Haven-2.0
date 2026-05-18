@@ -91,7 +91,7 @@ def send_signal(recipient: str, message: str) -> bool:
         return False
 
 
-def send_pushover(user_key: str, message: str, title: str = "Haven Alert") -> bool:
+def send_pushover(user_key: str, message: str, title: str = "Haven Alert", *, app_token: str | None = None) -> bool:
     """
     Send a Pushover push notification.
 
@@ -100,11 +100,17 @@ def send_pushover(user_key: str, message: str, title: str = "Haven Alert") -> bo
     @param user_key: Pushover user/group key
     @param message: notification message body
     @param title: notification title (default: "Haven Alert")
+    @param app_token: Pushover application token (per-user); falls back to PUSHOVER_APP_TOKEN setting
     @return: True on HTTP 200, False on error
     """
+    resolved_token = app_token or settings.PUSHOVER_APP_TOKEN
+    if not resolved_token:
+        logger.warning("send_pushover: no app token configured — skipping")
+        return False
+
     url = "https://api.pushover.net/1/messages.json"
     data = {
-        "token": settings.PUSHOVER_APP_TOKEN,
+        "token": resolved_token,
         "user": user_key,
         "message": message,
         "title": title,

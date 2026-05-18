@@ -41,7 +41,7 @@ class MattermostChannel(
      * @return [Result.success] on HTTP 2xx; [Result.failure] with the HTTP error message otherwise.
      */
     @Suppress("UNUSED_PARAMETER")
-    override suspend fun send(event: TriggerEvent, attachment: ByteArray?): Result<Unit> =
+    override suspend fun send(event: TriggerEvent, attachment: ByteArray?, attachmentMime: String?): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
                 // attachment is intentionally ignored — Mattermost webhooks do not support file uploads

@@ -59,6 +59,7 @@ class User(TimestampMixin, Base):
     notification_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     notification_signal_number: Mapped[str | None] = mapped_column(String(20), nullable=True)
     pushover_user_key: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    pushover_app_token: Mapped[str | None] = mapped_column(String(50), nullable=True)
     notifications_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     # Relationships

@@ -1,8 +1,11 @@
 package org.havenapp.main.media
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.camera.video.FileOutputOptions
 import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
@@ -10,6 +13,7 @@ import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
+import androidx.core.content.ContextCompat
 import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
@@ -26,6 +30,10 @@ import java.util.concurrent.atomic.AtomicReference
  */
 class ClipRecorder {
 
+    companion object {
+        private const val TAG = "HAVEN_VIDEO"
+    }
+
     private var videoCapture: VideoCapture<Recorder>? = null
     private val activeRecording = AtomicReference<Recording?>(null)
     private var _isAvailable = false
@@ -38,12 +46,14 @@ class ClipRecorder {
     fun attach(videoCapture: VideoCapture<Recorder>) {
         this.videoCapture = videoCapture
         _isAvailable = true
+        Log.d(TAG, "ClipRecorder.attach() — VideoCapture bound, recording available")
     }
 
     /** Called if VideoCapture binding failed (LEGACY hardware). */
     fun setUnavailable() {
         _isAvailable = false
         videoCapture = null
+        Log.e(TAG, "ClipRecorder.setUnavailable() — VideoCapture NOT bound, recording disabled for this session")
     }
 
     /**
@@ -61,28 +71,87 @@ class ClipRecorder {
         durationSeconds: Int,
         onClipReady: (outputPath: String) -> Unit,
     ): String? {
-        if (!_isAvailable || activeRecording.get() != null) return null
-        val vc = videoCapture ?: return null
+        if (!_isAvailable) {
+            Log.e(TAG, "startClip() skipped — ClipRecorder is unavailable (VideoCapture not bound)")
+            return null
+        }
+        if (activeRecording.get() != null) {
+            Log.d(TAG, "startClip() skipped — already recording")
+            return null
+        }
+        val vc = videoCapture
+        if (vc == null) {
+            Log.e(TAG, "startClip() skipped — videoCapture is null despite isAvailable=true (should not happen)")
+            return null
+        }
 
         val file = File(filesDir, "clip_${System.currentTimeMillis()}.mp4")
+        Log.d(TAG, "startClip() — output file: ${file.absolutePath}")
+        Log.d(TAG, "startClip() — filesDir exists=${filesDir.exists()} canWrite=${filesDir.canWrite()}")
+
         val opts = FileOutputOptions.Builder(file).build()
 
-        val recording = vc.output
-            .prepareRecording(context, opts)
-            .withAudioEnabled()
+        val audioGranted = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+        Log.d(TAG, "startClip() — RECORD_AUDIO granted=$audioGranted, durationSeconds=$durationSeconds")
+
+        val preparedRecording = vc.output.prepareRecording(context, opts).let {
+            if (audioGranted) it.withAudioEnabled() else it
+        }
+
+        Log.d(TAG, "startClip() — calling preparedRecording.start()")
+        val recording = preparedRecording
             .start(Executors.newSingleThreadExecutor()) { event ->
-                if (event is VideoRecordEvent.Finalize) {
-                    activeRecording.set(null)
-                    if (!event.hasError()) {
-                        onClipReady(file.absolutePath)
+                when (event) {
+                    is VideoRecordEvent.Start -> {
+                        Log.d(TAG, "VideoRecordEvent.Start — recording started for ${file.name}")
+                    }
+                    is VideoRecordEvent.Status -> {
+                        // Periodic status events — not logged to avoid noise
+                    }
+                    is VideoRecordEvent.Pause -> {
+                        Log.d(TAG, "VideoRecordEvent.Pause")
+                    }
+                    is VideoRecordEvent.Resume -> {
+                        Log.d(TAG, "VideoRecordEvent.Resume")
+                    }
+                    is VideoRecordEvent.Finalize -> {
+                        activeRecording.set(null)
+                        val stats = event.recordingStats
+                        val durationMs = stats.recordedDurationNanos / 1_000_000L
+                        val bytes = stats.numBytesRecorded
+                        if (event.hasError()) {
+                            Log.e(
+                                TAG,
+                                "VideoRecordEvent.Finalize ERROR — errorCode=${event.error} " +
+                                    "cause=${event.cause?.message} " +
+                                    "durationMs=$durationMs bytes=$bytes " +
+                                    "outputUri=${event.outputResults.outputUri} " +
+                                    "file.exists=${file.exists()} file.length=${file.length()}",
+                                event.cause,
+                            )
+                        } else {
+                            Log.d(
+                                TAG,
+                                "VideoRecordEvent.Finalize OK — durationMs=$durationMs bytes=$bytes " +
+                                    "outputUri=${event.outputResults.outputUri} " +
+                                    "file.exists=${file.exists()} file.length=${file.length()}",
+                            )
+                            onClipReady(file.absolutePath)
+                        }
                     }
                 }
             }
         activeRecording.set(recording)
+        Log.d(TAG, "startClip() — recording object set, auto-stop in ${durationSeconds}s")
 
         // Auto-stop after duration
         Handler(Looper.getMainLooper()).postDelayed(
-            { recording.stop() },
+            {
+                Log.d(TAG, "startClip() auto-stop fired after ${durationSeconds}s")
+                recording.stop()
+            },
             durationSeconds * 1_000L,
         )
         return file.absolutePath
@@ -90,6 +159,10 @@ class ClipRecorder {
 
     /** Stops any active recording immediately. */
     fun stopIfRecording() {
-        activeRecording.getAndSet(null)?.stop()
+        val rec = activeRecording.getAndSet(null)
+        if (rec != null) {
+            Log.d(TAG, "stopIfRecording() — stopping active recording")
+            rec.stop()
+        }
     }
 }

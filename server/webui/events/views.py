@@ -95,7 +95,11 @@ def event_detail(request, event_id):
 @login_required
 def serve_video(request, event_id):
     """
-    Stream an unencrypted event video file.
+    Stream an unencrypted event video file with HTTP range request support.
+
+    Browsers send Range: bytes=0- for HTML5 <video> — without 206 Partial Content
+    many browsers refuse playback and show a codec error. This view handles both
+    full (200) and partial (206) responses so seeking works correctly.
 
     Returns 404 if no media_path or file missing.
     Returns 403 with explanation if the video is client-encrypted.
@@ -117,11 +121,44 @@ def serve_video(request, event_id):
     if not os.path.exists(full_path):
         raise Http404("Media file not found on server.")
 
-    response = StreamingHttpResponse(
-        open(full_path, "rb"),  # noqa: WPS515
-        content_type="video/mp4",
-    )
-    response["Content-Length"] = os.path.getsize(full_path)
+    file_size = os.path.getsize(full_path)
+    range_header = request.META.get("HTTP_RANGE", "")
+
+    if range_header.startswith("bytes="):
+        # Parse "bytes=start-end"
+        range_spec = range_header[6:]
+        start_str, _, end_str = range_spec.partition("-")
+        start = int(start_str) if start_str else 0
+        end = int(end_str) if end_str else file_size - 1
+        end = min(end, file_size - 1)
+        length = end - start + 1
+
+        def _range_iter(path, s, l, chunk=64 * 1024):
+            with open(path, "rb") as f:
+                f.seek(s)
+                remaining = l
+                while remaining > 0:
+                    data = f.read(min(chunk, remaining))
+                    if not data:
+                        break
+                    remaining -= len(data)
+                    yield data
+
+        response = StreamingHttpResponse(
+            _range_iter(full_path, start, length),
+            status=206,
+            content_type="video/mp4",
+        )
+        response["Content-Range"] = f"bytes {start}-{end}/{file_size}"
+        response["Content-Length"] = length
+    else:
+        response = StreamingHttpResponse(
+            open(full_path, "rb"),  # noqa: WPS515
+            content_type="video/mp4",
+        )
+        response["Content-Length"] = file_size
+
+    response["Accept-Ranges"] = "bytes"
     response["Content-Disposition"] = f'inline; filename="event_{event_id}.mp4"'
     return response
 

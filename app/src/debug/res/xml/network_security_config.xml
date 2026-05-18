@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network security config for DEBUG builds only.
+
+    Cleartext HTTP is permitted for all hosts so the Haven backend can be reached
+    over a local network without TLS during development. Release builds use
+    src/main/res/xml/network_security_config.xml which enforces HTTPS.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

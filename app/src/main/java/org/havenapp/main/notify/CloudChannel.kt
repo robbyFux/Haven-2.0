@@ -38,6 +38,9 @@ class CloudChannel(
     override val id: String = "cloud"
     override val isEnabled: Boolean = serverUrl.isNotBlank() && appKey.isNotBlank()
 
+    /** Cloud channel waits for the video clip before sending — no immediate JPEG alert. */
+    override val deferresToVideo: Boolean = true
+
     /**
      * Uploads a TriggerEvent to the cloud server as a multipart/form-data POST.
      *
@@ -46,22 +49,26 @@ class CloudChannel(
      *
      * @return [Result.success] on HTTP 201; [Result.failure] with the HTTP error message otherwise.
      */
-    override suspend fun send(event: TriggerEvent, attachment: ByteArray?): Result<Unit> =
+    override suspend fun send(event: TriggerEvent, attachment: ByteArray?, attachmentMime: String?): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
                 val url = "${serverUrl.trimEnd('/')}/api/v1/devices/$appKey/events"
+                // Server expects a single JSON-encoded "metadata" form field
+                val sensorVal = event.sensorValue ?: 0f
+                val ts = Instant.ofEpochMilli(event.timestamp).toString()
+                val metadataJson = """{"event_type":"${event.type.name}","severity":"${event.severity.name}","timestamp":"$ts","sensor_value":$sensorVal}"""
+
                 val bodyBuilder = MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
-                    .addFormDataPart("event_type", event.type.name)
-                    .addFormDataPart("severity", event.severity.name)
-                    .addFormDataPart("timestamp", Instant.ofEpochMilli(event.timestamp).toString())
-                    .addFormDataPart("sensor_value", (event.sensorValue ?: 0f).toString())
+                    .addFormDataPart("metadata", metadataJson)
 
                 if (attachment != null) {
+                    val mime = attachmentMime ?: "application/octet-stream"
+                    val filename = if (mime.startsWith("video/")) "clip.mp4" else "attachment"
                     bodyBuilder.addFormDataPart(
-                        "media",
-                        "alert.jpg",
-                        attachment.toRequestBody("image/jpeg".toMediaType()),
+                        "video",
+                        filename,
+                        attachment.toRequestBody(mime.toMediaType()),
                     )
                 }
 

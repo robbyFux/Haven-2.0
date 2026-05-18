@@ -64,10 +64,10 @@
           </div>
           {% else %}
           <div>
-            <video src="{% url 'events:video' event.id %}"
-                   controls
+            <video controls
                    class="w-full rounded-lg bg-black"
                    preload="metadata">
+              <source src="{% url 'events:video' event.id %}" type="video/mp4">
               Your browser does not support the video tag.
             </video>
           </div>
