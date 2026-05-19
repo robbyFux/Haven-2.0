@@ -14,21 +14,23 @@ android {
         applicationId = "org.havenapp.main"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    signingConfigs {
-        create("release") {
-            val keystorePath = System.getenv("HAVEN_KEYSTORE_PATH")
-            val keystorePassword = System.getenv("HAVEN_KEYSTORE_PASSWORD")
-            val keyAlias = System.getenv("HAVEN_KEY_ALIAS")
-            val keyPassword = System.getenv("HAVEN_KEY_PASSWORD")
-            if (!keystorePath.isNullOrBlank() && !keystorePassword.isNullOrBlank()
-                && !keyAlias.isNullOrBlank() && !keyPassword.isNullOrBlank()) {
-                storeFile = file(keystorePath)
+    val keystorePath = System.getenv("HAVEN_KEYSTORE_PATH")
+    val keystorePassword = System.getenv("HAVEN_KEYSTORE_PASSWORD")
+    val keyAlias = System.getenv("HAVEN_KEY_ALIAS")
+    val keyPassword = System.getenv("HAVEN_KEY_PASSWORD")
+    val hasKeystore = !keystorePath.isNullOrBlank() && !keystorePassword.isNullOrBlank()
+        && !keyAlias.isNullOrBlank() && !keyPassword.isNullOrBlank()
+
+    if (hasKeystore) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(keystorePath!!)
                 storePassword = keystorePassword
                 this.keyAlias = keyAlias
                 this.keyPassword = keyPassword
@@ -38,7 +40,7 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            if (hasKeystore) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
