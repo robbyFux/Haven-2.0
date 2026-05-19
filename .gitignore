@@ -38,3 +38,6 @@ server/test.db
 
 # Planning temp files
 .planning/tmp/
+
+# Release-Artefakte (APK, Docker-Archive)
+dist/
