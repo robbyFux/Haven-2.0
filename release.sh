@@ -102,11 +102,19 @@ if git tag --list | grep -q "^${TAG}$"; then
     error "Tag $TAG existiert bereits. Bitte andere Version wählen."
 fi
 
+# Uncommittete Änderungen vor dem Release sichern
 if git status --porcelain | grep -q '^[^?]'; then
-    warn "Es gibt uncommittete Änderungen. Bitte zuerst committen oder stashen."
-    git status --short
-    read -rp "Trotzdem fortfahren? [j/N] " CONFIRM
-    [[ "$CONFIRM" =~ ^[jJyY]$ ]] || exit 1
+    DIRTY_FILES=$(git status --short | grep '^[^?]')
+    info "Uncommittete Änderungen werden vor dem Release gesichert:"
+    echo "$DIRTY_FILES"
+    if [[ "$DRY_RUN" == true ]]; then
+        info "[dry-run] Würde committen und pushen: alle geänderten Dateien"
+    else
+        git add -u
+        git commit -m "chore: sync local changes before $TAG release"
+        git push origin "$(git rev-parse --abbrev-ref HEAD)"
+        ok "Lokale Änderungen committed und gepusht"
+    fi
 fi
 
 # ─── Ausgabeverzeichnis ───────────────────────────────────────────────────────
