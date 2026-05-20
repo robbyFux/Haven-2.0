@@ -207,8 +207,155 @@ else
     fi
 fi
 
-# ─── 4. Git-Commit und Tag ────────────────────────────────────────────────────
-step "4. Git-Commit und Tag erstellen"
+# ─── 4. Installationsanleitung generieren ────────────────────────────────────
+step "4. Installationsanleitung generieren"
+
+INSTALL_GUIDE="$DIST_DIR/INSTALL.md"
+
+if [[ "$DRY_RUN" == true ]]; then
+    info "[dry-run] Würde generieren: dist/$VERSION/INSTALL.md"
+else
+    cat > "$INSTALL_GUIDE" <<EOF
+# Haven 2.0 ${TAG} – Schnellstart
+
+## Android-App installieren (haven-v${VERSION}.apk)
+
+Das APK ist **unsigniert** — Android zeigt eine einmalige Sicherheitswarnung.
+
+### Option A: ADB (empfohlen)
+\`\`\`bash
+adb install haven-v${VERSION}.apk
+\`\`\`
+
+### Option B: Dateimanager
+1. APK auf das Gerät übertragen (USB / Download)
+2. **Einstellungen → Apps → Spezieller App-Zugriff → Unbekannte Apps installieren**
+   → Dateimanager → *Aus dieser Quelle zulassen*
+3. APK im Dateimanager antippen → *Installieren*
+
+---
+
+## Cloud-Server installieren (haven-cloud-v${VERSION}.tar.gz)
+
+### Voraussetzungen
+- Docker Engine 24+ und Docker Compose v2
+- Freie Ports 8000 (API) und 8080 (Web UI)
+
+### 1. Images laden
+\`\`\`bash
+docker load < haven-cloud-v${VERSION}.tar.gz
+\`\`\`
+
+### 2. Konfiguration anlegen
+\`\`\`bash
+mkdir haven-server && cd haven-server
+\`\`\`
+
+\`docker-compose.yml\` erstellen:
+\`\`\`yaml
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: haven
+      POSTGRES_PASSWORD: haven
+      POSTGRES_DB: haven
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U haven -d haven"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  app:
+    image: haven-api:${VERSION}
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports: ["8000:8000"]
+    volumes: ["./media:/app/media"]
+    env_file: .env
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+  worker:
+    image: haven-api:${VERSION}
+    command: celery -A app.celery_app worker --loglevel=info --concurrency=2
+    volumes: ["./media:/app/media"]
+    env_file: .env
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+  webui:
+    image: haven-webui:${VERSION}
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8080"
+    ports: ["8080:8080"]
+    volumes: ["./media:/app/media"]
+    env_file: .env
+    depends_on:
+      db: {condition: service_healthy}
+volumes:
+  postgres_data:
+\`\`\`
+
+\`.env\` erstellen:
+\`\`\`ini
+DATABASE_URL=postgresql+asyncpg://haven:haven@db:5432/haven
+REDIS_URL=redis://redis:6379/0
+# mind. 64 zufällige Zeichen: python3 -c "import secrets; print(secrets.token_hex(32))"
+SECRET_KEY=hier-zufaelligen-schluessel-eintragen
+DJANGO_SECRET_KEY=\${SECRET_KEY}
+ALLOWED_HOSTS=localhost,127.0.0.1
+\`\`\`
+
+### 3. Stack starten
+\`\`\`bash
+docker compose up -d
+docker compose exec app alembic upgrade head
+\`\`\`
+
+### 4. Admin-Nutzer anlegen
+\`\`\`bash
+docker compose exec app python -c "
+import asyncio, secrets
+from passlib.context import CryptContext
+from app.database import AsyncSessionLocal
+from app.models.user import User
+pwd = CryptContext(schemes=['bcrypt'], deprecated='auto')
+async def run():
+    async with AsyncSessionLocal() as db:
+        u = User(username='admin', password_hash=pwd.hash('changeme'),
+                 user_key='haven_u_' + secrets.token_hex(16), is_admin=True)
+        db.add(u); await db.commit()
+        print('User-Key:', u.user_key)
+asyncio.run(run())
+"
+\`\`\`
+
+Passwort danach unter **Web UI → Profil → Passwort ändern** setzen.
+
+### 5. Dienste prüfen
+| URL | Beschreibung |
+|-----|-------------|
+| http://localhost:8000/health | API Health-Check |
+| http://localhost:8080/ | Web UI |
+
+### Android-App verbinden
+Einstellungen → Cloud-Server → API-URL: \`http://<server-ip>:8000\`
+EOF
+    ok "Anleitung: dist/$VERSION/INSTALL.md"
+fi
+
+# ─── 5. Git-Commit und Tag ────────────────────────────────────────────────────
+step "5. Git-Commit und Tag erstellen"
+
 
 if [[ "$DRY_RUN" == true ]]; then
     info "[dry-run] Würde committen: app/build.gradle.kts, server/pyproject.toml"
@@ -221,7 +368,7 @@ else
 fi
 
 # ─── 5. Push und GitHub Release ───────────────────────────────────────────────
-step "5. GitHub Release erstellen"
+step "6. GitHub Release erstellen"
 
 if [[ "$GH_OK" == false ]]; then
     warn "gh CLI nicht verfügbar — GitHub Release übersprungen"
@@ -237,6 +384,7 @@ else
     RELEASE_ASSETS=()
     [[ -n "$APK_DEST" && -f "$APK_DEST" ]] && RELEASE_ASSETS+=("$APK_DEST")
     [[ -f "$DOCKER_ARCHIVE" ]]              && RELEASE_ASSETS+=("$DOCKER_ARCHIVE")
+    [[ -f "$INSTALL_GUIDE" ]]               && RELEASE_ASSETS+=("$INSTALL_GUIDE")
 
     gh release create "$TAG" \
         --title "Haven 2.0 $TAG" \
