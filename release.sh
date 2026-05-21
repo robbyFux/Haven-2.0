@@ -141,19 +141,36 @@ if [[ "$DRY_RUN" == false ]]; then
     ok "Versionsdateien aktualisiert"
 fi
 
+# ─── Hilfsfunktionen ──────────────────────────────────────────────────────────
+find_apksigner() {
+    if command -v apksigner &>/dev/null; then
+        echo "apksigner"; return
+    fi
+    if [[ -n "${ANDROID_HOME:-}" ]]; then
+        local bt
+        bt=$(find "$ANDROID_HOME/build-tools" -name "apksigner" -type f 2>/dev/null | sort -V | tail -1)
+        [[ -n "$bt" ]] && echo "$bt" && return
+    fi
+    echo ""
+}
+
 # ─── 2. Android APK bauen ─────────────────────────────────────────────────────
 step "2. Android APK bauen"
 
 APK_DEST=""
+APK_SIGNED_TYPE="unsigned"
 
 if [[ "$SKIP_APK" == true ]]; then
     warn "APK-Build übersprungen (--skip-apk)"
 elif [[ "$DRY_RUN" == true ]]; then
     info "[dry-run] Würde ausführen: ./gradlew :app:assembleRelease"
+    info "[dry-run] APK würde signiert: release-key (HAVEN_KEYSTORE_PATH gesetzt) oder dev-key"
 else
-    if [[ -z "${HAVEN_KEYSTORE_PATH:-}" ]]; then
-        warn "HAVEN_KEYSTORE_PATH nicht gesetzt — APK wird unsigniert gebaut"
-        warn "Für signierte Releases: HAVEN_KEYSTORE_PATH, HAVEN_KEYSTORE_PASSWORD, HAVEN_KEY_ALIAS, HAVEN_KEY_PASSWORD setzen"
+    if [[ -n "${HAVEN_KEYSTORE_PATH:-}" ]]; then
+        info "APK wird durch Gradle mit Release-Key signiert"
+    else
+        warn "HAVEN_KEYSTORE_PATH nicht gesetzt — APK wird nach dem Build mit Dev-Key signiert"
+        warn "Für Release-Signierung: HAVEN_KEYSTORE_PATH, HAVEN_KEYSTORE_PASSWORD, HAVEN_KEY_ALIAS, HAVEN_KEY_PASSWORD setzen"
     fi
 
     ./gradlew :app:assembleRelease --no-daemon
@@ -162,8 +179,41 @@ else
     [[ -z "$APK_SRC" ]] && error "Kein APK gefunden nach dem Build"
 
     APK_DEST="$DIST_DIR/haven-v${VERSION}.apk"
-    cp "$APK_SRC" "$APK_DEST"
-    ok "APK: dist/$VERSION/haven-v${VERSION}.apk"
+
+    if [[ -n "${HAVEN_KEYSTORE_PATH:-}" ]]; then
+        cp "$APK_SRC" "$APK_DEST"
+        APK_SIGNED_TYPE="release"
+        ok "APK (release-signiert): dist/$VERSION/haven-v${VERSION}.apk"
+    else
+        APKSIGNER=$(find_apksigner)
+        if [[ -z "$APKSIGNER" ]]; then
+            warn "apksigner nicht gefunden — APK bleibt unsigniert (nur ADB-Install möglich)"
+            warn "Tipp: ANDROID_HOME setzen oder apksigner in PATH legen"
+            cp "$APK_SRC" "$APK_DEST"
+        else
+            DEV_KEYSTORE="$HOME/.android/haven-dev.jks"
+            if [[ ! -f "$DEV_KEYSTORE" ]]; then
+                info "Erstelle Dev-Keystore: $DEV_KEYSTORE"
+                keytool -genkey -v \
+                    -keystore "$DEV_KEYSTORE" \
+                    -alias haven-dev \
+                    -keyalg RSA -keysize 2048 -validity 10000 \
+                    -dname "CN=Haven Dev, O=Haven, C=DE" \
+                    -storepass android -keypass android \
+                    -noprompt 2>/dev/null
+                ok "Dev-Keystore erstellt: $DEV_KEYSTORE"
+            fi
+            "$APKSIGNER" sign \
+                --ks "$DEV_KEYSTORE" \
+                --ks-alias haven-dev \
+                --ks-pass pass:android \
+                --key-pass pass:android \
+                --out "$APK_DEST" \
+                "$APK_SRC"
+            APK_SIGNED_TYPE="dev"
+            ok "APK (dev-signiert): dist/$VERSION/haven-v${VERSION}.apk"
+        fi
+    fi
 fi
 
 # ─── 3. Docker-Images bauen und exportieren ───────────────────────────────────
@@ -215,14 +265,16 @@ INSTALL_GUIDE="$DIST_DIR/INSTALL.md"
 if [[ "$DRY_RUN" == true ]]; then
     info "[dry-run] Würde generieren: dist/$VERSION/INSTALL.md"
 else
-    cat > "$INSTALL_GUIDE" <<EOF
+    # APK-Abschnitt abhängig vom Signing-Status
+    if [[ "$APK_SIGNED_TYPE" == "release" ]]; then
+        cat > "$INSTALL_GUIDE" <<EOF
 # Haven 2.0 ${TAG} – Schnellstart
 
 ## Android-App installieren (haven-v${VERSION}.apk)
 
-Das APK ist **unsigniert** — Android zeigt eine einmalige Sicherheitswarnung.
+Das APK ist mit dem **Release-Key signiert**.
 
-### Option A: ADB (empfohlen)
+### Option A: ADB
 \`\`\`bash
 adb install haven-v${VERSION}.apk
 \`\`\`
@@ -234,6 +286,47 @@ adb install haven-v${VERSION}.apk
 3. APK im Dateimanager antippen → *Installieren*
 
 ---
+EOF
+    elif [[ "$APK_SIGNED_TYPE" == "dev" ]]; then
+        cat > "$INSTALL_GUIDE" <<EOF
+# Haven 2.0 ${TAG} – Schnellstart
+
+## Android-App installieren (haven-v${VERSION}.apk)
+
+Das APK ist mit einem **Dev-Key signiert** — Android zeigt beim ersten Install eine einmalige Sicherheitswarnung.
+
+### Option A: ADB
+\`\`\`bash
+adb install haven-v${VERSION}.apk
+\`\`\`
+
+### Option B: Dateimanager
+1. APK auf das Gerät übertragen (USB / Download)
+2. **Einstellungen → Apps → Spezieller App-Zugriff → Unbekannte Apps installieren**
+   → Dateimanager → *Aus dieser Quelle zulassen*
+3. APK im Dateimanager antippen → *Installieren*
+
+---
+EOF
+    else
+        cat > "$INSTALL_GUIDE" <<EOF
+# Haven 2.0 ${TAG} – Schnellstart
+
+## Android-App installieren (haven-v${VERSION}.apk)
+
+Das APK ist **unsigniert** — Installation nur via \`adb install\` möglich (nicht per Dateimanager).
+
+### ADB
+\`\`\`bash
+adb install haven-v${VERSION}.apk
+\`\`\`
+
+---
+EOF
+    fi
+
+    # Cloud-Server-Abschnitt (immer gleich)
+    cat >> "$INSTALL_GUIDE" <<EOF
 
 ## Cloud-Server installieren (haven-cloud-v${VERSION}.tar.gz)
 
