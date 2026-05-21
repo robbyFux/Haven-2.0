@@ -97,7 +97,8 @@ class HavenObjectDetector @Inject constructor(
             Log.i(TAG, "MediaPipe ObjectDetector loaded successfully")
             appLogger.i(TAG, "MediaPipe model loaded: $MODEL_FILENAME (threshold=$SCORE_THRESHOLD, maxResults=$MAX_RESULTS)")
         }.onFailure {
-            initError = "${it::class.simpleName}: ${it.message}"
+            initError = generateSequence(it) { t -> t.cause?.takeIf { c -> c !== t } }
+                .joinToString(" → ") { t -> "${t::class.simpleName}: ${t.message}" }
             Log.w(TAG, "MediaPipe model load failed (file exists): $initError")
             appLogger.e(TAG, "MediaPipe init failed: $initError")
         }

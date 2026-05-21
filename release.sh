@@ -203,13 +203,13 @@ else
                     -noprompt 2>/dev/null
                 ok "Dev-Keystore erstellt: $DEV_KEYSTORE"
             fi
+            cp "$APK_SRC" "$APK_DEST"
             "$APKSIGNER" sign \
                 --ks "$DEV_KEYSTORE" \
                 --ks-key-alias haven-dev \
                 --ks-pass pass:android \
                 --key-pass pass:android \
-                --out "$APK_DEST" \
-                "$APK_SRC"
+                "$APK_DEST"
             APK_SIGNED_TYPE="dev"
             ok "APK (dev-signiert): dist/$VERSION/haven-v${VERSION}.apk"
         fi
