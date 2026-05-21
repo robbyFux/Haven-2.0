@@ -28,3 +28,8 @@
 # jede Umbenennung durch R8 bricht diesen Mechanismus (ExceptionInInitializerError).
 -keep class com.google.common.flogger.** { *; }
 -dontwarn com.google.common.flogger.**
+
+# Protobuf Lite (transitiv via MediaPipe) — nutzt Reflection auf eigene Felder per Quellname.
+# R8 darf weder Klassennamen noch Felder umbenennen (26/119 Klassen betroffen lt. mapping.txt).
+-keep class com.google.protobuf.** { *; }
+-dontwarn com.google.protobuf.**
