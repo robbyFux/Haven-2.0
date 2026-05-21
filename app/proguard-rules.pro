@@ -14,8 +14,11 @@
 # Keep CameraX
 -keep class androidx.camera.** { *; }
 
-# TFLite Task Library
+# TFLite runtime (wird intern von MediaPipe genutzt)
 -keep class org.tensorflow.lite.** { *; }
--keep class org.tensorflow.lite.task.** { *; }
--keep class org.tensorflow.lite.support.** { *; }
 -dontwarn org.tensorflow.**
+
+# MediaPipe Tasks Vision (ObjectDetector, BitmapImageBuilder, BaseOptions, RunningMode)
+# Nutzt JNI und Reflection — vollständige Package-Erhaltung nötig
+-keep class com.google.mediapipe.** { *; }
+-dontwarn com.google.mediapipe.**
