@@ -205,7 +205,7 @@ else
             fi
             "$APKSIGNER" sign \
                 --ks "$DEV_KEYSTORE" \
-                --ks-alias haven-dev \
+                --ks-key-alias haven-dev \
                 --ks-pass pass:android \
                 --key-pass pass:android \
                 --out "$APK_DEST" \
