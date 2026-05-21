@@ -22,3 +22,9 @@
 # Nutzt JNI und Reflection — vollständige Package-Erhaltung nötig
 -keep class com.google.mediapipe.** { *; }
 -dontwarn com.google.mediapipe.**
+
+# Flogger (transitiv via MediaPipe) — darf NICHT umbenannt werden.
+# Flogger.forEnclosingClass() sucht sich selbst per Stack-Walk;
+# jede Umbenennung durch R8 bricht diesen Mechanismus (ExceptionInInitializerError).
+-keep class com.google.common.flogger.** { *; }
+-dontwarn com.google.common.flogger.**
