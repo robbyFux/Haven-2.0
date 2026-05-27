@@ -11,6 +11,13 @@
   <table class="w-full text-sm divide-y divide-gray-700">
     <thead class="bg-gray-800 text-gray-400 uppercase text-xs">
       <tr>
+        <th class="px-4 py-3 text-left w-10">
+          <input type="checkbox"
+                 class="rounded border-gray-600 bg-gray-700 text-teal-500 focus:ring-teal-500"
+                 aria-label="Select all events"
+                 @change="toggleAll($event.target.checked)"
+                 :checked="selectAll">
+        </th>
         <th class="px-4 py-3 text-left">Time</th>
         <th class="px-4 py-3 text-left">Device</th>
         <th class="px-4 py-3 text-left">Type</th>

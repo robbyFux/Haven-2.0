@@ -1,4 +1,12 @@
 <tr class="hover:bg-gray-750 transition-colors">
+  <td class="px-4 py-3 w-10">
+    <input type="checkbox"
+           class="event-checkbox rounded border-gray-600 bg-gray-700 text-teal-500 focus:ring-teal-500"
+           name="event_ids"
+           value="{{ event.id }}"
+           aria-label="Select event {{ event.id }}"
+           x-model="selected">
+  </td>
   <td class="px-4 py-3 font-mono text-xs text-gray-300 whitespace-nowrap">
     {{ event.timestamp|date:"Y-m-d H:i:s" }}
   </td>

@@ -69,6 +69,16 @@
         </select>
       </div>
 
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-gray-400">Status</label>
+        <select name="status"
+                class="bg-gray-700 text-gray-100 rounded px-2 py-1 text-sm border border-gray-600 focus:outline-none focus:border-teal-500">
+          <option value="active" {% if request.GET.status == "active" or not request.GET.status %}selected{% endif %}>Active</option>
+          <option value="archived" {% if request.GET.status == "archived" %}selected{% endif %}>Archived</option>
+          <option value="all" {% if request.GET.status == "all" %}selected{% endif %}>All</option>
+        </select>
+      </div>
+
       <div class="flex gap-2">
         <button type="submit"
                 class="bg-teal-600 hover:bg-teal-700 text-white rounded px-3 py-1 text-sm transition-colors">
@@ -82,9 +92,106 @@
     </form>
   </div>
 
-  {# Event table #}
-  <div id="event-table">
-    {% include "events/partials/event_table.html" %}
-  </div>
+  {# Alpine.js bulk select wrapper — sits OUTSIDE #event-table so HTMX partial swaps don't destroy Alpine state #}
+  <div x-data="{
+         selected: [],
+         selectAll: false,
+         showConfirmModal: false,
+         confirmAction: '',
+         confirmMessage: '',
+         currentStatus: '{{ request.GET.status|default:&quot;active&quot; }}',
+         toggleAll(checked) {
+           this.selectAll = checked;
+           this.selected = checked
+             ? Array.from(document.querySelectorAll('.event-checkbox')).map(cb => cb.value)
+             : [];
+         }
+       }"
+       x-on:htmx:after-swap.window="selected = []; selectAll = false;">
+
+    {# Bulk action bar — shown when at least one checkbox is selected #}
+    <div x-show="selected.length > 0"
+         class="bg-gray-800 rounded-lg px-4 py-2 flex items-center gap-3 text-sm">
+      <span class="text-sm text-gray-300" x-text="selected.length + ' event(s) selected'"></span>
+
+      <button type="button"
+              @click="confirmAction = 'archive'; confirmMessage = 'Archive ' + selected.length + ' events?'; showConfirmModal = true"
+              class="bg-teal-700 hover:bg-teal-600 text-white rounded px-3 py-1 transition-colors">
+        Archive Events
+      </button>
+
+      <button type="button"
+              @click="confirmAction = 'unarchive'; confirmMessage = 'Restore ' + selected.length + ' events to the Active view?'; showConfirmModal = true"
+              class="bg-teal-700 hover:bg-teal-600 text-white rounded px-3 py-1 transition-colors">
+        Unarchive Events
+      </button>
+
+      <button type="button"
+              @click="confirmAction = 'delete'; confirmMessage = 'Delete ' + selected.length + ' events? This cannot be undone.'; showConfirmModal = true"
+              class="bg-red-800/60 hover:bg-red-700/60 text-red-300 rounded px-3 py-1 transition-colors">
+        Delete Events
+      </button>
+    </div>
+
+    {# Confirmation modal #}
+    <div x-show="showConfirmModal"
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl border border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-100 mb-2"
+            x-text="confirmAction === 'archive' ? 'Archive ' + selected.length + ' events?' : (confirmAction === 'unarchive' ? 'Restore ' + selected.length + ' events?' : 'Delete ' + selected.length + ' events?')">
+        </h3>
+        <p class="text-sm text-gray-400 mb-6"
+           x-text="confirmAction === 'archive' ? 'These events will be hidden from the Active view. You can restore them by filtering by Archived.' : (confirmAction === 'unarchive' ? 'These events will be restored to the Active view.' : 'This will permanently delete the selected events and their media. This cannot be undone.')">
+        </p>
+        <div class="flex gap-3 justify-end">
+          <button type="button"
+                  @click="showConfirmModal = false"
+                  class="text-gray-400 hover:text-gray-200 rounded px-3 py-1 text-sm border border-gray-600 hover:border-gray-400 transition-colors">
+            Cancel
+          </button>
+          <button type="button"
+                  @click="showConfirmModal = false; $refs[confirmAction + 'Form'].submit()"
+                  :class="confirmAction === 'delete' ? 'bg-red-700 hover:bg-red-600 text-white rounded px-3 py-1 text-sm transition-colors' : 'bg-teal-600 hover:bg-teal-500 text-white rounded px-3 py-1 text-sm transition-colors'">
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {# Hidden HTMX bulk forms — each includes hidden status input to preserve filter state after POST #}
+    <form x-ref="archiveForm"
+          hx-post="{% url 'events:bulk_archive' %}"
+          hx-target="#event-table"
+          hx-swap="innerHTML"
+          hx-include=".event-checkbox:checked">
+      {% csrf_token %}
+      <input type="hidden" name="status" :value="currentStatus">
+    </form>
+
+    <form x-ref="unarchiveForm"
+          hx-post="{% url 'events:bulk_unarchive' %}"
+          hx-target="#event-table"
+          hx-swap="innerHTML"
+          hx-include=".event-checkbox:checked">
+      {% csrf_token %}
+      <input type="hidden" name="status" :value="currentStatus">
+    </form>
+
+    <form x-ref="deleteForm"
+          hx-post="{% url 'events:bulk_delete' %}"
+          hx-target="#event-table"
+          hx-swap="innerHTML"
+          hx-include=".event-checkbox:checked">
+      {% csrf_token %}
+      <input type="hidden" name="status" :value="currentStatus">
+    </form>
+
+    {# Event table #}
+    <div id="event-table">
+      {% include "events/partials/event_table.html" %}
+    </div>
+
+  </div>{# end Alpine wrapper #}
 </div>
 {% endblock %}
