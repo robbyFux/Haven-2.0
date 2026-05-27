@@ -118,7 +118,7 @@ fun ZoneEditorScreen(
         },
     ) { padding ->
         if (isLandscape) {
-            // Querformat: Kamera links, Steuerung rechts
+            // Landscape: camera on the left, controls on the right
             Row(
                 modifier = Modifier
                     .fillMaxSize()
@@ -154,7 +154,7 @@ fun ZoneEditorScreen(
                 )
             }
         } else {
-            // Hochformat: Kamera oben, Steuerung unten
+            // Portrait: camera on top, controls below
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -191,7 +191,7 @@ fun ZoneEditorScreen(
     }
 }
 
-/** Baut eine normalisierte DetectionZone aus Drag-Koordinaten; null wenn zu klein. */
+/** Builds a normalized DetectionZone from drag coordinates; null if the selection is too small. */
 private fun buildZone(start: Offset, end: Offset, canvasW: Float, canvasH: Float): DetectionZone? {
     if (canvasW <= 0f || canvasH <= 0f) return null
     val minX = min(start.x, end.x).coerceIn(0f, canvasW)
@@ -254,7 +254,7 @@ private fun ZoneCameraBox(
             val w = size.width
             val h = size.height
 
-            // Drittel-Raster
+            // Rule-of-thirds grid overlay
             for (i in 1..2) {
                 drawLine(Color.White.copy(alpha = 0.25f), Offset(w * i / 3f, 0f), Offset(w * i / 3f, h), strokeWidth = 0.8f)
                 drawLine(Color.White.copy(alpha = 0.25f), Offset(0f, h * i / 3f), Offset(w, h * i / 3f), strokeWidth = 0.8f)

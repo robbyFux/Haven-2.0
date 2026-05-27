@@ -17,6 +17,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.ui.graphics.Color
@@ -131,6 +132,8 @@ fun SettingsScreen(
                     }
                 }
 
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
                 SettingsSection(title = stringResource(R.string.settings_camera_title)) {
                     Column(modifier = Modifier.selectableGroup()) {
                         CameraPosition.entries.forEach { pos ->
@@ -142,6 +145,8 @@ fun SettingsScreen(
                         }
                     }
                 }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                 SettingsSection(title = stringResource(R.string.settings_detection_title)) {
                     Column(modifier = Modifier.selectableGroup()) {
@@ -165,6 +170,8 @@ fun SettingsScreen(
                     }
                 }
 
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
                 SettingsSection(title = stringResource(R.string.settings_zone_title)) {
                     val zone = uiState.detectionZone
                     Text(
@@ -184,6 +191,8 @@ fun SettingsScreen(
                         Text(stringResource(R.string.settings_zone_edit))
                     }
                 }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                 SettingsSection(title = stringResource(R.string.expert_entry_label)) {
                     Row(
@@ -212,6 +221,8 @@ fun SettingsScreen(
                     }
                 }
 
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
                 SettingsSection(title = stringResource(R.string.settings_sensors_title)) {
                     SensorToggleRow(
                         label = stringResource(R.string.calibration_sensor_motion),
@@ -234,6 +245,8 @@ fun SettingsScreen(
                         onCheckedChange = { viewModel.setCameraEnabled(it) },
                     )
                 }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                 SettingsSection(title = stringResource(R.string.settings_light_suppress_title)) {
                     val lightSuppressSeconds by viewModel.lightSuppressMotionSeconds.collectAsStateWithLifecycle()
@@ -263,6 +276,8 @@ fun SettingsScreen(
                     }
                 }
 
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
                 SettingsSection(title = stringResource(R.string.settings_calibration_title)) {
                     Column(modifier = Modifier.selectableGroup()) {
                         CALIBRATION_OPTIONS.forEach { secs ->
@@ -274,6 +289,8 @@ fun SettingsScreen(
                         }
                     }
                 }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                 SettingsSection(title = stringResource(R.string.settings_clip_duration_title)) {
                     Column(modifier = Modifier.selectableGroup()) {
@@ -339,6 +356,8 @@ fun SettingsScreen(
                     }
                 }
 
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
                 // Security section
                 SettingsSection(title = stringResource(R.string.settings_security_title)) {
                     SensorToggleRow(
@@ -396,6 +415,8 @@ fun SettingsScreen(
                     }
                 }
 
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
                 // Mattermost channel (D-02)
                 SettingsSection(title = stringResource(R.string.settings_mattermost_title)) {
                     SensorToggleRow(
@@ -431,6 +452,8 @@ fun SettingsScreen(
                         }
                     }
                 }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                 // Pushover channel
                 SettingsSection(title = stringResource(R.string.settings_pushover_title)) {
@@ -468,6 +491,8 @@ fun SettingsScreen(
                     }
                 }
 
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
                 // Cloud server channel
                 SettingsSection(title = stringResource(R.string.settings_cloud_title)) {
                     SensorToggleRow(
@@ -488,6 +513,8 @@ fun SettingsScreen(
                         }
                     }
                 }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                 // NotificationRule (D-05)
                 SettingsSection(title = stringResource(R.string.settings_notification_rule_title)) {
@@ -584,6 +611,8 @@ fun SettingsScreen(
                     }
                 }
 
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
                 SettingsSection(title = stringResource(R.string.settings_log_level_title)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -601,6 +630,8 @@ fun SettingsScreen(
                         )
                     }
                 }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                 SettingsSection(title = stringResource(R.string.settings_about_title)) {
                     Text(
