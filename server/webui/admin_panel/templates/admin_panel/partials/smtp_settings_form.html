@@ -1,0 +1,118 @@
+{% if messages %}
+<div class="mb-4 space-y-2">
+  {% for message in messages %}
+  <div class="p-3 rounded-lg
+    {% if message.tags == 'error' %}bg-red-900/50 text-red-300
+    {% elif message.tags == 'success' %}bg-green-900/50 text-green-300
+    {% else %}bg-blue-900/50 text-blue-300{% endif %}">
+    {{ message }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<form method="post"
+      action="{% url 'admin_panel:smtp_settings' %}"
+      hx-post="{% url 'admin_panel:smtp_settings' %}"
+      hx-target="#smtp-settings-form"
+      hx-swap="innerHTML">
+  {% csrf_token %}
+
+  <div class="space-y-4 mb-6">
+
+    {# --- SMTP Host --- #}
+    <div>
+      <label for="{{ form.smtp_host.id_for_label }}"
+             class="block text-sm font-medium text-gray-300 mb-1">
+        {{ form.smtp_host.label }}
+      </label>
+      {{ form.smtp_host }}
+      {% if form.smtp_host.errors %}
+      <p class="text-red-400 text-sm mt-1">{{ form.smtp_host.errors|join:", " }}</p>
+      {% endif %}
+    </div>
+
+    {# --- Port --- #}
+    <div>
+      <label for="{{ form.smtp_port.id_for_label }}"
+             class="block text-sm font-medium text-gray-300 mb-1">
+        {{ form.smtp_port.label }}
+      </label>
+      {{ form.smtp_port }}
+      {% if form.smtp_port.errors %}
+      <p class="text-red-400 text-sm mt-1">{{ form.smtp_port.errors|join:", " }}</p>
+      {% endif %}
+    </div>
+
+    {# --- Username --- #}
+    <div>
+      <label for="{{ form.smtp_user.id_for_label }}"
+             class="block text-sm font-medium text-gray-300 mb-1">
+        {{ form.smtp_user.label }}
+      </label>
+      {{ form.smtp_user }}
+      {% if form.smtp_user.errors %}
+      <p class="text-red-400 text-sm mt-1">{{ form.smtp_user.errors|join:", " }}</p>
+      {% endif %}
+    </div>
+
+    {# --- Password (write-only) --- #}
+    <div>
+      <label for="{{ form.smtp_password.id_for_label }}"
+             class="block text-sm font-medium text-gray-300 mb-1">
+        {{ form.smtp_password.label }}
+      </label>
+      {{ form.smtp_password }}
+      {% if form.smtp_password.errors %}
+      <p class="text-red-400 text-sm mt-1">{{ form.smtp_password.errors|join:", " }}</p>
+      {% endif %}
+    </div>
+
+    {# --- From Address --- #}
+    <div>
+      <label for="{{ form.smtp_from.id_for_label }}"
+             class="block text-sm font-medium text-gray-300 mb-1">
+        {{ form.smtp_from.label }}
+      </label>
+      {{ form.smtp_from }}
+      {% if form.smtp_from.errors %}
+      <p class="text-red-400 text-sm mt-1">{{ form.smtp_from.errors|join:", " }}</p>
+      {% endif %}
+    </div>
+
+    {# --- Use TLS checkbox --- #}
+    <div>
+      <label class="flex items-center gap-2 cursor-pointer">
+        {{ form.use_tls }}
+        <span class="text-sm text-gray-300">Use TLS/STARTTLS</span>
+      </label>
+      {% if form.use_tls.errors %}
+      <p class="text-red-400 text-sm mt-1">{{ form.use_tls.errors|join:", " }}</p>
+      {% endif %}
+    </div>
+
+  </div>
+
+  {% if form.non_field_errors %}
+  <p class="text-red-400 text-sm mb-4">{{ form.non_field_errors|join:", " }}</p>
+  {% endif %}
+
+  <!-- Action buttons -->
+  <div class="flex items-center gap-3 flex-wrap">
+    <button type="submit"
+            class="bg-teal-600 hover:bg-teal-500 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+      Save SMTP Settings
+    </button>
+    <button type="button"
+            hx-post="{% url 'admin_panel:smtp_test' %}"
+            hx-target="#smtp-test-result"
+            hx-swap="innerHTML"
+            class="bg-gray-700 hover:bg-gray-600 text-gray-300 font-medium py-2 px-6 rounded-lg transition-colors">
+      Send Test Email
+    </button>
+  </div>
+
+</form>
+
+<!-- Inline test result area -->
+<div id="smtp-test-result" class="mt-3"></div>

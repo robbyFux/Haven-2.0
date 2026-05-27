@@ -28,7 +28,15 @@
         Revoke
       </button>
     {% else %}
-      <span class="text-xs text-gray-600">—</span>
+      <button
+        hx-post="{% url 'devices:device_delete' device.id %}"
+        hx-target="#device-{{ device.id }}"
+        hx-swap="outerHTML"
+        hx-confirm="Delete this device permanently? This cannot be undone."
+        class="text-xs px-3 py-1 rounded bg-gray-700/60 text-gray-400 hover:bg-red-800/60 hover:text-red-300 transition-colors"
+      >
+        Delete
+      </button>
     {% endif %}
   </td>
 </tr>

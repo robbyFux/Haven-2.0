@@ -1,5 +1,5 @@
 """
-Forms for the Haven admin panel (plan 06-05).
+Forms for the Haven admin panel (plan 06-05, 08-03).
 """
 
 from django import forms
@@ -88,3 +88,90 @@ class QuotaEditForm(forms.Form):
             }
         ),
     )
+
+
+# Shared Tailwind input class used across admin panel forms.
+_INPUT_CLASS = (
+    "w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 "
+    "text-gray-100 focus:outline-none focus:border-teal-500"
+)
+
+
+class SmtpSettingsForm(forms.Form):
+    """
+    Form for configuring the outgoing mail server (SMTP).
+
+    Changes are persisted to the SMTPSettings singleton row in the database.
+    The smtp_password field is write-only: leaving it blank preserves the existing
+    encrypted password. Superusers only.
+    """
+
+    smtp_host = forms.CharField(
+        max_length=255,
+        required=False,
+        label="SMTP Host",
+        widget=forms.TextInput(
+            attrs={
+                "class": _INPUT_CLASS,
+                "placeholder": "smtp.example.com",
+            }
+        ),
+    )
+    smtp_port = forms.IntegerField(
+        min_value=1,
+        max_value=65535,
+        initial=587,
+        label="Port",
+        widget=forms.NumberInput(
+            attrs={
+                "class": _INPUT_CLASS,
+                "min": "1",
+                "max": "65535",
+            }
+        ),
+    )
+    smtp_user = forms.CharField(
+        max_length=255,
+        required=False,
+        label="Username",
+        widget=forms.TextInput(
+            attrs={
+                "class": _INPUT_CLASS,
+                "autocomplete": "off",
+            }
+        ),
+    )
+    smtp_password = forms.CharField(
+        required=False,
+        label="Password",
+        widget=forms.PasswordInput(
+            attrs={
+                "class": _INPUT_CLASS,
+                "autocomplete": "new-password",
+                "placeholder": "Leave blank to keep current",
+            }
+        ),
+    )
+    smtp_from = forms.CharField(
+        max_length=255,
+        required=False,
+        label="From Address",
+        widget=forms.TextInput(
+            attrs={
+                "class": _INPUT_CLASS,
+                "placeholder": "haven@example.com",
+            }
+        ),
+    )
+    use_tls = forms.BooleanField(
+        required=False,
+        initial=True,
+        label="Use TLS",
+    )
+
+    def clean_smtp_port(self):
+        """Validate that port is in the valid TCP range."""
+        port = self.cleaned_data.get("smtp_port")
+        if port is not None and not (1 <= port <= 65535):
+            raise forms.ValidationError("Port must be between 1 and 65535.")
+        return port
