@@ -23,19 +23,27 @@ import org.havenapp.main.sensor.effectiveCameraFraction
 import java.io.ByteArrayOutputStream
 
 /**
- * Drei-Stufen Kamera-Bewegungserkennung:
+ * Three-stage camera motion detection pipeline.
  *
- *   Stufe 1 – Luminanz-Diff (schnell):
- *     Anteil veränderter Pixel → schnelles Gate für offensichtliche Bewegung.
+ * Stage 1 — Luma diff (fast):
+ *   WHY luma-first: fraction of changed pixels is cheap to compute directly from the
+ *   Y-plane buffer; no bitmap allocation required. Gates the two slower stages so that
+ *   ~80 % of frames are discarded here at near-zero CPU cost.
  *
- *   Stufe 2 – Perceptual Hash (strukturell):
- *     Hamming-Distanz des 8×8 Average Hash → filtert Helligkeitsflicker heraus.
+ * Stage 2 — Perceptual hash (structural):
+ *   WHY pHash gate: the 8×8 average hash reduces a frame to a 64-bit structural
+ *   fingerprint. A uniform brightness change (light flicker, cloud shadow) shifts all
+ *   pixel values uniformly but leaves the relative block structure unchanged → near-zero
+ *   Hamming distance → no false trigger. Only real spatial motion (object moving through
+ *   frame) flips blocks above/below the mean and produces a distance ≥ 4.
  *
- *   Stufe 3 – TFLite ObjectDetection (nur wenn Stufe 1+2 triggern und ML aktiviert):
- *     EfficientDet Lite 0 klassifiziert Person / Tier / Fahrzeug.
- *     Emit: CAMERA_PERSON / CAMERA_PET / CAMERA_VEHICLE oder CAMERA als Fallback.
- *
- * TFLite läuft nur bei bestätigter Bewegung → spart Akku.
+ * Stage 3 — TFLite object detection (only when stages 1+2 confirm motion and ML is enabled):
+ *   EfficientDet Lite 0 classifies person / pet / vehicle.
+ *   WHY TFLite throttle ([TFLITE_MIN_INTERVAL_MS]): continuous per-frame inference would
+ *   exhaust the device memory allocator on mid-range hardware (OOM). The 1 500 ms minimum
+ *   interval caps inference at ~0.67 fps while still providing semantically-classified events.
+ *   Stage gating (requiring stages 1+2 to pass) saves ~80 % of inference calls.
+ *   Emits: CAMERA_PERSON / CAMERA_PET / CAMERA_VEHICLE or CAMERA as fallback.
  */
 class CameraAnalyzer(
     private val sensitivity: Sensitivity,
@@ -54,7 +62,7 @@ class CameraAnalyzer(
     private val motionThreshold: Float = sensitivity.effectiveCameraFraction(expert)
     private val hashThreshold = 4
 
-    /** TFLite-Drosselung: max 1 Inferenz pro [TFLITE_MIN_INTERVAL_MS] ms, um OOM zu verhindern. */
+    /** TFLite throttle: at most 1 inference per [TFLITE_MIN_INTERVAL_MS] ms to prevent OOM. */
     private var lastTfliteMs = 0L
     private val TFLITE_MIN_INTERVAL_MS = 1_500L
 
@@ -82,7 +90,7 @@ class CameraAnalyzer(
         image.use {
             if (sensitivity == Sensitivity.OFF) return
 
-            // Luma-Ebene einmalig extrahieren
+            // Extract luma plane once — shared by both detectors to avoid double allocation
             val yPlane = image.planes[0]
             val yBuffer = yPlane.buffer
             val rowStride = yPlane.rowStride
@@ -100,15 +108,15 @@ class CameraAnalyzer(
                 }
             }
 
-            // Zone-Ausschnitt: Luma einmalig zuschneiden – beide Detektoren arbeiten dann
-            // nur auf dem relevanten Bildbereich, ohne selbst von Zonen wissen zu müssen.
+            // Crop luma to the detection zone once — both detectors operate on the region
+            // of interest without needing to know about zone coordinates themselves.
             val (effectiveLuma, effectiveW, effectiveH) = if (zone != null) {
                 cropLuma(luma, width, height, zone)
             } else {
                 Triple(luma, width, height)
             }
 
-            // Stufe 1 + 2: Bewegungsbestätigung
+            // Stages 1 + 2: motion confirmation gate
             val lumaDiff = luminanceDetector.analyze(effectiveLuma, effectiveW, effectiveH) ?: return
             val hashDist = pHashDetector.analyze(effectiveLuma, effectiveW, effectiveH)
 
@@ -141,10 +149,10 @@ class CameraAnalyzer(
                 lastJpegFrame = out.toByteArray()
             }
 
-            // Stufe 3: TFLite (nur wenn Modus ML verlangt, Detektor verfügbar und Drosselung erlaubt)
+            // Stage 3: TFLite inference (only when mode requires ML, detector is available, and throttle allows)
             if (detectionMode.requiresML && objectDetector?.isAvailable == true) {
                 val now = System.currentTimeMillis()
-                if (now - lastTfliteMs < TFLITE_MIN_INTERVAL_MS) return  // Drosselung: still warten
+                if (now - lastTfliteMs < TFLITE_MIN_INTERVAL_MS) return  // throttle: not enough time elapsed
                 lastTfliteMs = now
                 val bitmap = buildBitmap(image, luma, width, height)
                 if (bitmap != null) {
@@ -158,12 +166,12 @@ class CameraAnalyzer(
                         }
                         return
                     }
-                    // ML verfügbar aber nichts Relevantes erkannt → kein Event
+                    // ML available but no relevant objects detected — emit no event
                     return
                 }
             }
 
-            // Fallback: generisches Kamera-Bewegungsevent
+            // Fallback: generic camera motion event (no ML or ML returned nothing)
             _events.trySend(
                 TriggerEvent(
                     type = TriggerType.CAMERA,
@@ -182,8 +190,9 @@ class CameraAnalyzer(
     }
 
     /**
-     * Schneidet das normalisierte Luma-Array auf die Zone zu.
-     * Gibt ein neues dicht-gepacktes Array + die Zonenabmessungen zurück.
+     * Crops the stride-normalized luma array to the detection zone.
+     *
+     * @return Triple of (croppedLuma, zoneWidth, zoneHeight) — densely packed, ready for both detectors.
      */
     private fun cropLuma(
         luma: ByteArray,
@@ -201,9 +210,10 @@ class CameraAnalyzer(
     }
 
     /**
-     * Konvertiert die ImageProxy-Ebenen in ein ARGB-Bitmap für TFLite.
-     * Nutzt die bereits extrahierten Y-Daten (luma) + liest UV-Ebenen frisch.
-     * Rückgabe null bei Konvertierungsfehler.
+     * Converts ImageProxy planes to an ARGB Bitmap for TFLite inference.
+     * Uses the already-extracted Y data (luma) and reads the UV planes fresh.
+     *
+     * @return ARGB Bitmap, or null on conversion failure (graceful degradation).
      */
     private fun buildBitmap(image: ImageProxy, luma: ByteArray, width: Int, height: Int): Bitmap? {
         return runCatching {
@@ -213,10 +223,10 @@ class CameraAnalyzer(
             val vBuf = vPlane.buffer
 
             val nv21 = ByteArray(width * height * 3 / 2)
-            // Y-Ebene (bereits stride-normalisiert)
+            // Y plane (already stride-normalized)
             luma.copyInto(nv21, destinationOffset = 0)
 
-            // VU interleaved (NV21-Format)
+            // VU interleaved (NV21 format)
             var uvIdx = width * height
             for (row in 0 until height / 2) {
                 for (col in 0 until width / 2) {

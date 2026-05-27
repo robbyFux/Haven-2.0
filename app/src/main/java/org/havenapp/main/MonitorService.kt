@@ -73,7 +73,7 @@ class MonitorService : LifecycleService() {
 
         const val CALIBRATION_SECONDS_DEFAULT = 10
 
-        /** Sekunden vor dem Stop, die beim Beenden verworfen werden (Nutzer läuft zum Gerät). */
+        /** Seconds before stop that are discarded on shutdown (user walking to the device triggers sensors). */
         const val STOP_COOLDOWN_SECONDS = 30
 
         private val _state = MutableStateFlow(MonitorState.IDLE)
@@ -208,13 +208,13 @@ class MonitorService : LifecycleService() {
                 _countdownSeconds.value = 0
             }
 
-            // --- Phase 2: Kalibrierung ---
+            // --- Phase 2: Calibration ---
             _state.value = MonitorState.CALIBRATING
             _calibrationResults.value = null
             _calibrationSecondsRemaining.value = (calibrationMs / 1000).toInt()
             updateNotification()
 
-            // Countdown während Kalibrierung
+            // Countdown while calibrating
             launch {
                 val totalSecs = (calibrationMs / 1000).toInt()
                 for (remaining in totalSecs downTo 0) {
@@ -223,7 +223,7 @@ class MonitorService : LifecycleService() {
                 }
             }
 
-            // Sensor-Kalibrierungsergebnisse sammeln (nur aktivierte Sensoren)
+            // Collect sensor calibration results (enabled sensors only)
             if (motionEnabled) launch {
                 fusedMotionMonitor.noiseFloor.filterNotNull().first().let { nf ->
                     _calibrationResults.update { it?.copy(motionNoiseFloor = nf) ?: CalibrationResults(motionNoiseFloor = nf) }
@@ -260,7 +260,7 @@ class MonitorService : LifecycleService() {
             }
             val sensorFlow = merge(*sensorFlows.toTypedArray())
 
-            // Nach Kalibrierungszeit DB-Event öffnen und Zustand wechseln
+            // After calibration period: open DB event and transition state to ACTIVE
             launch {
                 delay(calibrationMs)
                 currentEventId = eventRepository.openEvent()
@@ -324,9 +324,8 @@ class MonitorService : LifecycleService() {
                 }
             }
 
-            // --- Phase 3: Aktive Überwachung ---
-            // Sensor-Flow läuft ab Kalibrierungsstart; currentEventId ist null
-            // solange kalibriert wird → Events werden erst danach persistiert.
+            // --- Phase 3: Active monitoring ---
+            // Sensor flow runs from calibration start; currentEventId is null until state transitions to ACTIVE
             sensorFlow.collect { trigger ->
                 // Resolve the ClipRecorder for this trigger. If cameraEnabled=false the
                 // deferred is never completed and withTimeoutOrNull returns null immediately
