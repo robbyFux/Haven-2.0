@@ -37,10 +37,22 @@ class FusedMotionMonitor @Inject constructor(
     private val sensorManager: SensorManager,
 ) : SensorMonitor {
 
-    /** Wird auf den berechneten Noise-Floor gesetzt, sobald der Warmup abgeschlossen ist. */
+    /** Set to the computed noise floor once warmup is complete; null during warmup. */
     private val _noiseFloor = MutableStateFlow<Float?>(null)
     val noiseFloor: StateFlow<Float?> = _noiseFloor
 
+    /**
+     * Starts the fused accelerometer + gyroscope monitoring flow.
+     *
+     * @param sensitivity Sensitivity level controlling the threshold multiplier applied
+     *   to the noise floor after warmup completes.
+     * @param warmupMs Warmup duration in ms; motion events are suppressed until
+     *   calibration completes and the noise floor is established.
+     * @param expert Optional expert thresholds overriding the default sensitivity
+     *   multipliers when [ExpertThresholds.DEFAULT] is not used.
+     * @return Flow of [TriggerEvent]s emitted when fused motion score exceeds the threshold.
+     *   Completes when the returned [Flow] collector is cancelled.
+     */
     override fun observe(sensitivity: Sensitivity, warmupMs: Long, expert: ExpertThresholds): Flow<TriggerEvent> {
         if (sensitivity == Sensitivity.OFF) return emptyFlow()
 
@@ -75,6 +87,12 @@ class FusedMotionMonitor @Inject constructor(
                     if (!warmupDone) {
                         warmupSamples.add(fused)
                         if (elapsed >= warmupMs) {
+                            // WHY 90th-percentile noise floor: more robust than the mean.
+                            // During warmup, brief environmental spikes (footstep, door closing
+                            // nearby) would inflate the mean and produce an unrealistically
+                            // high baseline, making the threshold too lenient. The 90th
+                            // percentile ignores the top 10 % of samples, giving a baseline
+                            // that reflects sustained ambient motion rather than outliers.
                             noiseFloor = if (warmupSamples.isNotEmpty()) {
                                 val sorted = warmupSamples.sorted()
                                 val idx = (sorted.size * 0.90).toInt()
@@ -125,6 +143,11 @@ class FusedMotionMonitor @Inject constructor(
                 override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) = Unit
             }
 
+            // WHY SENSOR_DELAY_GAME (~20 ms polling): ~10x faster than SENSOR_DELAY_NORMAL
+            // (~200 ms). Faster sampling reduces the chance of missing short-duration
+            // movements (door slam, quick hand-wave) between samples. Battery impact is
+            // acceptable for a security monitoring use case where the app is deliberately
+            // run in the foreground with a WakeLock.
             sensorManager.registerListener(accelListener, accelSensor, SensorManager.SENSOR_DELAY_GAME)
             if (gyroSensor != null) {
                 sensorManager.registerListener(gyroListener, gyroSensor, SensorManager.SENSOR_DELAY_GAME)

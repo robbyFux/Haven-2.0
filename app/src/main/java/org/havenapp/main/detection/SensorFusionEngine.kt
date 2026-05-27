@@ -23,7 +23,15 @@ class SensorFusionEngine(
     var latestGyroMagnitude = 0f
         private set
 
-    /** Returns the delta magnitude since the last accelerometer sample. */
+    /**
+     * Computes the Euclidean delta magnitude since the last accelerometer sample.
+     *
+     * @param x Accelerometer x-axis value in m/s².
+     * @param y Accelerometer y-axis value in m/s².
+     * @param z Accelerometer z-axis value in m/s².
+     * @return Euclidean distance between consecutive accelerometer vectors (delta magnitude).
+     *   Returns 0 on the first call (no previous sample to compare against).
+     */
     fun processAccelerometer(x: Float, y: Float, z: Float): Float {
         if (!accelInitialized) {
             lastAccelX = x; lastAccelY = y; lastAccelZ = z
@@ -37,7 +45,13 @@ class SensorFusionEngine(
         return sqrt(dx * dx + dy * dy + dz * dz)
     }
 
-    /** Stores the latest angular velocity magnitude (rad/s). */
+    /**
+     * Stores the latest angular velocity magnitude for the next [fuse] call.
+     *
+     * @param x Gyroscope x-axis angular velocity in rad/s.
+     * @param y Gyroscope y-axis angular velocity in rad/s.
+     * @param z Gyroscope z-axis angular velocity in rad/s.
+     */
     fun processGyroscope(x: Float, y: Float, z: Float) {
         latestGyroMagnitude = sqrt(x * x + y * y + z * z)
     }

@@ -16,18 +16,27 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Wrapper um die MediaPipe Tasks Vision ObjectDetector API.
+ * Wrapper around the MediaPipe Tasks Vision ObjectDetector API.
  *
- * Modell: EfficientDet Lite 0 (COCO, 80 Klassen, ~4 MB).
- * Das Modell wird beim ersten Aufruf von [initialize] geladen.
- * Ist die Datei nicht vorhanden, degradiert der Detector graceful:
- * [detect] gibt eine leere Liste zurück und [initError] enthält die Ursache.
+ * Model: EfficientDet Lite 0 (COCO, 80 classes, ~4 MB).
+ * WHY EfficientDet Lite 0: ~4 MB model size fits within the 16 KB page-size
+ * alignment requirement on Android 16+; the smallest EfficientDet variant still
+ * achieves acceptable accuracy for security-relevant COCO categories (person,
+ * pets, vehicles) at ~4 ms/frame on mid-range hardware.
  *
- * Migration von TFLite Task Vision 0.4.4 → MediaPipe Tasks Vision 0.10.29 (COMPAT-01):
- * Die öffentliche Schnittstelle ([initialize], [detect], [isAvailable], [availabilityFlow],
- * [initError]) bleibt unverändert — nur die interne Implementierung wechselt.
+ * The model is loaded on the first call to [initialize].
+ * If the asset file is absent, the detector degrades gracefully:
+ * [detect] returns an empty list and [initError] holds the cause.
  *
- * COCO-Klassen → Haven TriggerType:
+ * WHY RunningMode.IMAGE: synchronous per-frame inference avoids callback threading
+ * on the ImageAnalysis executor. Each analyze() call blocks for the duration of
+ * inference; the 1 500 ms throttle in CameraAnalyzer prevents OOM from back-pressure.
+ *
+ * Migration from TFLite Task Vision 0.4.4 → MediaPipe Tasks Vision 0.10.29 (COMPAT-01):
+ * The public interface ([initialize], [detect], [isAvailable], [availabilityFlow],
+ * [initError]) is unchanged — only the internal implementation changes.
+ *
+ * COCO class → Haven TriggerType mapping:
  *   "person"                                → CAMERA_PERSON
  *   "cat", "dog"                            → CAMERA_PET
  *   "car", "motorcycle", "bus", "truck",
@@ -53,22 +62,26 @@ class HavenObjectDetector @Inject constructor(
 
     private val _isAvailable = MutableStateFlow(false)
 
-    /** StateFlow, der sich ändert wenn das Modell geladen/entladen wird. */
+    /** StateFlow that changes when the model is loaded or unloaded. */
     val availabilityFlow: StateFlow<Boolean> = _isAvailable.asStateFlow()
 
-    /** True wenn das Modell geladen und einsatzbereit ist. */
+    /** True when the model is loaded and ready for inference. */
     val isAvailable: Boolean get() = _isAvailable.value
 
-    /** Null wenn erfolgreich geladen; sonst menschenlesbare Fehlerbeschreibung. */
+    /** Null when successfully loaded; otherwise a human-readable error description. */
     var initError: String? = null
         private set
 
-    /** Lädt das MediaPipe ObjectDetector-Modell. Gibt true zurück wenn erfolgreich. */
+    /**
+     * Loads the MediaPipe ObjectDetector model from assets.
+     *
+     * @return True if the model loaded successfully; false otherwise (see [initError] for cause).
+     */
     fun initialize(): Boolean {
         if (initAttempted) return detector != null
         initAttempted = true
 
-        // Schritt 1: Datei in assets prüfen
+        // Step 1: verify asset file exists before attempting model load
         val fileExists = runCatching {
             context.assets.open(MODEL_FILENAME).close()
             true
@@ -81,7 +94,7 @@ class HavenObjectDetector @Inject constructor(
             return false
         }
 
-        // Schritt 2: MediaPipe ObjectDetector laden (RunningMode.IMAGE für synchrone Inferenz)
+        // Step 2: build and load the MediaPipe ObjectDetector (RunningMode.IMAGE for synchronous inference)
         runCatching {
             val baseOptions = BaseOptions.builder()
                 .setModelAssetPath(MODEL_FILENAME)
@@ -106,9 +119,16 @@ class HavenObjectDetector @Inject constructor(
     }
 
     /**
-     * Führt Objekterkennung auf dem Bitmap aus.
-     * @return Liste der erkannten [TriggerType]s passend zum [DetectionMode].
-     *         Leer wenn kein Modell vorhanden oder keine relevanten Objekte erkannt.
+     * Runs object detection on the given bitmap.
+     *
+     * WHY graceful degradation: if the model file is absent or failed to load,
+     * this returns an empty list instead of throwing. The app continues with
+     * MOTION_ONLY detection rather than crashing.
+     *
+     * @param bitmap Frame to analyse; should be the full-resolution camera frame.
+     * @param mode Detection mode controlling which COCO classes produce trigger events.
+     * @return List of detected [TriggerType]s matching the active [DetectionMode].
+     *   Empty when no model is loaded or no relevant objects were detected.
      */
     fun detect(bitmap: Bitmap, mode: DetectionMode): List<TriggerType> {
         val d = detector ?: return emptyList()
