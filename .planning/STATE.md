@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.7
-milestone_name: Android 16 Compat & Sensor Expert
-status: complete
-stopped_at: "Completed Phase 07: Android 16 Compat & Sensor Expert Settings"
-last_updated: "2026-04-13T11:10:58.215Z"
-last_activity: 2026-04-13 -- Phase 07 complete (all phases 3–7 done)
+milestone: v0.8
+milestone_name: Android & WebUI UX Polish
+status: planned
+stopped_at: "Phase 8 planned — ready to execute"
+last_updated: "2026-05-27T00:00:00.000Z"
+last_activity: 2026-05-27 -- Phase 08 planned (3 plans in 1 wave)
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 5
-  total_plans: 29
+  total_plans: 32
   completed_plans: 29
-  percent: 100
+  percent: 50
 ---
 
 # Project State
@@ -98,10 +98,11 @@ Recent decisions affecting current work:
 ### Roadmap Evolution
 
 - Phase 4 added: NotificationEngine — Signal+Mattermost alerts, configurable channels and severity thresholds, anti-flood cooldown, Settings grouping, Debug logging level (2026-04-05)
+- Phase 8 added: Android & WebUI UX Polish — consolidated 5 pending todos: code comment standardization (English + algorithmic docs), Settings visual dividers, WebUI bulk event actions, Admin SMTP config, revoked device deletion (2026-05-27)
 
 ### Pending Todos
 
-5 todos pending — see `.planning/todos/pending/`
+5 todos consolidated into Phase 8 (Android & WebUI UX Polish) — see `.planning/todos/pending/`
 
 ### Blockers/Concerns
 
