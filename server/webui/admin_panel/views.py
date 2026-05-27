@@ -1,23 +1,45 @@
 """
-Admin panel views for Haven Web UI (plan 06-05).
+Admin panel views for Haven Web UI (plan 06-05, 08-03).
 
 All views are protected by @admin_required (login + is_admin=True).
-Supports HTMX partial rendering for user table and user row updates.
+Supports HTMX partial rendering for user table, user row updates, and
+SMTP settings form swap.
 """
 
+import asyncio
+import base64
+import hashlib
 import os
 
+import aiosmtplib
+from cryptography.fernet import Fernet, InvalidToken
+from django.conf import settings as django_settings
 from django.contrib import messages
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
+from email.mime.text import MIMEText
 
 from accounts.models import HavenUser
-from admin_panel.forms import AISettingsForm, QuotaEditForm
-from admin_panel.models import AISettings
+from admin_panel.forms import AISettingsForm, QuotaEditForm, SmtpSettingsForm
+from admin_panel.models import AISettings, SMTPSettings
 from core.decorators import admin_required
 from devices.models import Device
 from events.models import Event
+
+
+def _get_fernet() -> Fernet:
+    """
+    Derive a stable Fernet key from django_settings.SECRET_KEY.
+
+    SHA-256 of the key → 32 bytes → base64url → valid Fernet key.
+    This is deterministic: the same SECRET_KEY always yields the same Fernet key.
+    Mirrors the pattern in server/app/services/totp.py.
+    """
+    key_bytes = hashlib.sha256(django_settings.SECRET_KEY.encode()).digest()
+    fernet_key = base64.urlsafe_b64encode(key_bytes)
+    return Fernet(fernet_key)
 
 
 def _format_storage(total_bytes: int) -> str:
@@ -208,3 +230,152 @@ def ai_settings(request):
         "admin_panel/ai_settings.html",
         {"form": form, "model_missing": model_missing},
     )
+
+
+def _smtp_form_initial(current: SMTPSettings) -> dict:
+    """Build initial data for SmtpSettingsForm from the singleton (excluding password)."""
+    return {
+        "smtp_host": current.smtp_host,
+        "smtp_port": current.smtp_port,
+        "smtp_user": current.smtp_user,
+        # smtp_password intentionally omitted — write-only field
+        "smtp_from": current.smtp_from,
+        "use_tls": current.use_tls,
+    }
+
+
+@admin_required
+def smtp_settings(request):
+    """
+    GET/POST view for configuring the outgoing mail server (SMTP).
+
+    GET: populates form with current SMTPSettings singleton values.
+    POST: validates and saves changes. Password is Fernet-encrypted before storage;
+    leaving the password field blank preserves the existing encrypted password.
+    HTMX: returns partial on success/error.
+    Non-HTMX: redirects to this view on success, re-renders on error.
+    """
+    current = SMTPSettings.get()
+
+    if request.method == "POST":
+        form = SmtpSettingsForm(request.POST)
+        if form.is_valid():
+            current.smtp_host = form.cleaned_data["smtp_host"] or ""
+            current.smtp_port = form.cleaned_data["smtp_port"]
+            current.smtp_user = form.cleaned_data["smtp_user"] or ""
+            current.smtp_from = form.cleaned_data["smtp_from"] or ""
+            current.use_tls = form.cleaned_data["use_tls"]
+
+            new_password = form.cleaned_data.get("smtp_password", "")
+            if new_password:
+                current.smtp_password_encrypted = (
+                    _get_fernet().encrypt(new_password.encode()).decode()
+                )
+            # If smtp_password is blank, leave smtp_password_encrypted unchanged.
+
+            current.save()
+            messages.success(request, "SMTP settings saved.")
+
+            if request.htmx:
+                return render(
+                    request,
+                    "admin_panel/partials/smtp_settings_form.html",
+                    {"form": SmtpSettingsForm(initial=_smtp_form_initial(current))},
+                )
+            return redirect("admin_panel:smtp_settings")
+
+        if request.htmx:
+            return HttpResponse(form.errors.as_text(), status=422)
+        return render(request, "admin_panel/smtp_settings.html", {"form": form})
+
+    form = SmtpSettingsForm(initial=_smtp_form_initial(current))
+    return render(request, "admin_panel/smtp_settings.html", {"form": form})
+
+
+@admin_required
+@require_POST
+def smtp_test(request):
+    """
+    Send a test email to the admin's own address using the current SMTP settings.
+
+    Uses aiosmtplib via asyncio.run() — Django is sync (WSGI) so bare await is
+    not available. A timeout of 10 seconds is enforced to prevent worker hang.
+
+    The decrypted SMTP password is never logged.
+    """
+    current = SMTPSettings.get()
+
+    if not current.smtp_host:
+        if request.htmx:
+            return HttpResponse(
+                '<span class="text-red-400">SMTP host not configured.</span>',
+                status=422,
+            )
+        messages.error(request, "SMTP host not configured.")
+        return redirect("admin_panel:smtp_settings")
+
+    # Decrypt password — InvalidToken means corrupted ciphertext (never log plaintext)
+    plaintext_password = ""
+    if current.smtp_password_encrypted:
+        try:
+            plaintext_password = (
+                _get_fernet()
+                .decrypt(current.smtp_password_encrypted.encode())
+                .decode()
+            )
+        except InvalidToken:
+            if request.htmx:
+                return HttpResponse(
+                    '<span class="text-red-400">Failed to decrypt stored password. '
+                    "Please re-enter the SMTP password and save settings.</span>",
+                    status=422,
+                )
+            messages.error(
+                request,
+                "Failed to decrypt stored password. Please re-enter and save.",
+            )
+            return redirect("admin_panel:smtp_settings")
+
+    recipient = request.user.email or ""
+    if not recipient:
+        if request.htmx:
+            return HttpResponse(
+                '<span class="text-red-400">Admin account has no email address configured.</span>',
+                status=422,
+            )
+        messages.error(request, "Admin account has no email address configured.")
+        return redirect("admin_panel:smtp_settings")
+
+    msg = MIMEText("This is a test email from Haven Cloud.", "plain")
+    msg["Subject"] = "Haven Cloud — Test Email"
+    msg["From"] = current.smtp_from or current.smtp_user or "haven@localhost"
+    msg["To"] = recipient
+
+    async def _send():
+        await aiosmtplib.send(
+            msg,
+            hostname=current.smtp_host,
+            port=current.smtp_port,
+            username=current.smtp_user or None,
+            password=plaintext_password or None,
+            use_tls=current.use_tls,
+            timeout=10,
+        )
+
+    try:
+        asyncio.run(_send())
+    except Exception as exc:
+        if request.htmx:
+            return HttpResponse(
+                f'<span class="text-red-400">Send failed: {exc}</span>',
+                status=422,
+            )
+        messages.error(request, f"Send failed: {exc}")
+        return redirect("admin_panel:smtp_settings")
+
+    if request.htmx:
+        return HttpResponse(
+            f'<span class="text-green-400">Test email sent to {recipient}.</span>'
+        )
+    messages.success(request, f"Test email sent to {recipient}.")
+    return redirect("admin_panel:smtp_settings")
