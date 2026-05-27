@@ -16,6 +16,7 @@ an optional app PIN. One phase delivers a fully secured, fully functional monito
 - ✅ **v0.5 Cloud-Server** — Phase 5 (complete)
 - ✅ **v0.6 Web-UI** — Phase 6 (complete)
 - ✅ **v0.7 Android 16 Compat & Sensor Expert** — Phase 7 (complete)
+- 🔲 **v0.8 Android & WebUI UX Polish** — Phase 8 (planned)
 
 ## Phases
 
@@ -23,9 +24,30 @@ an optional app PIN. One phase delivers a fully secured, fully functional monito
 - [x] **Phase 4: NotificationEngine** - Signal+Mattermost alerts, configurable channels and severity thresholds, anti-flood cooldown, Settings grouping, Debug logging level (completed 2026-04-05)
 - [x] **Phase 5: Cloud-Server** - Self-hosted Python backend (FastAPI) with multi-user auth (2FA), multi-device support, encrypted user data, admin quotas, event+video upload from Haven, optional AI analysis, and cloud-triggered notifications (Mail/Signal/Pushover) (completed 2026-04-07)
 - [x] **Phase 6: Web-UI** - Django-based web interface for the Cloud-Server covering all Phase 5 features: user self-service (registration, login, 2FA, device management), event/video browsing, admin dashboard (user management, quotas, system stats), notification settings, AI analysis results — built with Django Templates + HTMX + Alpine.js + Tailwind CSS (completed 2026-04-09)
+- [ ] **Phase 8: Android & WebUI UX Polish** - Code comments standardized to English + expanded algorithmic docs; Settings visual dividers between items; WebUI bulk event archive/delete; Admin SMTP configuration UI; revoked device deletion
 - [x] **Phase 7: Android 16 Compatibility & Sensor Expert Settings** - Migrate tensorflow-lite-task-vision to MediaPipe Tasks Vision for 16 KB page-size compliance (Android 16); fix motion sensor sensitivity; add Expert Settings screen with per-sensor threshold sliders (Medium as calibration base, Low/High derived as offsets) (completed 2026-04-13)
 
 ## Phase Details
+
+### Phase 8: Android & WebUI UX Polish
+
+**Goal:** Polish and improve existing features across both the Android app and the Cloud Server WebUI. No new sensors or architectural changes — purely quality-of-life improvements from the pending todo list.
+**Depends on:** Phase 7
+**Requirements:** (from pending todos)
+**Success Criteria:**
+  1. All inline code comments are in English; algorithmic hot spots (SensorFusionEngine, LightMonitor, FusedMotionMonitor, CameraAnalyzer, PerceptualHashDetector, HavenObjectDetector) have explanatory WHY comments
+  2. Public functions in those files have KDoc `@param`/`@return` tags where missing
+  3. `SettingsScreen.kt` CategoryCards with multiple items show `HorizontalDivider` between entries (not after the last one)
+  4. WebUI event list supports checkbox-based multi-select with "Select all"; Bulk Archive and Bulk Delete actions work with confirmation dialog
+  5. Archived events are hidden from the default view and accessible via a filter/tab
+  6. Admin users can configure SMTP settings (host, port, user, password, TLS) in the WebUI; settings stored encrypted in DB, used for email dispatch
+  7. Revoked devices (is_active=False) show a Delete button in the device list; clicking it permanently removes the DB entry (HTMX inline removal)
+**Plans:** 3 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Android: translate German comments + add WHY/KDoc in 6 hot-spot files + translate MonitorService + ZoneEditorScreen + add HorizontalDivider in SettingsScreen
+- [ ] 08-02-PLAN.md — WebUI events: is_archived Alembic migration + Django/FastAPI model update + Status filter + bulk archive/unarchive/delete views + Alpine.js checkbox UI
+- [ ] 08-03-PLAN.md — WebUI admin: SMTPSettings model + Fernet encryption + smtp_settings/smtp_test views + SMTP templates + dashboard nav link + device_delete view + Delete button in device_row
 
 ### Phase 3: Phase-2-Complete
 **Goal**: All Phase 2 features work as specified + video clip recording on sensor trigger + encrypted local storage + optional app PIN + sensor calibration improvements
@@ -133,3 +155,4 @@ Plans:
 | 5. Cloud-Server | 8/8 | Complete   | 2026-04-07 |
 | 6. Web-UI | 6/6 | Complete | 2026-04-09 |
 | 7. Android 16 Compat & Sensor Expert | 3/3 | Complete | 2026-04-13 |
+| 8. Android & WebUI UX Polish | 0/3 | Planned | — |
