@@ -50,6 +50,7 @@ class Event(TimestampMixin, Base):
     media_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     media_size_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     is_encrypted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_archived: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="events")

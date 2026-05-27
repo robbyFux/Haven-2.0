@@ -41,6 +41,7 @@ class Event(models.Model):
     media_path = models.CharField(max_length=500, null=True, blank=True)
     media_size_bytes = models.BigIntegerField(null=True, blank=True)
     is_encrypted = models.BooleanField(default=False)
+    is_archived = models.BooleanField(default=False)
 
     # --- timestamps ---
     created_at = models.DateTimeField()

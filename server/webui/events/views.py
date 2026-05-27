@@ -1,11 +1,14 @@
 """
-Event browser views for Haven Web UI (plan 06-04).
+Event browser views for Haven Web UI (plan 06-04 / 08-02).
 
 Views:
-  event_list   — paginated list with django-filter + HTMX partial support
-  event_detail — event info, triggers, AI analysis, video player
-  serve_video  — stream unencrypted video; 403 for encrypted
-  event_delete — delete event + media file + update user quota counters
+  event_list       — paginated list with django-filter + HTMX partial support
+  event_detail     — event info, triggers, AI analysis, video player
+  serve_video      — stream unencrypted video; 403 for encrypted
+  event_delete     — delete event + media file + update user quota counters
+  bulk_archive     — archive selected events (is_archived=True)
+  bulk_unarchive   — restore selected archived events (is_archived=False)
+  bulk_delete      — permanently delete selected events and their media
 """
 
 import os
@@ -16,6 +19,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import Http404, HttpResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from devices.models import Device
 
@@ -29,19 +33,29 @@ EVENT_TYPES = [
 ]
 
 
-@login_required
-def event_list(request):
+def _render_event_table(request, status=None):
     """
-    Paginated event list for the logged-in user.
+    Re-render the event table partial with the current filter context.
 
-    Filters: date range, device, event type, severity (via EventFilter).
-    HTMX: if HX-Request header is present, render only the partial table template.
+    Used by bulk action views to return an updated table after a POST.
+    The status parameter overrides GET params so POST requests restore the
+    correct filter after a bulk action (GET params are empty on POST).
     """
+    if status is None:
+        status = request.GET.get("status", "active")
+
     base_qs = (
         Event.objects.filter(user_id=request.user.id)
         .select_related("device")
         .order_by("-timestamp")
     )
+
+    if status == "active":
+        base_qs = base_qs.filter(is_archived=False)
+    elif status == "archived":
+        base_qs = base_qs.filter(is_archived=True)
+    # status == "all": no additional filter
+
     f = EventFilter(request.GET, queryset=base_qs)
 
     paginator = Paginator(f.qs, 25)
@@ -54,6 +68,48 @@ def event_list(request):
         "filter": f,
         "devices": devices,
         "event_types": EVENT_TYPES,
+        "current_status": status,
+    }
+
+    return render(request, "events/partials/event_table.html", context)
+
+
+@login_required
+def event_list(request):
+    """
+    Paginated event list for the logged-in user.
+
+    Filters: date range, device, event type, severity (via EventFilter).
+    Status filter (active/archived/all) applied before EventFilter.
+    HTMX: if HX-Request header is present, render only the partial table template.
+    """
+    status = request.GET.get("status", "active")
+
+    base_qs = (
+        Event.objects.filter(user_id=request.user.id)
+        .select_related("device")
+        .order_by("-timestamp")
+    )
+
+    if status == "active":
+        base_qs = base_qs.filter(is_archived=False)
+    elif status == "archived":
+        base_qs = base_qs.filter(is_archived=True)
+    # status == "all": no additional filter
+
+    f = EventFilter(request.GET, queryset=base_qs)
+
+    paginator = Paginator(f.qs, 25)
+    page = paginator.get_page(request.GET.get("page", 1))
+
+    devices = Device.objects.filter(user_id=request.user.id, is_active=True)
+
+    context = {
+        "page": page,
+        "filter": f,
+        "devices": devices,
+        "event_types": EVENT_TYPES,
+        "current_status": status,
     }
 
     if request.htmx:
@@ -195,4 +251,77 @@ def event_delete(request, event_id):
     event.delete()
 
     messages.success(request, "Event deleted.")
+    return redirect("events:list")
+
+
+@login_required
+@require_POST
+def bulk_archive(request):
+    """
+    Archive multiple events owned by the current user.
+
+    Reads event_ids from POST body and sets is_archived=True.
+    Always filters by user_id to prevent cross-user tampering (T-08-03).
+    Returns updated event table partial (HTMX) or redirects to list.
+    """
+    event_ids = request.POST.getlist("event_ids")
+    status = request.POST.get("status", "active")
+
+    if event_ids:
+        Event.objects.filter(user_id=request.user.id, id__in=event_ids).update(is_archived=True)
+
+    if request.htmx:
+        return _render_event_table(request, status=status)
+    return redirect("events:list")
+
+
+@login_required
+@require_POST
+def bulk_unarchive(request):
+    """
+    Restore multiple archived events owned by the current user.
+
+    Reads event_ids from POST body and sets is_archived=False.
+    Always filters by user_id to prevent cross-user tampering (T-08-03).
+    Returns updated event table partial (HTMX) or redirects to list.
+    """
+    event_ids = request.POST.getlist("event_ids")
+    status = request.POST.get("status", "archived")
+
+    if event_ids:
+        Event.objects.filter(user_id=request.user.id, id__in=event_ids).update(is_archived=False)
+
+    if request.htmx:
+        return _render_event_table(request, status=status)
+    return redirect("events:list")
+
+
+@login_required
+@require_POST
+def bulk_delete(request):
+    """
+    Permanently delete multiple events owned by the current user.
+
+    Reads event_ids from POST body. Deletes associated media files before
+    removing DB rows (mirrors event_delete media deletion logic).
+    Always filters by user_id to prevent cross-user tampering (T-08-05).
+    Returns updated event table partial (HTMX) or redirects to list.
+    """
+    event_ids = request.POST.getlist("event_ids")
+    status = request.POST.get("status", "active")
+
+    if event_ids:
+        events_qs = Event.objects.filter(user_id=request.user.id, id__in=event_ids)
+
+        # Delete associated media files before removing DB rows
+        for event in events_qs:
+            if event.media_path:
+                full_path = os.path.join(settings.MEDIA_ROOT, event.media_path)
+                if os.path.exists(full_path):
+                    os.remove(full_path)
+
+        events_qs.delete()
+
+    if request.htmx:
+        return _render_event_table(request, status=status)
     return redirect("events:list")
