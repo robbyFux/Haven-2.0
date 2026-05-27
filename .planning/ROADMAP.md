@@ -24,7 +24,7 @@ an optional app PIN. One phase delivers a fully secured, fully functional monito
 - [x] **Phase 4: NotificationEngine** - Signal+Mattermost alerts, configurable channels and severity thresholds, anti-flood cooldown, Settings grouping, Debug logging level (completed 2026-04-05)
 - [x] **Phase 5: Cloud-Server** - Self-hosted Python backend (FastAPI) with multi-user auth (2FA), multi-device support, encrypted user data, admin quotas, event+video upload from Haven, optional AI analysis, and cloud-triggered notifications (Mail/Signal/Pushover) (completed 2026-04-07)
 - [x] **Phase 6: Web-UI** - Django-based web interface for the Cloud-Server covering all Phase 5 features: user self-service (registration, login, 2FA, device management), event/video browsing, admin dashboard (user management, quotas, system stats), notification settings, AI analysis results — built with Django Templates + HTMX + Alpine.js + Tailwind CSS (completed 2026-04-09)
-- [ ] **Phase 8: Android & WebUI UX Polish** - Code comments standardized to English + expanded algorithmic docs; Settings visual dividers between items; WebUI bulk event archive/delete; Admin SMTP configuration UI; revoked device deletion
+- [x] **Phase 8: Android & WebUI UX Polish** - Code comments standardized to English + expanded algorithmic docs; Settings visual dividers between items; WebUI bulk event archive/delete; Admin SMTP configuration UI; revoked device deletion (completed 2026-05-27)
 - [x] **Phase 7: Android 16 Compatibility & Sensor Expert Settings** - Migrate tensorflow-lite-task-vision to MediaPipe Tasks Vision for 16 KB page-size compliance (Android 16); fix motion sensor sensitivity; add Expert Settings screen with per-sensor threshold sliders (Medium as calibration base, Low/High derived as offsets) (completed 2026-04-13)
 
 ## Phase Details
@@ -35,6 +35,7 @@ an optional app PIN. One phase delivers a fully secured, fully functional monito
 **Depends on:** Phase 7
 **Requirements:** (from pending todos)
 **Success Criteria:**
+
   1. All inline code comments are in English; algorithmic hot spots (SensorFusionEngine, LightMonitor, FusedMotionMonitor, CameraAnalyzer, PerceptualHashDetector, HavenObjectDetector) have explanatory WHY comments
   2. Public functions in those files have KDoc `@param`/`@return` tags where missing
   3. `SettingsScreen.kt` CategoryCards with multiple items show `HorizontalDivider` between entries (not after the last one)
@@ -42,18 +43,22 @@ an optional app PIN. One phase delivers a fully secured, fully functional monito
   5. Archived events are hidden from the default view and accessible via a filter/tab
   6. Admin users can configure SMTP settings (host, port, user, password, TLS) in the WebUI; settings stored encrypted in DB, used for email dispatch
   7. Revoked devices (is_active=False) show a Delete button in the device list; clicking it permanently removes the DB entry (HTMX inline removal)
-**Plans:** 3 plans
+
+**Plans:** 3/3 plans complete
 
 Plans:
-- [ ] 08-01-PLAN.md — Android: translate German comments + add WHY/KDoc in 6 hot-spot files + translate MonitorService + ZoneEditorScreen + add HorizontalDivider in SettingsScreen
-- [ ] 08-02-PLAN.md — WebUI events: is_archived Alembic migration + Django/FastAPI model update + Status filter + bulk archive/unarchive/delete views + Alpine.js checkbox UI
-- [ ] 08-03-PLAN.md — WebUI admin: SMTPSettings model + Fernet encryption + smtp_settings/smtp_test views + SMTP templates + dashboard nav link + device_delete view + Delete button in device_row
+
+- [x] 08-01-PLAN.md — Android: translate German comments + add WHY/KDoc in 6 hot-spot files + translate MonitorService + ZoneEditorScreen + add HorizontalDivider in SettingsScreen
+- [x] 08-02-PLAN.md — WebUI events: is_archived Alembic migration + Django/FastAPI model update + Status filter + bulk archive/unarchive/delete views + Alpine.js checkbox UI
+- [x] 08-03-PLAN.md — WebUI admin: SMTPSettings model + Fernet encryption + smtp_settings/smtp_test views + SMTP templates + dashboard nav link + device_delete view + Delete button in device_row
 
 ### Phase 3: Phase-2-Complete
+
 **Goal**: All Phase 2 features work as specified + video clip recording on sensor trigger + encrypted local storage + optional app PIN + sensor calibration improvements
 **Depends on**: Phase 2 (complete)
 **Requirements**: TFLITE-01, TFLITE-02, TFLITE-03, ZONE-01, ZONE-02, EVENT-01, EVENT-02, SENSOR-01, SENSOR-02, REC-01, REC-02, REC-03, SEC-01, SEC-02, SEC-03, SEC-04, SEC-05
 **Success Criteria** (what must be TRUE):
+
   1. User can select PERSON, PET, VEHICLE, or ALL detection modes in Settings (not greyed out)
   2. A zone drawn in ZoneEditorScreen is still active after the app is restarted and visible to CameraAnalyzer
   3. User can delete an event from the Timeline or EventDetailScreen and it is gone from the list
@@ -65,9 +70,11 @@ Plans:
   9. LightMonitor uses dual-rate EMA and cross-sensor suppression to reduce false alarms
   10. FusedMotionMonitor responds faster with SENSOR_DELAY_GAME
   11. EventDetailScreen supports filtering triggers by sensor type
+
 **Plans**: 7 plans
 
 Plans:
+
 - [x] 03-01-PLAN.md — Verify quick-task fixes and add FusedMotionMonitor calibration guard
 - [x] 03-02-PLAN.md — Video recording infrastructure (ClipRecorder + CameraX VideoCapture)
 - [x] 03-03-PLAN.md — Encrypted storage (AES-GCM) and ExoPlayer video playback
@@ -86,6 +93,7 @@ Plans:
 **Plans:** 5/5 plans complete
 
 Plans:
+
 - [x] 04-01-PLAN.md — Foundation: OkHttp dep, HavenAlertChannel interface, NotificationRule, NetworkModule, DataStore keys, AppLogger LogLevel
 - [x] 04-02-PLAN.md — Channel implementations: SignalRestChannel, MattermostChannel, CameraAnalyzer lastJpegFrame
 - [x] 04-03-PLAN.md — Settings UI restructuring: CategoryCard layout, string resources
@@ -101,6 +109,7 @@ Plans:
 **Plans:** 6 plans
 
 Plans:
+
 - [x] 06-01-PLAN.md — Django project scaffold, unmanaged models, custom auth backend, base template, Docker, test infra
 - [x] 06-02-PLAN.md — Auth system: registration, login, TOTP 2FA, change password, delete account
 - [x] 06-03-PLAN.md — Device management: list, create (App-Key), revoke (HTMX inline)
@@ -117,6 +126,7 @@ Plans:
 **Plans:** 8 plans
 
 Plans:
+
 - [x] 05-01-PLAN.md — Project scaffold: pyproject.toml, Docker, FastAPI app, DB models, Alembic, test infra
 - [x] 05-02-PLAN.md — Auth system: registration, login, JWT, 2FA (TOTP), User-Key
 - [x] 05-03-PLAN.md — Device management (App-Key CRUD) + Argon2id crypto service
@@ -132,6 +142,7 @@ Plans:
 **Depends on:** Phase 3 (sensor stack), Phase 4 (Settings architecture)
 **Requirements:** COMPAT-01, SENSOR-10, SENSOR-11
 **Success Criteria**:
+
   1. App installs and runs on Android 16 without "not 16 KB compatible" system warning
   2. TFLite object detection (PERSON/PET/VEHICLE) works correctly after migration
   3. Motion sensor triggers reliably at the default Medium sensitivity with normal room movement
@@ -139,9 +150,11 @@ Plans:
   5. Adjusting the Medium slider updates Low/High values in real time (visible feedback)
   6. Custom thresholds persist across app restarts via DataStore
   7. Resetting to defaults restores the Sensitivity enum values from CLAUDE.md
+
 **Plans:** 3 plans
 
 Plans:
+
 - [x] 07-01-PLAN.md — MediaPipe Tasks Vision migration: swap Gradle dep + rewrite HavenObjectDetector API (COMPAT-01)
 - [x] 07-02-PLAN.md — Sensitivity defaults fix + ExpertThresholds data class + SettingsRepository keys + monitor wiring (SENSOR-10, SENSOR-11 foundation)
 - [x] 07-03-PLAN.md — ExpertSettingsScreen + ViewModel + EXPERT_SETTINGS route + Settings entry row (SENSOR-11 UI)
@@ -155,4 +168,4 @@ Plans:
 | 5. Cloud-Server | 8/8 | Complete   | 2026-04-07 |
 | 6. Web-UI | 6/6 | Complete | 2026-04-09 |
 | 7. Android 16 Compat & Sensor Expert | 3/3 | Complete | 2026-04-13 |
-| 8. Android & WebUI UX Polish | 0/3 | Planned | — |
+| 8. Android & WebUI UX Polish | 3/3 | Complete   | 2026-05-27 |

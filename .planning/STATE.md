@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
 milestone: v0.8
-milestone_name: Android & WebUI UX Polish
-status: planned
-stopped_at: "Phase 8 planned — ready to execute"
-last_updated: "2026-05-27T00:00:00.000Z"
-last_activity: 2026-05-27 -- Phase 08 planned (3 plans in 1 wave)
+milestone_name: milestone
+status: executing
+stopped_at: Completed Phase 07 — all phases 3–7 done, milestone v0.7 achieved
+last_updated: "2026-05-27T11:54:09.416Z"
+last_activity: 2026-05-27 -- Phase 8 execution started
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 32
   completed_plans: 29
-  percent: 50
+  percent: 83
 ---
 
 # Project State
@@ -21,13 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Zuverlässige, privacy-respektierende Bewegungserkennung — die App muss starten, kalibrieren und Ereignisse erfassen, ohne dass etwas stillschweigend fehlschlägt.
-**Current focus:** Phase 07 — android16-compat-sensor-expert
+**Current focus:** Phase 8 — android-webui-ux-polish
 
 ## Current Position
 
-Phase: 07 (android16-compat-sensor-expert) — COMPLETE
-Status: All phases complete (3–7). Milestone v0.7 achieved.
-Last activity: 2026-04-13 -- Phase 07 complete
+Phase: 8 (android-webui-ux-polish) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 8
+Last activity: 2026-05-27 -- Phase 8 execution started
 
 Progress: [██████████] 100%
 
