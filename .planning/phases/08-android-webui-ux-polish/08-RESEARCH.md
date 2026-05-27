@@ -566,15 +566,15 @@ elif status == "archived":
 
 ## Open Questions
 
-1. **`HAVEN_SECRET_KEY` vs `SECRET_KEY`**
+1. **(RESOLVED) `HAVEN_SECRET_KEY` vs `SECRET_KEY`**
    - What we know: D-05 specifies `HAVEN_SECRET_KEY`. The existing codebase uses `SECRET_KEY` for Fernet derivation (totp.py). Both FastAPI and Django read `SECRET_KEY` from env.
-   - What's unclear: Does the user want a separate env var (`HAVEN_SECRET_KEY`) or does D-05 informally refer to the existing `SECRET_KEY`?
-   - Recommendation: Default to `SECRET_KEY` (existing env var) for consistency. If a separate var is needed, the plan must document adding `HAVEN_SECRET_KEY` to the Docker environment.
+   - Resolution: User confirmed — use `settings.SECRET_KEY` (Django's existing SECRET_KEY), consistent with `app/services/totp.py` SHA-256 derivation pattern. No new `HAVEN_SECRET_KEY` env var is introduced. D-05 named it informally; the actual key source is the existing `SECRET_KEY`.
+   - Plan impact: Plan 03 `_get_fernet()` uses `settings.SECRET_KEY`; no Docker environment change needed.
 
-2. **Bulk unarchive endpoint**
-   - What we know: D-02 says "unarchive is supported." The Status filter includes "Active" view. But no bulk unarchive endpoint was specified in the requirements.
-   - What's unclear: Is bulk unarchive a separate button in the Archived filter view, or is it implicit (select archived events, click Archive to toggle)?
-   - Recommendation: Implement a `bulk_unarchive` view symmetric to `bulk_archive`. The UI can show "Unarchive Events" in the bulk bar when the Status filter is "Archived."
+2. **(RESOLVED) Bulk unarchive endpoint**
+   - What we know: D-02 says "unarchive is supported." The Status filter includes "Active" view.
+   - Resolution: `bulk_unarchive` view implemented (symmetric to `bulk_archive`). Plan 02 Task 3 adds an "Unarchive Events" button in the bulk action bar and a corresponding `x-ref="unarchiveForm"` hidden HTMX form targeting `#event-table`. The confirmation modal includes an 'unarchive' branch in title/body text alongside archive and delete.
+   - Plan impact: Plan 02 Task 2 registers the `bulk_unarchive` view and URL route; Plan 02 Task 3 adds all template UI entry points.
 
 3. **SMTP settings page link on admin dashboard**
    - What we know: UI-SPEC says to add a "SMTP Settings" nav link in `dashboard.html`.
