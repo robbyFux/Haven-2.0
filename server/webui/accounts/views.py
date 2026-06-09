@@ -21,7 +21,7 @@ from django.contrib.auth import logout as auth_logout
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
-from passlib.context import CryptContext
+import bcrypt
 
 from .forms import (
     ChangePasswordForm,
@@ -32,7 +32,6 @@ from .forms import (
     TotpSetupConfirmForm,
 )
 
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 _BACKEND = "core.auth_backend.HavenAuthBackend"
 
 
@@ -58,7 +57,7 @@ def register_view(request):
         password = form.cleaned_data["password"]
         HavenUser.objects.create(
             username=username,
-            password_hash=_pwd_context.hash(password),
+            password_hash=bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode(),
             user_key=f"haven_u_{secrets.token_hex(32)}",
             created_at=timezone.now(),
             is_active=True,
@@ -222,11 +221,11 @@ def change_password_view(request):
         current = form.cleaned_data["current_password"]
         new_pw = form.cleaned_data["new_password"]
 
-        if not _pwd_context.verify(current, user.password_hash):
+        if not bcrypt.checkpw(current.encode(), user.password_hash.encode()):
             messages.error(request, "Current password is incorrect.")
             return render(request, "accounts/change_password.html", {"form": form})
 
-        user.password_hash = _pwd_context.hash(new_pw)
+        user.password_hash = bcrypt.hashpw(new_pw.encode(), bcrypt.gensalt()).decode()
         user.save(update_fields=["password_hash"])
         update_session_auth_hash(request, user)
         messages.success(request, "Password changed successfully.")

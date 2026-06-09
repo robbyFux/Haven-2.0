@@ -14,7 +14,7 @@ import base64
 import secrets
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from passlib.context import CryptContext
+import bcrypt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -43,8 +43,6 @@ from app.services.totp import (
 
 router = APIRouter(tags=["auth"])
 
-# Module-level bcrypt context — reused across requests
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 @router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
@@ -62,7 +60,7 @@ async def register(body: RegisterRequest, db: DbSession) -> RegisterResponse:
             detail="Username already taken",
         )
 
-    password_hash = pwd_context.hash(body.password)
+    password_hash = bcrypt.hashpw(body.password.encode(), bcrypt.gensalt()).decode()
     user_key = f"haven_u_{secrets.token_hex(32)}"
 
     user = User(
@@ -87,7 +85,7 @@ async def login(body: LoginRequest, db: DbSession) -> TokenResponse:
     result = await db.execute(select(User).where(User.username == body.username))
     user = result.scalar_one_or_none()
 
-    if user is None or not pwd_context.verify(body.password, user.password_hash):
+    if user is None or not bcrypt.checkpw(body.password.encode(), user.password_hash.encode()):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",

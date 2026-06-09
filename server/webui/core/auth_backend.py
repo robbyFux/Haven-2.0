@@ -8,15 +8,16 @@ TOTP verification is NOT performed here — it happens in the login view after
 the password check succeeds, so the session is only created once both factors
 pass.
 
-Threat T-06-01: bcrypt verification via passlib provides brute-force resistance
-through cost factor; session auth via Django middleware handles the rest.
+Threat T-06-01: bcrypt verification provides brute-force resistance through cost
+factor; session auth via Django middleware handles the rest.
 """
 
-from passlib.context import CryptContext
+import bcrypt
 
 from accounts.models import HavenUser
 
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Pre-computed hash used for constant-time dummy verify (prevents username enumeration timing)
+_DUMMY_HASH: bytes = bcrypt.hashpw(b"x", bcrypt.gensalt())
 
 
 class HavenAuthBackend:
@@ -42,10 +43,10 @@ class HavenAuthBackend:
             user = HavenUser.objects.get(username=username)
         except HavenUser.DoesNotExist:
             # Run a dummy verify to prevent timing attacks via username enumeration
-            _pwd_context.dummy_verify()
+            bcrypt.checkpw(b"x", _DUMMY_HASH)
             return None
 
-        if not _pwd_context.verify(password, user.password_hash):
+        if not bcrypt.checkpw(password.encode(), user.password_hash.encode()):
             return None
 
         if not user.is_active:

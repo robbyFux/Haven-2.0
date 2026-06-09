@@ -81,8 +81,8 @@ async def _create_user_direct(
     pushover_user_key: str | None = None,
 ) -> User:
     """Create and persist a test user directly (bypasses password hashing for speed)."""
-    from passlib.context import CryptContext
-    pwd = CryptContext(schemes=["bcrypt"]).hash("password")
+    import bcrypt
+    pwd = bcrypt.hashpw(b"password", bcrypt.gensalt()).decode()
 
     user = User(
         username=username,

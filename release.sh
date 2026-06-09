@@ -409,8 +409,8 @@ services:
     volumes:
       - haven_certs:/etc/nginx/certs
     environment:
-      # Server-IP oder Hostname — wird ins TLS-Zertifikat eingetragen
-      CERT_HOSTNAME: localhost
+      # Server-IP oder Hostname — wird ins TLS-Zertifikat eingetragen; auf echte IP/Domain setzen!
+      CERT_HOSTNAME: <server-ip-oder-domain>
     depends_on:
       - app
       - webui
@@ -437,9 +437,11 @@ REDIS_URL=redis://redis:6379/0
 # mind. 64 zufällige Zeichen: python3 -c "import secrets; print(secrets.token_hex(32))"
 SECRET_KEY=hier-zufaelligen-schluessel-eintragen
 DJANGO_SECRET_KEY=\${SECRET_KEY}
-# Server-IP oder Hostnamen eintragen (kommagetrennt)
-ALLOWED_HOSTS=localhost,127.0.0.1
-CSRF_TRUSTED_ORIGINS=https://localhost:8080
+# Alle Hosts erlauben (Standard für self-hosted); für Produktion auf IP/Domain einschränken:
+# ALLOWED_HOSTS=192.168.1.10,mein-server.example.com
+ALLOWED_HOSTS=*
+# Ersetze <server-ip> mit der IP oder Domain deines Servers
+CSRF_TRUSTED_ORIGINS=https://<server-ip>:8080,https://localhost:8080
 \`\`\`
 
 ### 3. Stack starten
@@ -451,14 +453,13 @@ docker compose exec app alembic upgrade head
 ### 4. Admin-Nutzer anlegen
 \`\`\`bash
 docker compose exec app python -c "
-import asyncio, secrets
-from passlib.context import CryptContext
+import asyncio, secrets, bcrypt
 from app.database import AsyncSessionLocal
 from app.models.user import User
-pwd = CryptContext(schemes=['bcrypt'], deprecated='auto')
 async def run():
     async with AsyncSessionLocal() as db:
-        u = User(username='admin', password_hash=pwd.hash('changeme'),
+        pw_hash = bcrypt.hashpw(b'changeme', bcrypt.gensalt()).decode()
+        u = User(username='admin', password_hash=pw_hash,
                  user_key='haven_u_' + secrets.token_hex(16), is_admin=True)
         db.add(u); await db.commit()
         print('User-Key:', u.user_key)
@@ -476,6 +477,37 @@ Passwort danach unter **Web UI → Profil → Passwort ändern** setzen.
 
 ### Android-App verbinden
 Einstellungen → Cloud-Server → API-URL: \`https://<server-ip>:8000\`
+
+---
+
+## Update einer bestehenden Installation auf ${TAG}
+
+### 1. Neues Archiv auf den Server übertragen
+\`\`\`bash
+scp haven-cloud-v${VERSION}.tar.gz user@<server-ip>:~/haven-server/
+\`\`\`
+
+### 2. Neue Images laden
+\`\`\`bash
+cd ~/haven-server
+docker load < haven-cloud-v${VERSION}.tar.gz
+\`\`\`
+
+### 3. Stack neu starten
+\`\`\`bash
+docker compose up -d --no-build
+\`\`\`
+
+Die Webui führt Django-Migrationen beim Start automatisch aus.
+API-Migrationen (Alembic) ggf. manuell anstoßen:
+\`\`\`bash
+docker compose exec app alembic upgrade head
+\`\`\`
+
+### 4. Alte Images aufräumen (optional)
+\`\`\`bash
+docker image prune -f
+\`\`\`
 EOF
     ok "Anleitung: dist/$VERSION/INSTALL.md"
 fi

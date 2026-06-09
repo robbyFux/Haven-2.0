@@ -34,16 +34,15 @@ class HavenUserManager(BaseUserManager):
         Used in tests and the admin seeder — not for production registration
         (that path goes through the FastAPI backend).
         """
-        from passlib.context import CryptContext
+        import bcrypt
 
-        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
         user = self.model(
             username=username,
             is_admin=is_admin,
             user_key=f"haven_u_{secrets.token_hex(16)}",
             **extra_fields,
         )
-        user.password_hash = pwd_context.hash(password)
+        user.password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
         user.save(using=self._db)
         return user
 

@@ -31,10 +31,9 @@ def test_register_creates_user(client):
     user = HavenUser.objects.get(username="newuser")
     assert user.user_key.startswith("haven_u_")
     # Verify password is bcrypt-hashed (not stored in plaintext)
-    from passlib.context import CryptContext
+    import bcrypt
 
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    assert pwd_context.verify("securepass123", user.password_hash)
+    assert bcrypt.checkpw(b"securepass123", user.password_hash.encode())
 
 
 @pytest.mark.django_db
@@ -263,8 +262,6 @@ def test_logout(authenticated_client):
 @pytest.mark.django_db
 def test_change_password_success(client, create_user):
     """POST /accounts/change-password/ with correct current password updates hash."""
-    from passlib.context import CryptContext
-
     user = create_user("pwuser", "oldpassword")
     client.force_login(user)
 
@@ -280,8 +277,9 @@ def test_change_password_success(client, create_user):
     assert "/accounts/profile/" in response["Location"]
 
     user.refresh_from_db()
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    assert pwd_context.verify("newpassword456", user.password_hash)
+    import bcrypt
+
+    assert bcrypt.checkpw(b"newpassword456", user.password_hash.encode())
 
 
 @pytest.mark.django_db
