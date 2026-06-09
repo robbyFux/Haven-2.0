@@ -12,11 +12,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip and install all project dependencies into /venv
+# Install all project dependencies into /venv
 COPY pyproject.toml .
 RUN python -m venv /venv \
-    && /venv/bin/pip install --upgrade pip \
-    && /venv/bin/pip install .
+    && /venv/bin/pip install --timeout 120 hatchling \
+    && /venv/bin/pip install --no-build-isolation --timeout 120 .
 
 # --- Runtime stage ---
 FROM python:3.12-slim AS runtime

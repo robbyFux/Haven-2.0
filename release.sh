@@ -231,12 +231,14 @@ elif [[ "$DRY_RUN" == true ]]; then
 else
     info "Baue haven-api:$VERSION (API + Worker)..."
     docker build \
+        --network=host \
         -t "haven-api:$VERSION" \
         -t "haven-api:latest" \
         server/
 
     info "Baue haven-webui:$VERSION (Web-UI)..."
     docker build \
+        --network=host \
         -t "haven-webui:$VERSION" \
         -t "haven-webui:latest" \
         -f server/Dockerfile.webui \
@@ -244,6 +246,7 @@ else
 
     info "Baue haven-nginx:$VERSION (TLS-Proxy)..."
     docker build \
+        --network=host \
         -t "haven-nginx:$VERSION" \
         -t "haven-nginx:latest" \
         -f server/Dockerfile.nginx \
