@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml .
 RUN pip install --no-cache-dir -e ".[web]"
 
+# Allow all hosts by default; override via ALLOWED_HOSTS env var at runtime
+ENV ALLOWED_HOSTS=*
+
 COPY . .
 
 WORKDIR /app/webui
