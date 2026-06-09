@@ -99,12 +99,16 @@
          showConfirmModal: false,
          confirmAction: '',
          confirmMessage: '',
-         currentStatus: '{{ request.GET.status|default:&quot;active&quot; }}',
+         currentStatus: '{{ request.GET.status|default:"active" }}',
          toggleAll(checked) {
            this.selectAll = checked;
            this.selected = checked
              ? Array.from(document.querySelectorAll('.event-checkbox')).map(cb => cb.value)
              : [];
+         },
+         submitBulkForm() {
+           const form = this.$refs[this.confirmAction + 'Form'];
+           form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
          }
        }"
        x-on:htmx:after-swap.window="selected = []; selectAll = false;">
@@ -151,7 +155,7 @@
             Cancel
           </button>
           <button type="button"
-                  @click="showConfirmModal = false; $refs[confirmAction + 'Form'].submit()"
+                  @click="showConfirmModal = false; submitBulkForm()"
                   :class="confirmAction === 'delete' ? 'bg-red-700 hover:bg-red-600 text-white rounded px-3 py-1 text-sm transition-colors' : 'bg-teal-600 hover:bg-teal-500 text-white rounded px-3 py-1 text-sm transition-colors'">
             Confirm
           </button>

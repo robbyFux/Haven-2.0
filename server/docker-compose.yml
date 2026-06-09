@@ -30,8 +30,6 @@ services:
   app:
     build: .
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    ports:
-      - "8000:8000"
     volumes:
       - ./media:/app/media
       - .:/app
@@ -64,8 +62,6 @@ services:
     command: >
       sh -c "python manage.py migrate --noinput &&
              python manage.py runserver 0.0.0.0:8080"
-    ports:
-      - "8080:8080"
     volumes:
       - ./media:/app/media
       - ./webui:/app/webui
@@ -78,5 +74,21 @@ services:
       db:
         condition: service_healthy
 
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    ports:
+      - "8000:8000"
+      - "8080:8080"
+    volumes:
+      - haven_certs:/etc/nginx/certs
+    environment:
+      - CERT_HOSTNAME=localhost
+    depends_on:
+      - app
+      - webui
+
 volumes:
   postgres_data:
+  haven_certs:

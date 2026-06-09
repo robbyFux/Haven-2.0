@@ -226,7 +226,7 @@ if [[ "$SKIP_DOCKER" == true ]]; then
 elif [[ "$DOCKER_OK" == false ]]; then
     warn "Docker nicht verfügbar — übersprungen"
 elif [[ "$DRY_RUN" == true ]]; then
-    info "[dry-run] Würde bauen: haven-api:$VERSION, haven-webui:$VERSION"
+    info "[dry-run] Würde bauen: haven-api:$VERSION, haven-webui:$VERSION, haven-nginx:$VERSION"
     info "[dry-run] Würde exportieren: dist/$VERSION/haven-cloud-v${VERSION}.tar.gz"
 else
     info "Baue haven-api:$VERSION (API + Worker)..."
@@ -242,16 +242,25 @@ else
         -f server/Dockerfile.webui \
         server/
 
+    info "Baue haven-nginx:$VERSION (TLS-Proxy)..."
+    docker build \
+        -t "haven-nginx:$VERSION" \
+        -t "haven-nginx:latest" \
+        -f server/Dockerfile.nginx \
+        server/
+
     if [[ "$PUSH_DOCKER" == true ]]; then
         info "Pushe Images zu Docker Hub..."
         docker push "haven-api:$VERSION"
         docker push "haven-api:latest"
         docker push "haven-webui:$VERSION"
         docker push "haven-webui:latest"
+        docker push "haven-nginx:$VERSION"
+        docker push "haven-nginx:latest"
         ok "Docker-Images gepusht"
     else
         info "Exportiere Images als Archiv..."
-        docker save "haven-api:$VERSION" "haven-webui:$VERSION" | gzip > "$DOCKER_ARCHIVE"
+        docker save "haven-api:$VERSION" "haven-webui:$VERSION" "haven-nginx:$VERSION" | gzip > "$DOCKER_ARCHIVE"
         ok "Docker-Archiv: dist/$VERSION/haven-cloud-v${VERSION}.tar.gz"
         info "Laden mit: docker load < dist/$VERSION/haven-cloud-v${VERSION}.tar.gz"
     fi
@@ -332,7 +341,7 @@ EOF
 
 ### Voraussetzungen
 - Docker Engine 24+ und Docker Compose v2
-- Freie Ports 8000 (API) und 8080 (Web UI)
+- Freie Ports 8000 (API, HTTPS) und 8080 (Web UI, HTTPS)
 
 ### 1. Images laden
 \`\`\`bash
@@ -370,7 +379,6 @@ services:
   app:
     image: haven-api:${VERSION}
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
-    ports: ["8000:8000"]
     volumes: ["./media:/app/media"]
     env_file: .env
     depends_on:
@@ -388,15 +396,39 @@ services:
     image: haven-webui:${VERSION}
     command: >
       sh -c "python manage.py migrate --noinput &&
-             python manage.py runserver 0.0.0.0:8080"
-    ports: ["8080:8080"]
+             gunicorn config.wsgi:application --bind 0.0.0.0:8080 --workers 2"
     volumes: ["./media:/app/media"]
     env_file: .env
     depends_on:
       db: {condition: service_healthy}
+  nginx:
+    image: haven-nginx:${VERSION}
+    ports:
+      - "8000:8000"
+      - "8080:8080"
+    volumes:
+      - haven_certs:/etc/nginx/certs
+    environment:
+      # Server-IP oder Hostname — wird ins TLS-Zertifikat eingetragen
+      CERT_HOSTNAME: localhost
+    depends_on:
+      - app
+      - webui
 volumes:
   postgres_data:
+  haven_certs:
 \`\`\`
+
+> **TLS-Zertifikat:** Beim ersten Start generiert der \`nginx\`-Container automatisch
+> ein selbst-signiertes Zertifikat (gültig 10 Jahre). Browser und Android-App zeigen
+> eine Sicherheitswarnung, solange das Zertifikat nicht als vertrauenswürdig markiert ist.
+>
+> Zertifikat exportieren:
+> \`\`\`bash
+> docker compose cp nginx:/etc/nginx/certs/haven.crt ./haven.crt
+> \`\`\`
+> Das exportierte \`haven.crt\` kann auf Android-Geräten unter
+> **Einstellungen → Sicherheit → Zertifikate → CA-Zertifikat installieren** eingebunden werden.
 
 \`.env\` erstellen:
 \`\`\`ini
@@ -405,7 +437,9 @@ REDIS_URL=redis://redis:6379/0
 # mind. 64 zufällige Zeichen: python3 -c "import secrets; print(secrets.token_hex(32))"
 SECRET_KEY=hier-zufaelligen-schluessel-eintragen
 DJANGO_SECRET_KEY=\${SECRET_KEY}
+# Server-IP oder Hostnamen eintragen (kommagetrennt)
 ALLOWED_HOSTS=localhost,127.0.0.1
+CSRF_TRUSTED_ORIGINS=https://localhost:8080
 \`\`\`
 
 ### 3. Stack starten
@@ -437,11 +471,11 @@ Passwort danach unter **Web UI → Profil → Passwort ändern** setzen.
 ### 5. Dienste prüfen
 | URL | Beschreibung |
 |-----|-------------|
-| http://localhost:8000/health | API Health-Check |
-| http://localhost:8080/ | Web UI |
+| https://localhost:8000/health | API Health-Check |
+| https://localhost:8080/ | Web UI |
 
 ### Android-App verbinden
-Einstellungen → Cloud-Server → API-URL: \`http://<server-ip>:8000\`
+Einstellungen → Cloud-Server → API-URL: \`https://<server-ip>:8000\`
 EOF
     ok "Anleitung: dist/$VERSION/INSTALL.md"
 fi
