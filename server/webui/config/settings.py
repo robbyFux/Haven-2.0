@@ -23,6 +23,9 @@ ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
 
 SESSION_COOKIE_SECURE = os.environ.get("SECURE_COOKIES", "false").lower() == "true"
 CSRF_COOKIE_SECURE = os.environ.get("SECURE_COOKIES", "false").lower() == "true"
+
+_trusted = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in _trusted.split(",") if o.strip()]
 SESSION_COOKIE_HTTPONLY = True  # Django default — explicit for clarity (T-06-07)
 SESSION_COOKIE_AGE = 86400  # 24 hours
 
