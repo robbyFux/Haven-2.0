@@ -240,7 +240,7 @@ def _smtp_form_initial(current: SMTPSettings) -> dict:
         "smtp_user": current.smtp_user,
         # smtp_password intentionally omitted — write-only field
         "smtp_from": current.smtp_from,
-        "use_tls": current.use_tls,
+        "tls_mode": current.tls_mode,
     }
 
 
@@ -264,7 +264,7 @@ def smtp_settings(request):
             current.smtp_port = form.cleaned_data["smtp_port"]
             current.smtp_user = form.cleaned_data["smtp_user"] or ""
             current.smtp_from = form.cleaned_data["smtp_from"] or ""
-            current.use_tls = form.cleaned_data["use_tls"]
+            current.tls_mode = form.cleaned_data["tls_mode"]
 
             new_password = form.cleaned_data.get("smtp_password", "")
             if new_password:
@@ -301,18 +301,24 @@ def smtp_test(request):
     Uses aiosmtplib via asyncio.run() — Django is sync (WSGI) so bare await is
     not available. A timeout of 10 seconds is enforced to prevent worker hang.
 
-    The decrypted SMTP password is never logged.
+    tls_mode maps to aiosmtplib parameters:
+      - 'ssl'      → use_tls=True  (SMTPS, implicit TLS, port 465)
+      - 'starttls' → start_tls=True (STARTTLS upgrade after connect, port 587)
+      - 'none'     → no TLS flags
+
+    HTMX note: errors are returned with HTTP 200 so HTMX swaps them into the
+    target container. HTTP 4xx responses are not swapped by default.
     """
     current = SMTPSettings.get()
 
-    if not current.smtp_host:
+    def _htmx_error(msg: str) -> HttpResponse:
         if request.htmx:
-            return HttpResponse(
-                '<span class="text-red-400">SMTP host not configured.</span>',
-                status=422,
-            )
-        messages.error(request, "SMTP host not configured.")
+            return HttpResponse(f'<span class="text-red-400">{msg}</span>')
+        messages.error(request, msg)
         return redirect("admin_panel:smtp_settings")
+
+    if not current.smtp_host:
+        return _htmx_error("SMTP host not configured.")
 
     # Decrypt password — InvalidToken means corrupted ciphertext (never log plaintext)
     plaintext_password = ""
@@ -324,32 +330,25 @@ def smtp_test(request):
                 .decode()
             )
         except InvalidToken:
-            if request.htmx:
-                return HttpResponse(
-                    '<span class="text-red-400">Failed to decrypt stored password. '
-                    "Please re-enter the SMTP password and save settings.</span>",
-                    status=422,
-                )
-            messages.error(
-                request,
-                "Failed to decrypt stored password. Please re-enter and save.",
+            return _htmx_error(
+                "Failed to decrypt stored password. "
+                "Please re-enter the SMTP password and save settings."
             )
-            return redirect("admin_panel:smtp_settings")
 
     recipient = request.user.email or ""
     if not recipient:
-        if request.htmx:
-            return HttpResponse(
-                '<span class="text-red-400">Admin account has no email address configured.</span>',
-                status=422,
-            )
-        messages.error(request, "Admin account has no email address configured.")
-        return redirect("admin_panel:smtp_settings")
+        return _htmx_error("Admin account has no email address configured.")
 
     msg = MIMEText("This is a test email from Haven Cloud.", "plain")
     msg["Subject"] = "Haven Cloud — Test Email"
     msg["From"] = current.smtp_from or current.smtp_user or "haven@localhost"
     msg["To"] = recipient
+
+    tls_kwargs: dict = {}
+    if current.tls_mode == SMTPSettings.TLS_SSL:
+        tls_kwargs["use_tls"] = True
+    elif current.tls_mode == SMTPSettings.TLS_STARTTLS:
+        tls_kwargs["start_tls"] = True
 
     async def _send():
         await aiosmtplib.send(
@@ -358,20 +357,14 @@ def smtp_test(request):
             port=current.smtp_port,
             username=current.smtp_user or None,
             password=plaintext_password or None,
-            use_tls=current.use_tls,
             timeout=10,
+            **tls_kwargs,
         )
 
     try:
         asyncio.run(_send())
     except Exception as exc:
-        if request.htmx:
-            return HttpResponse(
-                f'<span class="text-red-400">Send failed: {exc}</span>',
-                status=422,
-            )
-        messages.error(request, f"Send failed: {exc}")
-        return redirect("admin_panel:smtp_settings")
+        return _htmx_error(f"Send failed: {exc}")
 
     if request.htmx:
         return HttpResponse(

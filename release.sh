@@ -361,6 +361,7 @@ mkdir haven-server && cd haven-server
 services:
   db:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: haven
       POSTGRES_PASSWORD: haven
@@ -374,6 +375,7 @@ services:
       retries: 5
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -381,6 +383,7 @@ services:
       retries: 5
   app:
     image: haven-api:${VERSION}
+    restart: unless-stopped
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     volumes: ["./media:/app/media"]
     env_file: .env
@@ -389,6 +392,7 @@ services:
       redis: {condition: service_healthy}
   worker:
     image: haven-api:${VERSION}
+    restart: unless-stopped
     command: celery -A app.celery_app worker --loglevel=info --concurrency=2
     volumes: ["./media:/app/media"]
     env_file: .env
@@ -397,6 +401,7 @@ services:
       redis: {condition: service_healthy}
   webui:
     image: haven-webui:${VERSION}
+    restart: unless-stopped
     command: >
       sh -c "python manage.py migrate --noinput &&
              gunicorn config.wsgi:application --bind 0.0.0.0:8080 --workers 2"
@@ -406,6 +411,7 @@ services:
       db: {condition: service_healthy}
   nginx:
     image: haven-nginx:${VERSION}
+    restart: unless-stopped
     ports:
       - "8000:8000"
       - "8080:8080"

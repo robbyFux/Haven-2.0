@@ -79,7 +79,9 @@ class SMTPSettings(models.Model):
     The SMTP password is stored Fernet-encrypted using SHA-256(settings.SECRET_KEY)
     as the key material — see _get_fernet() in admin_panel/views.py.
     The smtp_password_encrypted field always stores ciphertext; plaintext is
-    never persisted.
+    never persisted. tls_mode controls the encryption handshake: 'none' for
+    plain SMTP, 'starttls' for STARTTLS on port 587, 'ssl' for implicit
+    TLS on port 465.
     """
 
     smtp_host = models.CharField(max_length=255, blank=True, default="")
@@ -87,7 +89,21 @@ class SMTPSettings(models.Model):
     smtp_user = models.CharField(max_length=255, blank=True, default="")
     smtp_password_encrypted = models.TextField(blank=True, default="")
     smtp_from = models.CharField(max_length=255, blank=True, default="")
-    use_tls = models.BooleanField(default=True)
+
+    TLS_NONE = "none"
+    TLS_STARTTLS = "starttls"
+    TLS_SSL = "ssl"
+    TLS_MODE_CHOICES = [
+        (TLS_NONE, "None (plain SMTP)"),
+        (TLS_STARTTLS, "STARTTLS (port 587)"),
+        (TLS_SSL, "SSL/TLS (port 465)"),
+    ]
+    tls_mode = models.CharField(
+        max_length=10,
+        choices=TLS_MODE_CHOICES,
+        default=TLS_STARTTLS,
+    )
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

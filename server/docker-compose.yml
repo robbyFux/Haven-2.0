@@ -3,6 +3,7 @@ version: "3.9"
 services:
   db:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: haven
       POSTGRES_PASSWORD: haven
@@ -19,6 +20,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     ports:
       - "6379:6379"
     healthcheck:
@@ -29,6 +31,7 @@ services:
 
   app:
     build: .
+    restart: unless-stopped
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./media:/app/media
@@ -43,6 +46,7 @@ services:
 
   worker:
     build: .
+    restart: unless-stopped
     command: celery -A app.celery_app worker --loglevel=info --concurrency=2
     volumes:
       - ./media:/app/media
@@ -59,6 +63,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.webui
+    restart: unless-stopped
     command: >
       sh -c "python manage.py migrate --noinput &&
              python manage.py runserver 0.0.0.0:8080"
@@ -78,6 +83,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.nginx
+    restart: unless-stopped
     ports:
       - "8000:8000"
       - "8080:8080"

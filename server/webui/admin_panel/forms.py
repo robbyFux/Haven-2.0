@@ -163,10 +163,19 @@ class SmtpSettingsForm(forms.Form):
             }
         ),
     )
-    use_tls = forms.BooleanField(
-        required=False,
-        initial=True,
-        label="Use TLS",
+    tls_mode = forms.ChoiceField(
+        choices=[
+            ("none", "None (plain SMTP)"),
+            ("starttls", "STARTTLS (port 587)"),
+            ("ssl", "SSL/TLS (port 465)"),
+        ],
+        initial="starttls",
+        label="Security",
+        widget=forms.Select(
+            attrs={
+                "class": _INPUT_CLASS,
+            }
+        ),
     )
 
     def clean_smtp_port(self):

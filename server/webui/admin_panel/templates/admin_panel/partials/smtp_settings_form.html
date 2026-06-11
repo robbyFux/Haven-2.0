@@ -80,14 +80,18 @@
       {% endif %}
     </div>
 
-    {# --- Use TLS checkbox --- #}
+    {# --- TLS mode --- #}
     <div>
-      <label class="flex items-center gap-2 cursor-pointer">
-        {{ form.use_tls }}
-        <span class="text-sm text-gray-300">Use TLS/STARTTLS</span>
+      <label for="{{ form.tls_mode.id_for_label }}"
+             class="block text-sm font-medium text-gray-300 mb-1">
+        {{ form.tls_mode.label }}
       </label>
-      {% if form.use_tls.errors %}
-      <p class="text-red-400 text-sm mt-1">{{ form.use_tls.errors|join:", " }}</p>
+      {{ form.tls_mode }}
+      <p class="text-gray-500 text-xs mt-1">
+        Use STARTTLS for port 587, SSL/TLS for port 465.
+      </p>
+      {% if form.tls_mode.errors %}
+      <p class="text-red-400 text-sm mt-1">{{ form.tls_mode.errors|join:", " }}</p>
       {% endif %}
     </div>
 
