@@ -1,5 +1,5 @@
 ---
-status: awaiting_human_verify
+status: resolved
 trigger: "TFLite model warning still shows after docker compose up --build, even though the file exists at server/efficientdet_lite0.tflite and server/app/efficientdet_lite0.tflite"
 created: 2026-04-13T00:00:00Z
 updated: 2026-04-13T00:00:00Z
