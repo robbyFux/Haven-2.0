@@ -30,6 +30,7 @@ COPY --from=builder /venv /venv
 COPY app/ ./app/
 COPY alembic/ ./alembic/
 COPY alembic.ini .
+COPY efficientdet_lite0.tflite /app/efficientdet_lite0.tflite
 
 # Create media directory
 RUN mkdir -p /app/media
