@@ -12,41 +12,56 @@ but never raise — a failed notification must not crash the Celery worker.
 
 import logging
 from email.mime.text import MIMEText
+from typing import TYPE_CHECKING
 
 import httpx
 
-from app.config import settings
+if TYPE_CHECKING:
+    from app.services.smtp_settings import SmtpConfig
 
 logger = logging.getLogger(__name__)
 
 
-async def send_email(to: str, subject: str, body: str) -> bool:
+async def send_email(to: str, subject: str, body: str, *, smtp: "SmtpConfig") -> bool:
     """
-    Send an email notification via SMTP with STARTTLS.
+    Send an email notification via SMTP.
 
     Uses aiosmtplib for async delivery (called via asyncio.run from the
-    Celery task context).
+    Celery task context, or directly from async FastAPI routes).
+
+    TLS is controlled by smtp.tls_mode:
+      "ssl"      → use_tls=True  (implicit TLS, port 465)
+      "starttls" → start_tls=True (STARTTLS upgrade, port 587)
+      "none"     → no TLS flags
 
     @param to: recipient email address
     @param subject: email subject line
     @param body: plain-text message body
+    @param smtp: SmtpConfig with connection parameters and credentials
     @return: True on success, False if the send failed
     """
     try:
-        import aiosmtplib
+        import aiosmtplib  # noqa: PLC0415
 
         message = MIMEText(body, "plain", "utf-8")
-        message["From"] = settings.SMTP_FROM
+        message["From"] = smtp.from_addr or smtp.user or "haven@localhost"
         message["To"] = to
         message["Subject"] = subject
 
+        tls_kwargs: dict = {}
+        if smtp.tls_mode == "ssl":
+            tls_kwargs["use_tls"] = True
+        elif smtp.tls_mode == "starttls":
+            tls_kwargs["start_tls"] = True
+
         await aiosmtplib.send(
             message,
-            hostname=settings.SMTP_HOST,
-            port=settings.SMTP_PORT,
-            username=settings.SMTP_USER or None,
-            password=settings.SMTP_PASSWORD or None,
-            start_tls=True,
+            hostname=smtp.host,
+            port=smtp.port,
+            username=smtp.user or None,
+            password=smtp.password or None,
+            timeout=10,
+            **tls_kwargs,
         )
         return True
     except Exception as exc:  # noqa: BLE001

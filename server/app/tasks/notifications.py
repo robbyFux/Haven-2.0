@@ -23,6 +23,7 @@ import psycopg2
 from app.celery_app import celery_app
 from app.config import settings
 from app.services.notify import format_notification_message, send_email, send_pushover, send_signal
+from app.services.smtp_settings import get_smtp_settings_sync
 
 logger = logging.getLogger(__name__)
 
@@ -72,8 +73,17 @@ def send_notification_task(event_id: int) -> dict:
 
     results: dict[str, bool] = {}
 
-    if user["notification_email"] and settings.SMTP_HOST:
-        results["email"] = asyncio.run(send_email(user["notification_email"], subject, body))
+    if user["notification_email"]:
+        smtp = get_smtp_settings_sync()
+        if smtp.host:
+            results["email"] = asyncio.run(
+                send_email(user["notification_email"], subject, body, smtp=smtp)
+            )
+        else:
+            logger.warning(
+                "send_notification_task: SMTP not configured, skipping email for event %d",
+                event_id,
+            )
 
     if user["notification_signal_number"] and settings.SIGNAL_API_URL:
         results["signal"] = send_signal(user["notification_signal_number"], body)

@@ -235,17 +235,18 @@ async def test_send_notification_disabled(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_send_notification_email(db_session: AsyncSession):
-    """Task calls send_email when notification_email is set and SMTP_HOST is configured."""
-    user = await _create_user_direct(
-        db_session, "emailuser",
-        notification_email="test@example.com",
-    )
-    event = await _create_event(db_session, user)
-
+    """Task calls send_email when notification_email is set and SMTP is configured."""
     from app.tasks.notifications import send_notification_task
+    from app.services.smtp_settings import SmtpConfig
 
     load_result = {
-        "user": user,
+        "user": {
+            "notifications_enabled": True,
+            "notification_email": "test@example.com",
+            "notification_signal_number": None,
+            "pushover_user_key": None,
+            "pushover_app_token": None,
+        },
         "device_name": "Front Door",
         "event_type": "CAMERA",
         "severity": "HIGH",
@@ -253,23 +254,19 @@ async def test_send_notification_email(db_session: AsyncSession):
         "analysis_summary": None,
     }
 
-    call_count = [0]
+    smtp_config = SmtpConfig(
+        host="smtp.example.com",
+        port=587,
+        user="user@example.com",
+        password="secret",
+        from_addr="noreply@example.com",
+        tls_mode="starttls",
+    )
 
-    def fake_run(coro):
-        call_count[0] += 1
-        if call_count[0] == 1:
-            # First call: _load_event_data
-            return load_result
-        # Second call: send_email coroutine
-        return True
-
-    with patch("app.tasks.notifications.asyncio.run", side_effect=fake_run), \
-         patch("app.tasks.notifications.settings") as mock_settings:
-        mock_settings.SMTP_HOST = "smtp.example.com"
-        mock_settings.SIGNAL_API_URL = ""
-        mock_settings.PUSHOVER_APP_TOKEN = ""
-
-        result = send_notification_task(event.id)
+    with patch("app.tasks.notifications._load_event_data_sync", return_value=load_result), \
+         patch("app.tasks.notifications.get_smtp_settings_sync", return_value=smtp_config), \
+         patch("app.tasks.notifications.asyncio.run", return_value=True):
+        result = send_notification_task(42)
 
     assert result["status"] == "sent"
     assert result["results"].get("email") is True

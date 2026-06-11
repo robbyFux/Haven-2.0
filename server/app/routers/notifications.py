@@ -24,6 +24,7 @@ from app.services.notify import (
     send_pushover,
     send_signal,
 )
+from app.services.smtp_settings import get_smtp_settings
 from app.config import settings
 
 router = APIRouter(tags=["notifications"])
@@ -84,8 +85,12 @@ async def send_test_notification(
 
     results: dict[str, bool] = {}
 
-    if current_user.notification_email and settings.SMTP_HOST:
-        results["email"] = await send_email(current_user.notification_email, subject, body)
+    if current_user.notification_email:
+        smtp = await get_smtp_settings()
+        if smtp.host:
+            results["email"] = await send_email(
+                current_user.notification_email, subject, body, smtp=smtp
+            )
 
     if current_user.notification_signal_number and settings.SIGNAL_API_URL:
         results["signal"] = send_signal(current_user.notification_signal_number, body)
