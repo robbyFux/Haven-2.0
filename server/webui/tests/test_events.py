@@ -430,3 +430,46 @@ def test_event_delete_other_user(create_user):
     client.force_login(alice)
     response = client.post(f"/events/{bob_event.id}/delete/")
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_bulk_delete_updates_quota(create_user, tmp_path, settings):
+    """POST /events/bulk-delete/ removes events, media files, and updates quota."""
+    settings.MEDIA_ROOT = str(tmp_path)
+
+    user = create_user("bulk_del_user", "pw123")
+    user.current_event_count = 3
+    user.current_storage_bytes = 300
+    user.save(update_fields=["current_event_count", "current_storage_bytes"])
+
+    device = make_device(user)
+
+    media1 = tmp_path / "vid1.mp4"
+    media2 = tmp_path / "vid2.mp4"
+    media1.write_bytes(b"a" * 100)
+    media2.write_bytes(b"b" * 100)
+
+    event1 = make_event(user, device, media_path="vid1.mp4", media_size_bytes=100)
+    event2 = make_event(user, device, media_path="vid2.mp4", media_size_bytes=100)
+    event3 = make_event(user, device)  # no media, kept alive
+
+    client = Client()
+    client.force_login(user)
+    response = client.post(
+        "/events/bulk-delete/",
+        {"event_ids": [event1.id, event2.id]},
+    )
+    assert response.status_code in (200, 302)
+
+    from events.models import Event
+
+    assert not Event.objects.filter(id=event1.id).exists()
+    assert not Event.objects.filter(id=event2.id).exists()
+    assert Event.objects.filter(id=event3.id).exists()
+
+    assert not media1.exists()
+    assert not media2.exists()
+
+    user.refresh_from_db()
+    assert user.current_event_count == 1
+    assert user.current_storage_bytes == 100

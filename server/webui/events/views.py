@@ -104,12 +104,25 @@ def event_list(request):
 
     devices = Device.objects.filter(user_id=request.user.id, is_active=True)
 
+    user = request.user
+    storage_quota_bytes = user.storage_quota_mb * 1024 * 1024
+    storage_used_pct = (
+        round(user.current_storage_bytes / storage_quota_bytes * 100, 1)
+        if storage_quota_bytes > 0
+        else 0
+    )
+
     context = {
         "page": page,
         "filter": f,
         "devices": devices,
         "event_types": EVENT_TYPES,
         "current_status": status,
+        "storage_used_mb": round(user.current_storage_bytes / (1024 * 1024), 1),
+        "storage_quota_mb": user.storage_quota_mb,
+        "storage_used_pct": storage_used_pct,
+        "event_count": user.current_event_count,
+        "event_quota": user.max_events,
     }
 
     if request.htmx:
@@ -311,16 +324,25 @@ def bulk_delete(request):
     status = request.POST.get("status", "active")
 
     if event_ids:
-        events_qs = Event.objects.filter(user_id=request.user.id, id__in=event_ids)
+        events_list = list(
+            Event.objects.filter(user_id=request.user.id, id__in=event_ids)
+        )
 
-        # Delete associated media files before removing DB rows
-        for event in events_qs:
+        total_size = sum(e.media_size_bytes or 0 for e in events_list)
+        total_count = len(events_list)
+
+        for event in events_list:
             if event.media_path:
                 full_path = os.path.join(settings.MEDIA_ROOT, event.media_path)
                 if os.path.exists(full_path):
                     os.remove(full_path)
 
-        events_qs.delete()
+        user = request.user
+        user.current_storage_bytes = max(0, user.current_storage_bytes - total_size)
+        user.current_event_count = max(0, user.current_event_count - total_count)
+        user.save(update_fields=["current_storage_bytes", "current_event_count"])
+
+        Event.objects.filter(user_id=request.user.id, id__in=event_ids).delete()
 
     if request.htmx:
         return _render_event_table(request, status=status)
