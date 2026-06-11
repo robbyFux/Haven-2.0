@@ -76,6 +76,8 @@ def analyze_event_task(
         logger.debug("analyze_event_task: read %d bytes from %r for event_id=%d", len(file_data), full_path, event_id)
     except OSError as exc:
         logger.error("analyze_event_task: cannot read media file %s: %s", full_path, exc)
+        from app.tasks.notifications import send_notification_task  # noqa: PLC0415
+        send_notification_task.delay(event_id)
         return {"status": "error", "detail": str(exc)}
 
     # --- Decrypt if the file was stored encrypted ---
@@ -87,6 +89,8 @@ def analyze_event_task(
             logger.debug("analyze_event_task: decryption successful for event_id=%d, %d bytes", event_id, len(file_data))
         except Exception as exc:  # noqa: BLE001
             logger.error("analyze_event_task: decryption failed for event %d: %s", event_id, exc)
+            from app.tasks.notifications import send_notification_task  # noqa: PLC0415
+            send_notification_task.delay(event_id)
             return {"status": "error", "detail": f"Decryption failed: {exc}"}
 
     # --- Run inference ---
@@ -104,6 +108,8 @@ def analyze_event_task(
         logger.info("analyze_event_task: get_detector() returned %r for event_id=%d", detector, event_id)
         if detector is None:
             logger.warning("analyze_event_task: TFLite detector not available for event %d", event_id)
+            from app.tasks.notifications import send_notification_task  # noqa: PLC0415
+            send_notification_task.delay(event_id)
             return {"status": "error", "detail": "TFLite detector not available"}
 
         try:
@@ -121,6 +127,8 @@ def analyze_event_task(
                 frames = extract_frames_from_video(file_data)
                 if not frames:
                     logger.warning("analyze_event_task: no frames extracted from video for event_id=%d", event_id)
+                    from app.tasks.notifications import send_notification_task  # noqa: PLC0415
+                    send_notification_task.delay(event_id)
                     return {"status": "error", "detail": "No frames could be extracted from video"}
 
                 # Run detection on each frame, then aggregate
@@ -158,6 +166,8 @@ def analyze_event_task(
             raw = {"detections": detections}
         except Exception as exc:  # noqa: BLE001
             logger.exception("analyze_event_task: TFLite inference failed for event %d", event_id)
+            from app.tasks.notifications import send_notification_task  # noqa: PLC0415
+            send_notification_task.delay(event_id)
             return {"status": "error", "detail": f"Inference failed: {exc}"}
 
     elif ai_backend == "openrouter":
@@ -180,6 +190,8 @@ def analyze_event_task(
             raw = result
         except Exception as exc:  # noqa: BLE001
             logger.exception("analyze_event_task: OpenRouter call failed for event %d", event_id)
+            from app.tasks.notifications import send_notification_task  # noqa: PLC0415
+            send_notification_task.delay(event_id)
             return {"status": "error", "detail": f"OpenRouter failed: {exc}"}
 
     else:

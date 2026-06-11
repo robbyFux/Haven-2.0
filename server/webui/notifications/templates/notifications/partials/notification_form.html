@@ -59,6 +59,19 @@
       <p class="text-red-400 text-sm mt-1">{{ form.notification_email.errors|join:", " }}</p>
       {% endif %}
     </div>
+    {% if form.notification_email.value %}
+    <div class="flex items-center gap-3">
+      <button type="button"
+              hx-post="{% url 'notifications:email_test' %}"
+              hx-target="#email-test-result"
+              hx-swap="innerHTML"
+              hx-include="[name='csrfmiddlewaretoken']"
+              class="bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm font-medium px-4 py-1.5 rounded-lg border border-gray-600 transition-colors">
+        Send Test Email
+      </button>
+      <span id="email-test-result" class="text-sm"></span>
+    </div>
+    {% endif %}
     <p class="text-gray-500 text-sm">Receive email alerts when events are detected. Requires SMTP configured on the server.</p>
   </div>
 

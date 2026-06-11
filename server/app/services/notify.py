@@ -16,6 +16,8 @@ from typing import TYPE_CHECKING
 
 import httpx
 
+from app.config import settings
+
 if TYPE_CHECKING:
     from app.services.smtp_settings import SmtpConfig
 
