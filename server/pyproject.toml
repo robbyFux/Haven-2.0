@@ -1,6 +1,6 @@
 [project]
 name = "haven-cloud"
-version = "1.0.22"
+version = "1.0.23"
 description = "Haven 2.0 self-hosted cloud backend"
 requires-python = ">=3.12"
 dependencies = [
