@@ -502,7 +502,16 @@ cd ~/haven-server
 docker load < haven-cloud-v${VERSION}.tar.gz
 \`\`\`
 
-### 3. Stack neu starten
+### 3. docker-compose.yml aktualisieren
+Die Image-Tags in der \`docker-compose.yml\` auf die neue Version setzen:
+\`\`\`bash
+sed -i 's|haven-api:[0-9][0-9.]*|haven-api:${VERSION}|g; s|haven-webui:[0-9][0-9.]*|haven-webui:${VERSION}|g; s|haven-nginx:[0-9][0-9.]*|haven-nginx:${VERSION}|g' docker-compose.yml
+\`\`\`
+
+Bei größeren Updates empfiehlt es sich, die vollständige \`docker-compose.yml\` aus dem Abschnitt
+[Cloud-Server installieren](#cloud-server-installieren-haven-cloud-v${VERSION}targz) oben zu übernehmen.
+
+### 4. Stack neu starten
 \`\`\`bash
 docker compose up -d --no-build
 \`\`\`
@@ -513,9 +522,10 @@ API-Migrationen (Alembic) ggf. manuell anstoßen:
 docker compose exec app alembic upgrade head
 \`\`\`
 
-### 4. Alte Images aufräumen (optional)
+### 5. Alte Images aufräumen (optional)
+Entfernt alle nicht mehr verwendeten Images, gestoppte Container und Build-Cache:
 \`\`\`bash
-docker image prune -f
+docker system prune -a -f
 \`\`\`
 EOF
     ok "Anleitung: dist/$VERSION/INSTALL.md"

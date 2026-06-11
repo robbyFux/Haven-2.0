@@ -335,9 +335,9 @@ def smtp_test(request):
                 "Please re-enter the SMTP password and save settings."
             )
 
-    recipient = request.user.email or ""
+    recipient = request.user.notification_email or ""
     if not recipient:
-        return _htmx_error("Admin account has no email address configured.")
+        return _htmx_error("Admin account has no notification email configured.")
 
     msg = MIMEText("This is a test email from Haven Cloud.", "plain")
     msg["Subject"] = "Haven Cloud — Test Email"
